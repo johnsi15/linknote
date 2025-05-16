@@ -39,7 +39,7 @@ export function FeatureSection() {
       <div className='text-center mb-16'>
         <h2 className='text-3xl font-bold mb-4'>Features for Developers</h2>
         <p className='text-muted-foreground max-w-2xl mx-auto'>
-          Built with the unique needs of programmers in mind, DevLinks helps you save and organize your coding resources
+          Built with the unique needs of programmers in mind, Linknote helps you save and organize your coding resources
           more effectively.
         </p>
       </div>

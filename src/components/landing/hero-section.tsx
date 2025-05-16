@@ -19,7 +19,7 @@ export function HeroSection() {
           <span className='text-primary'> efficiently</span>
         </h1>
         <p className='text-xl text-muted-foreground mb-10 max-w-2xl mx-auto'>
-          DevLinks helps programmers organize and access their important coding resources with rich descriptions, code
+          Linknote helps programmers organize and access their important coding resources with rich descriptions, code
           snippets, and intelligent tagging.
         </p>
         <div className='flex justify-center gap-4'>
