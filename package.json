@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "6.19.4",
+    "@hookform/resolvers": "^5.0.1",
     "@libsql/client": "^0.15.6",
     "@radix-ui/react-dialog": "^1.1.13",
     "@radix-ui/react-dropdown-menu": "2.1.14",
@@ -23,12 +24,14 @@
     "drizzle-orm": "^0.43.1",
     "lucide-react": "0.510.0",
     "motion": "12.11.4",
+    "nanoid": "^5.1.5",
     "next": "15.3.2",
     "next-themes": "0.4.6",
     "nuqs": "2.4.3",
     "postcss": "8.5.3",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "react-hook-form": "^7.56.4",
     "sonner": "2.0.3",
     "tailwind-merge": "3.3.0",
     "zod": "^3.24.4"
