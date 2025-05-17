@@ -4,8 +4,12 @@ import { Button } from '@/components/ui/button'
 import { CodeIcon, BookmarkIcon, TagIcon } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
+import { SignedOut, SignUpButton } from '@clerk/nextjs'
+import { useAuth } from '@clerk/nextjs'
 
 export function HeroSection() {
+  const { isLoaded } = useAuth()
+
   return (
     <div className='container mx-auto px-4 py-20 flex flex-col items-center text-center'>
       <motion.div
@@ -23,12 +27,16 @@ export function HeroSection() {
           snippets, and intelligent tagging.
         </p>
         <div className='flex justify-center gap-4'>
-          <Link href='/sign-up'>
+          {!isLoaded && (
             <Button size='lg' className='gap-2'>
               <BookmarkIcon size={18} />
-              Get Started
+
+              <SignedOut>
+                <SignUpButton mode='modal'>Get Started</SignUpButton>
+              </SignedOut>
             </Button>
-          </Link>
+          )}
+
           <Link href='/dashboard'>
             <Button size='lg' variant='outline' className='gap-2'>
               <CodeIcon size={18} />
