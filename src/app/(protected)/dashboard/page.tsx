@@ -1,26 +1,16 @@
-'use client'
-
-import { Link, PlusIcon } from 'lucide-react'
+import { Link } from 'lucide-react'
 import { LinkCard } from '@/components/dashboard/link-card'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
 import { Button } from '@/components/ui/button'
-import { NewLinkModal } from '@/components/dashboard/new-link-modal'
-import { useState } from 'react'
+import { NewLinkButton } from '@/components/dashboard/new-link/button'
 
 export default function DashboardPage() {
-  const [isNewLinkModalOpen, setIsNewLinkModalOpen] = useState(false)
-
   return (
     <div className='space-y-8'>
       <div className='flex items-center justify-between'>
         <h1 className='text-3xl font-bold tracking-tight'>Dashboard</h1>
-        <Button className='gap-2' onClick={() => setIsNewLinkModalOpen(true)}>
-          <PlusIcon className='h-4 w-4' />
-          Añadir Link
-        </Button>
+        <NewLinkButton />
       </div>
-
-      <NewLinkModal isOpen={isNewLinkModalOpen} onClose={() => setIsNewLinkModalOpen(false)} />
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
         <div className='md:col-span-2 space-y-6'>
