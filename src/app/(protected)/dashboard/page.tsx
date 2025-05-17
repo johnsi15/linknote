@@ -1,21 +1,26 @@
+'use client'
+
+import { Link, PlusIcon } from 'lucide-react'
 import { LinkCard } from '@/components/dashboard/link-card'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
 import { Button } from '@/components/ui/button'
-import { PlusIcon } from 'lucide-react'
-import Link from 'next/link'
+import { NewLinkModal } from '@/components/dashboard/new-link-modal'
+import { useState } from 'react'
 
 export default function DashboardPage() {
+  const [isNewLinkModalOpen, setIsNewLinkModalOpen] = useState(false)
+
   return (
     <div className='space-y-8'>
       <div className='flex items-center justify-between'>
         <h1 className='text-3xl font-bold tracking-tight'>Dashboard</h1>
-        <Link href='/dashboard/new'>
-          <Button className='gap-2'>
-            <PlusIcon className='h-4 w-4' />
-            Add Link
-          </Button>
-        </Link>
+        <Button className='gap-2' onClick={() => setIsNewLinkModalOpen(true)}>
+          <PlusIcon className='h-4 w-4' />
+          Añadir Link
+        </Button>
       </div>
+
+      <NewLinkModal isOpen={isNewLinkModalOpen} onClose={() => setIsNewLinkModalOpen(false)} />
 
       <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
         <div className='md:col-span-2 space-y-6'>
@@ -36,6 +41,7 @@ export default function DashboardPage() {
                 description='Official documentation for React Server Components in Next.js'
                 tags={['react', 'nextjs', 'documentation']}
                 createdAt={new Date().toISOString()}
+                id='example-1'
               />
               <LinkCard
                 title='TypeScript Advanced Types Guide'
@@ -43,6 +49,7 @@ export default function DashboardPage() {
                 description="Learn about TypeScript's advanced type features"
                 tags={['typescript', 'guide']}
                 createdAt={new Date(Date.now() - 86400000).toISOString()}
+                id='example-2'
               />
               <LinkCard
                 title='CSS Grid Layout Tutorial'
@@ -50,6 +57,7 @@ export default function DashboardPage() {
                 description='A comprehensive guide to CSS Grid layout'
                 tags={['css', 'layout', 'tutorial']}
                 createdAt={new Date(Date.now() - 172800000).toISOString()}
+                id='example-3'
               />
             </div>
           </div>

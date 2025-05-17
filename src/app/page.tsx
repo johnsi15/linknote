@@ -2,6 +2,9 @@ import { HeroSection } from '@/components/landing/hero-section'
 import { FeatureSection } from '@/components/landing/feature-section'
 import Link from 'next/link'
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
+import { GithubIcon } from '@/components/icons/github'
+import { XIcon } from 'lucide-react'
+import { IgIcon } from '@/components/icons/ig'
 
 export default function Home() {
   return (
@@ -18,10 +21,10 @@ export default function Home() {
               <SignInButton mode='modal'>Login</SignInButton>
             </SignedOut>
             <SignedOut>
-              <SignUpButton>Sign Up</SignUpButton>
+              <SignUpButton mode='modal'>Sign Up</SignUpButton>
             </SignedOut>
             <SignedIn>
-              <UserButton>Create Note</UserButton>
+              <UserButton />
             </SignedIn>
           </div>
         </nav>
@@ -32,9 +35,42 @@ export default function Home() {
         <FeatureSection />
       </main>
 
-      <footer className='border-t py-8 mt-12'>
-        <div className='container mx-auto px-4 text-center text-muted-foreground'>
-          <p>© 2025 Linknote. All rights reserved.</p>
+      <footer className='relative z-10 border-border/40 border-t bg-background/80 backdrop-blur-sm'>
+        <div className='container mx-auto flex h-8 max-w-2xl items-center justify-between px-4'>
+          <div className='flex items-center gap-4 text-muted-foreground text-xs'>
+            <a href='https://github.com/' target='_blank' rel='noopener noreferrer' className='hover:text-foreground'>
+              <GithubIcon className='h-3.5 w-3.5' />
+            </a>
+            <a
+              href='https://x.com/johnserranodev'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='hover:text-foreground'
+            >
+              <XIcon className='h-3.5 w-3.5' />
+            </a>
+            <div className='rounded-full  p-1'>
+              <a
+                href='https://www.instagram.com/johnserranodev'
+                target='_blank'
+                rel='noopener noreferrer'
+                className='hover:text-foreground'
+              >
+                <IgIcon className='h-3.5 w-3.5' />
+              </a>
+            </div>
+          </div>
+          <div className='text-muted-foreground text-xs'>
+            Built by{' '}
+            <a
+              href='https://github.com/johnsi15'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='hover:text-foreground'
+            >
+              John Serrano
+            </a>
+          </div>
         </div>
       </footer>
     </div>

@@ -82,7 +82,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           <span>{formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
           {id && (
             <div className='flex space-x-1 ml-2'>
-              <Link href={`/dashboard/edit/${id}`}>
+              <Link href={`/links/${id}`}>
                 <Button variant='ghost' size='icon' className='h-7 w-7'>
                   <PencilIcon className='h-3.5 w-3.5' />
                 </Button>
