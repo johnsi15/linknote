@@ -1,6 +1,7 @@
 import React from 'react'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
+// import { useTagFilter } from '@/hooks/use-tag-filter'
 
 interface Tag {
   name: string
@@ -12,6 +13,7 @@ interface TagCloudProps {
 }
 
 export function TagCloud({ tags }: TagCloudProps) {
+  // const [activeTag, setActiveTag] = useTagFilter()
   const maxCount = Math.max(...tags.map(tag => tag.count))
 
   // Calculate font size based on count (between 0.7rem and 1.2rem)
