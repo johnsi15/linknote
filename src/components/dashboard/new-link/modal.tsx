@@ -1,8 +1,7 @@
 'use client'
 
-import React, { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import NewLinkForm from '@/components/dashboard/new-link-form'
+import NewLinkForm from '@/components/dashboard/new-link/form'
 
 interface NewLinkModalProps {
   isOpen: boolean

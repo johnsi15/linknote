@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils'
 import { BookmarkIcon, PlusIcon, TagIcon, LayoutGridIcon } from 'lucide-react'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { NewLinkModal } from '@/components/dashboard/new-link-modal'
+import { NewLinkModal } from '@/components/dashboard/new-link/modal'
 
 export function DashboardNav({ className }: { className?: string }) {
   const pathname = usePathname()
@@ -47,7 +47,7 @@ export function DashboardNav({ className }: { className?: string }) {
         </Link>
         <Button variant='default' size='sm' className='flex items-center' onClick={() => setIsNewLinkModalOpen(true)}>
           <PlusIcon className='mr-2 h-4 w-4' />
-          Nuevo Link
+          New Link
         </Button>
       </nav>
 
