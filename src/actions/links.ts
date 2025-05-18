@@ -34,6 +34,24 @@ interface TagRelation {
   }
 }
 
+export async function saveLink(formData: LinkFormData, isUpdate: boolean = false, linkId?: string) {
+  try {
+    const { userId } = await getSecureSession()
+    const validatedData = linkSchema.parse(formData)
+
+    if (isUpdate && linkId) {
+      // Actualizar un enlace existente (PUT)
+      return await updateLink(linkId, validatedData)
+    } else {
+      // Crear un nuevo enlace (POST)
+      return await createLink(validatedData)
+    }
+  } catch (error) {
+    console.error('Error al guardar enlace:', error)
+    return { success: false, error: 'No se pudo guardar el enlace' }
+  }
+}
+
 // Crear un nuevo enlace
 export async function createLink(formData: LinkFormData) {
   try {
@@ -245,7 +263,7 @@ export async function updateLink(id: string, formData: LinkFormData) {
 
     revalidatePath('/dashboard')
     revalidatePath(`/links/${id}`)
-    return { success: true }
+    return { success: true, linkId: existingLink.id }
   } catch (error) {
     console.error('Error al actualizar enlace:', error)
     return { success: false, error: 'No se pudo actualizar el enlace' }

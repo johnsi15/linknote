@@ -110,7 +110,7 @@ export default function LinkDetailPage() {
         </div>
       </div>
 
-      {isEditing ? (
+      {/* {isEditing ? (
         <LinkForm
           defaultValues={{
             title: linkData.title,
@@ -129,7 +129,7 @@ export default function LinkDetailPage() {
           tags={linkData.tags || []}
           createdAt={linkData.createdAt}
         />
-      )}
+      )} */}
     </div>
   )
 }

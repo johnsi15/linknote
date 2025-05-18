@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 // import NewLinkForm from '@/components/dashboard/new-link/form'
 import { LinkForm } from '@/components/dashboard/link-form'
-import { createLink } from '@/actions/links'
+import { saveLink } from '@/actions/links'
 
 interface NewLinkModalProps {
   isOpen: boolean
@@ -16,23 +16,31 @@ interface NewLinkModalProps {
 export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
   const router = useRouter()
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
+  const [linkId, setLinkId] = useState<string | undefined>(undefined)
 
-  const handleSubmit = async (formData: any) => {
-    const result = await createLink(formData)
+  const handleSubmit = async (formData: any, isAutoSaveEvent = false) => {
+    const isActualUpdateForBackend = Boolean(linkId)
+
+    const result = await saveLink(formData, isActualUpdateForBackend, linkId)
 
     if (result.success) {
-      toast.success('Enlace creado', { description: 'El enlace se ha creado correctamente' })
-      onClose()
-
       if (result.linkId) {
-        console.log('Link ID:', result.linkId)
-        console.log({ result })
-        // router.push(`/links/${result.linkId}`)
-      } else {
-        router.refresh()
+        setLinkId(result.linkId)
       }
+
+      if (isAutoSaveEvent) {
+        toast.success('Enlace guardado automáticamente')
+      } else {
+        toast.success(isActualUpdateForBackend ? 'Enlace actualizado' : 'Enlace creado', {
+          description: 'El enlace se ha guardado correctamente',
+        })
+        onClose()
+      }
+
+      return result
     } else {
       toast.error('Error', { description: result.error || 'No se pudo crear el enlace' })
+      return { success: false, error: result.error || 'Error desconocido' }
     }
   }
 
@@ -69,7 +77,7 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
         </DialogHeader>
         {/* <NewLinkForm onCancel={onClose} onSuccess={onClose} /> */}
 
-        <LinkForm onSubmit={handleSubmit} suggestedTags={suggestedTags} />
+        <LinkForm onSubmit={handleSubmit} suggestedTags={suggestedTags} autoSave={true} />
       </DialogContent>
     </Dialog>
   )
