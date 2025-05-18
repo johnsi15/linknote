@@ -128,18 +128,19 @@ export async function getLinkById(id: string) {
     })
 
     if (!link) {
-      return { success: false, error: 'Enlace no encontrado' }
+      return { success: false, error: 'Link no found' }
     }
 
-    // Obtener etiquetas asociadas al enlace
-    const linkTagsRelations = (await db.query.linkTags.findMany({
-      where: eq(linkTags.linkId, id),
-      with: {
-        tag: true,
-      },
-    })) as TagRelation[]
+    const linkTagsRows = await db.select({ tagId: linkTags.tagId }).from(linkTags).where(eq(linkTags.linkId, link.id))
 
-    const tagNames = linkTagsRelations.map(relation => relation.tag.name)
+    const tagNames = []
+
+    if (linkTagsRows.length > 0) {
+      const tagIds = linkTagsRows.map(row => row.tagId)
+      const tagRows = await db.select({ name: tags.name }).from(tags).where(inArray(tags.id, tagIds))
+
+      tagNames.push(...tagRows.map(t => t.name))
+    }
 
     return {
       success: true,
