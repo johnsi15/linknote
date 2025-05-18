@@ -3,8 +3,11 @@ import { LinkCard } from '@/components/dashboard/link-card'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
 import { Button } from '@/components/ui/button'
 import { NewLinkButton } from '@/components/dashboard/new-link/button'
+import { getUserLinks } from '@/actions/links'
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const { links, success, error } = await getUserLinks()
+
   return (
     <div className='space-y-8'>
       <div className='flex items-center justify-between'>
@@ -24,31 +27,36 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className='grid grid-cols-1 gap-4'>
-              {/* Mock data for demonstration */}
-              <LinkCard
-                title='React Server Components Documentation'
-                url='https://nextjs.org/docs/app/building-your-application/rendering/server-components'
-                description='Official documentation for React Server Components in Next.js'
-                tags={['react', 'nextjs', 'documentation']}
-                createdAt={new Date().toISOString()}
-                id='example-1'
-              />
-              <LinkCard
-                title='TypeScript Advanced Types Guide'
-                url='https://www.typescriptlang.org/docs/handbook/advanced-types.html'
-                description="Learn about TypeScript's advanced type features"
-                tags={['typescript', 'guide']}
-                createdAt={new Date(Date.now() - 86400000).toISOString()}
-                id='example-2'
-              />
-              <LinkCard
-                title='CSS Grid Layout Tutorial'
-                url='https://css-tricks.com/snippets/css/complete-guide-grid/'
-                description='A comprehensive guide to CSS Grid layout'
-                tags={['css', 'layout', 'tutorial']}
-                createdAt={new Date(Date.now() - 172800000).toISOString()}
-                id='example-3'
-              />
+              {success &&
+                links &&
+                links.map(({ id, title, url, description, tags, createdAt }) => (
+                  <LinkCard
+                    key={id}
+                    title={title}
+                    url={url}
+                    description={description ?? ''}
+                    tags={tags}
+                    createdAt={new Date(createdAt ?? '').toISOString()}
+                    id={id}
+                  />
+                ))}
+
+              {!success && error && (
+                <div className='flex items-center justify-center p-8 text-center border rounded-lg bg-muted/20'>
+                  <p className='text-sm text-muted-foreground mb-4'>{error}</p>
+                </div>
+              )}
+
+              {success && links?.length === 0 && (
+                <div className='flex flex-col items-center justify-center p-8 text-center border rounded-lg bg-muted/20'>
+                  <Link className='h-12 w-12 text-muted-foreground mb-3' />
+                  <h3 className='text-lg font-medium mb-1'>No links found</h3>
+                  <p className='text-sm text-muted-foreground mb-4'>
+                    You haven't created any links yet. Start by adding your first link.
+                  </p>
+                  <NewLinkButton />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -64,22 +72,22 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className='bg-card rounded-lg border p-4'>
-              <TagCloud
-                tags={[
-                  { name: 'react', count: 12 },
-                  { name: 'typescript', count: 8 },
-                  { name: 'nextjs', count: 7 },
-                  { name: 'css', count: 5 },
-                  { name: 'javascript', count: 15 },
-                  { name: 'tutorial', count: 6 },
-                  { name: 'guide', count: 4 },
-                  { name: 'documentation', count: 9 },
-                  { name: 'api', count: 3 },
-                  { name: 'design', count: 2 },
-                  { name: 'patterns', count: 3 },
-                  { name: 'performance', count: 5 },
-                ]}
-              />
+              {links && links.length > 0 ? (
+                <TagCloud
+                  tags={(() => {
+                    const allTags = links.flatMap(link => link.tags)
+
+                    const tagCounts = new Map()
+                    allTags.forEach(tag => {
+                      tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
+                    })
+
+                    return Array.from(tagCounts).map(([name, count]) => ({ name, count }))
+                  })()}
+                />
+              ) : (
+                <p className='text-sm text-muted-foreground text-center py-4'>There are no available labels</p>
+              )}
             </div>
           </div>
 
@@ -87,11 +95,13 @@ export default function DashboardPage() {
             <h2 className='text-xl font-semibold'>Quick Stats</h2>
             <div className='grid grid-cols-2 gap-4'>
               <div className='bg-card rounded-lg border p-4 text-center'>
-                <p className='text-3xl font-bold'>28</p>
+                <p className='text-3xl font-bold'>{links?.length ?? 0}</p>
                 <p className='text-muted-foreground text-sm'>Total Links</p>
               </div>
               <div className='bg-card rounded-lg border p-4 text-center'>
-                <p className='text-3xl font-bold'>12</p>
+                <p className='text-3xl font-bold'>
+                  {links ? Array.from(new Set(links.flatMap(link => link.tags))).length : 0}
+                </p>
                 <p className='text-muted-foreground text-sm'>Total Tags</p>
               </div>
             </div>

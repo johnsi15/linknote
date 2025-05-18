@@ -149,14 +149,19 @@ export async function getUserLinks() {
     // Para cada enlace, obtener sus etiquetas
     const linksWithTags = await Promise.all(
       userLinks.map(async link => {
-        const linkTagsRelations = (await db.query.linkTags.findMany({
-          where: eq(linkTags.linkId, link.id),
-          with: {
-            tag: true,
-          },
-        })) as TagRelation[]
+        const linkTagsRows = await db
+          .select({ tagId: linkTags.tagId })
+          .from(linkTags)
+          .where(eq(linkTags.linkId, link.id))
 
-        const tagNames = linkTagsRelations.map(relation => relation.tag.name)
+        const tagNames = []
+
+        if (linkTagsRows.length > 0) {
+          const tagIds = linkTagsRows.map(row => row.tagId)
+          const tagRows = await db.select({ name: tags.name }).from(tags).where(inArray(tags.id, tagIds))
+
+          tagNames.push(...tagRows.map(t => t.name))
+        }
 
         return {
           ...link,
@@ -168,7 +173,7 @@ export async function getUserLinks() {
     return { success: true, links: linksWithTags }
   } catch (error) {
     console.error('Error al obtener enlaces:', error)
-    return { success: false, error: 'No se pudieron obtener los enlaces' }
+    return { success: false, error: 'Could not get links' }
   }
 }
 
