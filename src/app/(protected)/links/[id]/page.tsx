@@ -3,12 +3,13 @@
 import { useParams, useRouter } from 'next/navigation'
 import { LinkCard } from '@/components/dashboard/link-card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2, PencilIcon } from 'lucide-react'
 import Link from 'next/link'
-import { getLinkById, updateLink, deleteLink } from '@/actions/links'
+import { getLinkById, deleteLink } from '@/actions/links'
 import { toast } from 'sonner'
-import { LinkForm } from '@/components/dashboard/link-form'
 import { useEffect, useState } from 'react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { LinkForm } from '@/components/dashboard/link-form'
 
 export default function LinkDetailPage() {
   const params = useParams()
@@ -16,7 +17,7 @@ export default function LinkDetailPage() {
   const id = params.id as string
 
   const [isLoading, setIsLoading] = useState(true)
-  const [isEditing, setIsEditing] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [linkData, setLinkData] = useState<any>(null)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -24,6 +25,7 @@ export default function LinkDetailPage() {
     async function fetchLinkData() {
       setIsLoading(true)
       const result = await getLinkById(id)
+      console.log({ result })
 
       if (result.success) {
         setLinkData(result.link)
@@ -38,20 +40,37 @@ export default function LinkDetailPage() {
     fetchLinkData()
   }, [id, router])
 
-  const handleUpdate = async (formData: any) => {
-    const result = await updateLink(id, formData)
+  const handleUpdate = async (formData: any, isAutoSaveEvent = false) => {
+    try {
+      const result = await fetch(`/api/links/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      }).then(res => res.json())
 
-    if (result.success) {
-      toast.success('Enlace actualizado', { description: 'El enlace se ha actualizado correctamente' })
-      setIsEditing(false)
+      if (result.success) {
+        if (!isAutoSaveEvent) {
+          toast.success('Enlace actualizado', { description: 'El enlace se ha actualizado correctamente' })
+          setIsEditModalOpen(false)
+        }
 
-      // Actualizar los datos locales
-      const updatedLink = await getLinkById(id)
-      if (updatedLink.success) {
-        setLinkData(updatedLink.link)
+        // Actualizar los datos locales
+        const updatedLink = await getLinkById(id)
+        if (updatedLink.success) {
+          setLinkData(updatedLink.link)
+        }
+
+        return { success: true, linkId: id }
+      } else {
+        toast.error('Error', { description: result.error })
+        return { success: false, error: result.error || 'Error desconocido' }
       }
-    } else {
-      toast.error('Error', { description: result.error })
+    } catch (error) {
+      console.error('Error al actualizar enlace:', error)
+      toast.error('Error', { description: 'No se pudo actualizar el enlace' })
+      return { success: false, error: 'Error al actualizar el enlace' }
     }
   }
 
@@ -88,48 +107,48 @@ export default function LinkDetailPage() {
               Volver
             </Button>
           </Link>
-          <h1 className='text-2xl font-bold'>{isEditing ? 'Editar enlace' : 'Detalles del enlace'}</h1>
+          <h1 className='text-2xl font-bold'>Detalles del enlace</h1>
         </div>
 
         <div className='flex gap-2'>
-          {!isEditing ? (
-            <>
-              <Button variant='outline' onClick={() => setIsEditing(true)}>
-                Editar
-              </Button>
-              <Button variant='destructive' onClick={handleDelete} disabled={isDeleting}>
-                {isDeleting ? <Loader2 className='h-4 w-4 animate-spin mr-2' /> : null}
-                Eliminar
-              </Button>
-            </>
-          ) : (
-            <Button variant='outline' onClick={() => setIsEditing(false)}>
-              Cancelar
-            </Button>
-          )}
+          <Button variant='outline' onClick={() => setIsEditModalOpen(true)}>
+            <PencilIcon className='h-4 w-4 mr-2' />
+            Editar
+          </Button>
+          <Button variant='destructive' onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? <Loader2 className='h-4 w-4 animate-spin mr-2' /> : null}
+            Eliminar
+          </Button>
         </div>
       </div>
 
-      {/* {isEditing ? (
-        <LinkForm
-          defaultValues={{
-            title: linkData.title,
-            url: linkData.url,
-            description: linkData.description || '',
-            tags: linkData.tags || [],
-          }}
-          onSubmit={handleUpdate}
-        />
-      ) : (
-        <LinkCard
-          id={id}
-          title={linkData.title}
-          url={linkData.url}
-          description={linkData.description || ''}
-          tags={linkData.tags || []}
-          createdAt={linkData.createdAt}
-        />
-      )} */}
+      <LinkCard
+        id={id}
+        title={linkData.title}
+        url={linkData.url}
+        description={linkData.description || ''}
+        tags={linkData.tags || []}
+        createdAt={linkData.createdAt}
+      />
+
+      {/* Modal de edición */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className='sm:max-w-3xl'>
+          <DialogHeader>
+            <DialogTitle>Editar Enlace</DialogTitle>
+          </DialogHeader>
+          <LinkForm
+            defaultValues={{
+              title: linkData.title,
+              url: linkData.url,
+              description: linkData.description || '',
+              tags: linkData.tags || [],
+            }}
+            onSubmit={handleUpdate}
+            autoSave={true}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
