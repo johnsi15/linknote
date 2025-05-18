@@ -41,9 +41,17 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [] }: LinkFo
   })
 
   const handleSubmit = async (values: FormValues) => {
+    const cleanedValues = {
+      ...values,
+      title: values.title.trim(),
+      url: values.url.trim(),
+      description: values.description?.trim() || '',
+      tags: values.tags.map(tag => tag.trim()).filter(tag => tag !== ''),
+    }
+
     setIsSubmitting(true)
     try {
-      await onSubmit(values)
+      await onSubmit(cleanedValues)
     } finally {
       setIsSubmitting(false)
     }

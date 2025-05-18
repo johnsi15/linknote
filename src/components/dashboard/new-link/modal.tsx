@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-import NewLinkForm from '@/components/dashboard/new-link/form'
+// import NewLinkForm from '@/components/dashboard/new-link/form'
 import { LinkForm } from '@/components/dashboard/link-form'
 import { createLink } from '@/actions/links'
 
@@ -24,9 +24,10 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
       toast.success('Enlace creado', { description: 'El enlace se ha creado correctamente' })
       onClose()
 
-      // Opcional: redirigir a la página de detalles del enlace
       if (result.linkId) {
-        router.push(`/links/${result.linkId}`)
+        console.log('Link ID:', result.linkId)
+        console.log({ result })
+        // router.push(`/links/${result.linkId}`)
       } else {
         router.refresh()
       }

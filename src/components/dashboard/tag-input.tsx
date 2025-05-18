@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { X, Plus, SparklesIcon } from 'lucide-react'
+import { KeyboardEvent, useRef, useState } from 'react'
+import { X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface TagInputProps {
   placeholder?: string
   tags: string[]
-  setTags?: (tags: string[]) => void
+  setTags: (tags: string[]) => void
   suggestedTags?: string[]
   onTagsChange?: (tags: string[]) => void
 }
@@ -21,107 +21,92 @@ export function TagInput({
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('')
   const [isInputFocused, setIsInputFocused] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const filteredSuggestions = suggestedTags.filter(
+    tag => tag.toLowerCase().includes(inputValue.toLowerCase()) && !tags.includes(tag)
+  )
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value)
+    const value = e.target.value
+    // Si el usuario escribe una coma, agregar el tag
+    if (value.includes(',')) {
+      const newTag = value.replace(',', '')
+      addTag(newTag)
+    } else {
+      setInputValue(value)
+      setShowSuggestions(true)
+    }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && inputValue) {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    // Agregar tag al presionar Enter o coma
+    if (e.key === 'Enter' || e.key === ',') {
       e.preventDefault()
       addTag(inputValue)
-    } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
-      const updatedTags = [...tags]
-      updatedTags.pop()
-      updateTags(updatedTags)
+    }
+
+    // Eliminar el último tag al presionar Backspace si el input está vacío
+    if (e.key === 'Backspace' && inputValue === '' && tags.length > 0) {
+      removeTag(tags[tags.length - 1])
     }
   }
 
   const addTag = (tag: string) => {
-    const trimmedTag = tag.trim().toLowerCase()
+    const trimmedTag = tag.trim()
     if (trimmedTag && !tags.includes(trimmedTag)) {
-      const newTags = [...tags, trimmedTag]
-      updateTags(newTags)
-    }
-    setInputValue('')
-  }
-
-  const removeTag = (index: number) => {
-    const updatedTags = tags.filter((_, i) => i !== index)
-    updateTags(updatedTags)
-  }
-
-  const addSuggestedTag = (tag: string) => {
-    if (!tags.includes(tag)) {
-      const newTags = [...tags, tag]
-      updateTags(newTags)
+      setTags([...tags, trimmedTag])
+      setInputValue('')
     }
   }
 
-  const updateTags = (newTags: string[]) => {
-    if (setTags) setTags(newTags)
-    if (onTagsChange) onTagsChange(newTags)
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove))
   }
 
-  const filteredSuggestions = suggestedTags.filter(
-    tag => !tags.includes(tag) && (!inputValue || tag.includes(inputValue.toLowerCase()))
-  )
+  const handleSuggestionClick = (tag: string) => {
+    addTag(tag)
+    inputRef.current?.focus()
+  }
 
   return (
-    <div className='space-y-2'>
-      <div
-        className={`flex flex-wrap gap-2 p-2 border rounded-md ${
-          isInputFocused ? 'ring-2 ring-ring ring-offset-2' : ''
-        }`}
-      >
+    <div className='w-full'>
+      <div className='flex flex-wrap gap-2 p-2 border rounded-md min-h-10 focus-within:ring-2 focus-within:ring-ring'>
         {tags.map((tag, index) => (
-          <Badge key={index} variant='secondary' className='gap-1 px-2 py-1'>
+          <Badge key={index} variant='secondary' className='flex items-center gap-1'>
             {tag}
-            <button
-              type='button'
-              onClick={() => removeTag(index)}
-              className='text-muted-foreground ml-1 hover:text-foreground'
-            >
-              <X className='h-3 w-3' />
-              <span className='sr-only'>Remove {tag}</span>
-            </button>
+            <X className='h-3 w-3 cursor-pointer hover:text-destructive' onClick={() => removeTag(tag)} />
           </Badge>
         ))}
-        <div className='flex-1'>
-          <input
-            type='text'
-            value={inputValue}
-            onChange={handleInputChange}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setIsInputFocused(true)}
-            onBlur={() => setIsInputFocused(false)}
-            className='w-full min-w-[120px] focus:outline-none bg-transparent'
-            placeholder={tags.length === 0 ? placeholder : ''}
-          />
-        </div>
+        <input
+          ref={inputRef}
+          type='text'
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          className='flex-1 min-w-[120px] outline-none bg-transparent'
+          placeholder={tags.length > 0 ? '' : 'Agregar etiquetas (separadas por coma)'}
+        />
       </div>
 
-      {suggestedTags.length > 0 && (
-        <div className='border rounded-md p-3 bg-primary/5'>
-          <div className='flex items-center gap-2 mb-2'>
-            <SparklesIcon className='h-4 w-4 text-primary' />
-            <p className='text-sm font-medium'>Suggested Tags</p>
-          </div>
-          <div className='flex flex-wrap gap-2'>
-            {filteredSuggestions.map(tag => (
-              <Badge
-                key={tag}
-                variant='outline'
-                className='cursor-pointer hover:bg-primary/20 transition-colors flex items-center gap-1'
-                onClick={() => addSuggestedTag(tag)}
-              >
-                <Plus className='h-3 w-3' />
-                {tag}
-              </Badge>
-            ))}
-          </div>
+      {showSuggestions && filteredSuggestions.length > 0 && (
+        <div className='mt-1 p-2 border rounded-md bg-background shadow-md max-h-40 overflow-y-auto'>
+          {filteredSuggestions.map((tag, index) => (
+            <div
+              key={index}
+              className='px-2 py-1 cursor-pointer hover:bg-accent rounded-sm'
+              onClick={() => handleSuggestionClick(tag)}
+            >
+              {tag}
+            </div>
+          ))}
         </div>
       )}
+
+      <p className='text-xs text-muted-foreground mt-1'>Presiona Enter o coma para agregar una etiqueta</p>
     </div>
   )
 }
