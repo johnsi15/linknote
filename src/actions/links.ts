@@ -3,20 +3,36 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { links, linkTags, tags } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { getSecureSession } from '@/lib/auth/server'
 import { z } from 'zod'
 
 // Esquema de validación para crear/actualizar enlaces
 const linkSchema = z.object({
-  title: z.string().min(1, 'The title is required'),
-  url: z.string().url('URL invalid'),
-  description: z.string().optional(),
-  tags: z.array(z.string()).default([]),
+  title: z
+    .string()
+    .min(1, 'The title is required')
+    .transform(val => val.trim()),
+  url: z
+    .string()
+    .url('URL invalid')
+    .transform(val => val.trim()),
+  description: z
+    .string()
+    .optional()
+    .transform(val => val?.trim() || ''),
+  tags: z.array(z.string().transform(val => val.trim())).default([]),
 })
 
 export type LinkFormData = z.infer<typeof linkSchema>
+
+interface TagRelation {
+  tag: {
+    name: string
+    id: string
+  }
+}
 
 // Crear un nuevo enlace
 export async function createLink(formData: LinkFormData) {
@@ -25,6 +41,8 @@ export async function createLink(formData: LinkFormData) {
     const validatedData = linkSchema.parse(formData)
 
     const linkId = nanoid()
+
+    console.log({ userId, linkId, validatedData })
 
     // Insertar el enlace
     await db.insert(links).values({
@@ -39,7 +57,10 @@ export async function createLink(formData: LinkFormData) {
     if (validatedData.tags.length > 0) {
       // Obtener etiquetas existentes del usuario
       const existingTags = await db.query.tags.findMany({
-        where: and(eq(tags.userId, userId), eq(tags.name, validatedData.tags[0])),
+        where: and(
+          eq(tags.userId, userId),
+          validatedData.tags.length > 0 ? inArray(tags.name, validatedData.tags) : undefined
+        ),
       })
 
       const existingTagNames = existingTags.map(tag => tag.name)
@@ -59,7 +80,7 @@ export async function createLink(formData: LinkFormData) {
 
       // Obtener todas las etiquetas para este enlace
       const allTags = await db.query.tags.findMany({
-        where: and(eq(tags.userId, userId), eq(tags.name, validatedData.tags[0])),
+        where: and(eq(tags.userId, userId), inArray(tags.name, validatedData.tags)),
       })
 
       // Crear relaciones entre enlace y etiquetas
@@ -93,12 +114,12 @@ export async function getLinkById(id: string) {
     }
 
     // Obtener etiquetas asociadas al enlace
-    const linkTagsRelations = await db.query.linkTags.findMany({
+    const linkTagsRelations = (await db.query.linkTags.findMany({
       where: eq(linkTags.linkId, id),
       with: {
         tag: true,
       },
-    })
+    })) as TagRelation[]
 
     const tagNames = linkTagsRelations.map(relation => relation.tag.name)
 
@@ -128,12 +149,12 @@ export async function getUserLinks() {
     // Para cada enlace, obtener sus etiquetas
     const linksWithTags = await Promise.all(
       userLinks.map(async link => {
-        const linkTagsRelations = await db.query.linkTags.findMany({
+        const linkTagsRelations = (await db.query.linkTags.findMany({
           where: eq(linkTags.linkId, link.id),
           with: {
             tag: true,
           },
-        })
+        })) as TagRelation[]
 
         const tagNames = linkTagsRelations.map(relation => relation.tag.name)
 
