@@ -7,23 +7,7 @@ import { eq, and, inArray } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { getSecureSession } from '@/lib/auth/server'
 import { z } from 'zod'
-
-// Esquema de validación para crear/actualizar enlaces
-const linkSchema = z.object({
-  title: z
-    .string()
-    .min(1, 'The title is required')
-    .transform(val => val.trim()),
-  url: z
-    .string()
-    .url('URL invalid')
-    .transform(val => val.trim()),
-  description: z
-    .string()
-    .optional()
-    .transform(val => val?.trim() || ''),
-  tags: z.array(z.string().transform(val => val.trim())).default([]),
-})
+import { linkSchema } from '@/lib/validations/link'
 
 export type LinkFormData = z.infer<typeof linkSchema>
 

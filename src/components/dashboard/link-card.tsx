@@ -70,16 +70,21 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
     if (confirm('¿Estás seguro de que deseas eliminar este enlace?')) {
       setIsDeleting(true)
       // TODO...
-      // const result = await deleteLink(id)
+      const result = await fetch(`/api/links/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }).then(res => res.json())
 
-      // if (result.success) {
-      //   toast.success('Enlace eliminado', { description: 'El enlace se ha eliminado correctamente' })
-      //   // router.push('/dashboard')
-      //   window.location.reload()
-      // } else {
-      //   toast.error('Error', { description: result.error })
-      //   setIsDeleting(false)
-      // }
+      if (result.success) {
+        toast.success('Enlace eliminado', { description: 'El enlace se ha eliminado correctamente' })
+        // router.push('/dashboard')
+        window.location.reload()
+      } else {
+        toast.error('Error', { description: result.error })
+        setIsDeleting(false)
+      }
     }
   }
 

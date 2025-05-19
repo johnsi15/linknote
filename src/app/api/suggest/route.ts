@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { useAuth } from '@clerk/nextjs'
 import { db } from '@/db'
-import { tags } from '@/lib/db/schema'
+import { tags } from '@/db/schema'
 import { z } from 'zod'
 
 const requestSchema = z.object({
