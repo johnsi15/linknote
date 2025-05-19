@@ -20,7 +20,7 @@ export function LinkList({ links }: LinkListProps) {
           url={url}
           description={description ?? ''}
           tags={tags}
-          createdAt={createdAt ? createdAt.toISOString() : ''}
+          createdAt={createdAt ? (typeof createdAt === 'string' ? createdAt : createdAt.toISOString()) : ''}
         />
       ))}
     </div>
