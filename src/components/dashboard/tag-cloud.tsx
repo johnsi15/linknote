@@ -24,7 +24,7 @@ export function TagCloud({ tags }: TagCloudProps) {
   }
 
   // Get color variant based on count
-  const getVariant = (count: number) => {
+  const getVariant = (count: number): 'default' | 'secondary' | 'outline' => {
     const ratio = count / maxCount
 
     if (ratio > 0.8) return 'default'
@@ -35,9 +35,9 @@ export function TagCloud({ tags }: TagCloudProps) {
   return (
     <div className='flex flex-wrap gap-2'>
       {tags.map(tag => (
-        <Link href={`/dashboard/links?tag=${tag.name}`} key={tag.name}>
+        <Link href={`/links?tag=${tag.name}`} key={tag.name}>
           <Badge
-            variant={getVariant(tag.count) as any}
+            variant={getVariant(tag.count)}
             style={{ fontSize: getFontSize(tag.count) }}
             className='cursor-pointer transition-all hover:scale-105'
           >
