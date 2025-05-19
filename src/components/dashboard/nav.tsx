@@ -15,6 +15,9 @@ export function DashboardNav({ className }: { className?: string }) {
   return (
     <>
       <nav className={cn('flex items-center space-x-4 lg:space-x-6', className)}>
+        <Link href='/' className='flex items-center text-sm font-medium transition-colors hover:text-primary'>
+          Linknote
+        </Link>
         <Link
           href='/dashboard'
           className={cn(
@@ -26,20 +29,20 @@ export function DashboardNav({ className }: { className?: string }) {
           Dashboard
         </Link>
         <Link
-          href='/dashboard/links'
+          href='/links'
           className={cn(
             'flex items-center text-sm font-medium transition-colors hover:text-primary',
-            pathname.includes('/dashboard/links') ? 'text-primary' : 'text-muted-foreground'
+            pathname.includes('/links') ? 'text-primary' : 'text-muted-foreground'
           )}
         >
           <BookmarkIcon className='mr-2 h-4 w-4' />
           My Links
         </Link>
         <Link
-          href='/dashboard/tags'
+          href='/tags'
           className={cn(
             'flex items-center text-sm font-medium transition-colors hover:text-primary',
-            pathname.includes('/dashboard/tags') ? 'text-primary' : 'text-muted-foreground'
+            pathname.includes('/tags') ? 'text-primary' : 'text-muted-foreground'
           )}
         >
           <TagIcon className='mr-2 h-4 w-4' />
