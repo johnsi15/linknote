@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { db } from '@/db'
 import { links, linkTags, tags } from '@/db/schema'
-import { eq, and, inArray } from 'drizzle-orm'
+import { eq, and, inArray, or, like, sql, asc, desc, gte, lte, SQLWrapper, countDistinct } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { getSecureSession } from '@/lib/auth/server'
 import { z } from 'zod'
@@ -11,16 +11,19 @@ import { linkSchema } from '@/lib/validations/link'
 
 export type LinkFormData = z.infer<typeof linkSchema>
 
-interface TagRelation {
-  tag: {
-    name: string
-    id: string
-  }
+interface GetUserLinksFilteredParams {
+  userId: string
+  search?: string
+  tags?: string[]
+  dateRange?: string
+  sort?: string // 'newest', 'oldest', 'titleAsc', 'titleDesc'
+  limit?: number
+  offset?: number // Para paginación
 }
 
 export async function saveLink(formData: LinkFormData, isUpdate: boolean = false, linkId?: string) {
   try {
-    const { userId } = await getSecureSession()
+    // const { userId } = await getSecureSession()
     const validatedData = linkSchema.parse(formData)
 
     if (isUpdate && linkId) {
@@ -277,5 +280,174 @@ export async function deleteLink(id: string) {
   } catch (error) {
     console.error('Error al eliminar enlace:', error)
     return { success: false, error: 'No se pudo eliminar el enlace' }
+  }
+}
+
+export type Link = typeof links.$inferSelect
+export type Tag = typeof tags.$inferSelect
+
+export async function getUserLinksFiltered({
+  userId,
+  search = '',
+  tags: tagNames = [], // Renombramos para claridad, estos son los nombres de los tags
+  dateRange = 'all',
+  sort = 'newest',
+  limit = 30,
+  offset = 0, //  Añadimos offset para paginación
+}: GetUserLinksFilteredParams): Promise<(Omit<Link, 'userId' | 'updatedAt'> & { tags: string[] })[]> {
+  if (!userId) {
+    throw new Error('User ID is required')
+  }
+
+  const allWhereConditions: SQLWrapper[] = []
+
+  allWhereConditions.push(eq(links.userId, userId))
+
+  // Filtro de Búsqueda (search)
+  if (search && search.trim() !== '') {
+    const searchLower = search.trim().toLowerCase()
+    const searchPattern = `%${searchLower}%`
+
+    const searchOrCondition = or(
+      like(sql`lower(${links.title})`, searchPattern),
+      links.description ? like(sql`lower(${links.description})`, searchPattern) : undefined,
+      like(sql`lower(${links.url})`, searchPattern)
+    )
+    if (searchOrCondition) {
+      allWhereConditions.push(searchOrCondition)
+    }
+  }
+
+  // 2. Filtro de Tags
+  if (tagNames.length > 0) {
+    allWhereConditions.push(inArray(tags.name, tagNames))
+    allWhereConditions.push(eq(tags.userId, userId))
+  }
+
+  // 3. Filtro de Rango de Fechas (dateRange)
+  const now = new Date()
+  let startDateFilter: Date | null = null
+  let endDateFilter: Date | null = null
+
+  switch (dateRange) {
+    case 'today':
+      startDateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+      endDateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+      break
+    case 'yesterday':
+      const yesterday = new Date(now)
+      yesterday.setDate(now.getDate() - 1)
+      startDateFilter = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0)
+      endDateFilter = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999)
+      break
+    case 'last7days':
+      const sevenDaysAgo = new Date(now)
+      sevenDaysAgo.setDate(now.getDate() - 7)
+      startDateFilter = new Date(
+        sevenDaysAgo.getFullYear(),
+        sevenDaysAgo.getMonth(),
+        sevenDaysAgo.getDate(),
+        0,
+        0,
+        0,
+        0
+      )
+      endDateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
+      break
+    case 'last30days':
+      const thirtyDaysAgo = new Date(now)
+      thirtyDaysAgo.setDate(now.getDate() - 30) // Setea al inicio del día hace 30 días
+      startDateFilter = new Date(
+        thirtyDaysAgo.getFullYear(),
+        thirtyDaysAgo.getMonth(),
+        thirtyDaysAgo.getDate(),
+        0,
+        0,
+        0,
+        0
+      )
+      endDateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999) // Hasta el final de hoy
+      break
+  }
+
+  if (startDateFilter) {
+    allWhereConditions.push(gte(links.createdAt, startDateFilter))
+  }
+  if (endDateFilter) {
+    allWhereConditions.push(lte(links.createdAt, endDateFilter))
+  }
+
+  const finalWhereClause = allWhereConditions.length > 0 ? and(...allWhereConditions) : undefined
+
+  let query = db
+    .select({
+      id: links.id,
+      title: links.title,
+      url: links.url,
+      description: links.description,
+      createdAt: links.createdAt,
+      // Usar GROUP_CONCAT para obtener los tags. SQLite por defecto usa ',' como separador.
+      tagsString: sql<string | null>`GROUP_CONCAT(DISTINCT ${tags.name})`.as('tagsString'),
+    })
+    .from(links)
+    .leftJoin(linkTags, eq(links.id, linkTags.linkId))
+    .leftJoin(tags, eq(linkTags.tagId, tags.id))
+    .$dynamic()
+
+  if (finalWhereClause) {
+    query = query.where(finalWhereClause)
+  }
+
+  query = query.groupBy(links.id, links.title, links.url, links.description, links.createdAt)
+
+  if (tagNames.length > 0) {
+    // Contamos los tags distintos que coinciden (después del WHERE) y verificamos si es igual al número de tags solicitados.
+    query = query.having(eq(countDistinct(tags.id), tagNames.length))
+  }
+
+  // 4. Ordenamiento (sort)
+  switch (sort) {
+    case 'oldest':
+      query = query.orderBy(asc(links.createdAt))
+      break
+    case 'titleAsc':
+      query = query.orderBy(sql`lower(${links.title}) ASC`)
+      break
+    case 'titleDesc':
+      query = query.orderBy(sql`lower(${links.title}) DESC`)
+      break
+    case 'newest':
+    default:
+      query = query.orderBy(desc(links.createdAt))
+      break
+  }
+
+  // --- 6. Paginación (limit y offset) ---
+  if (typeof limit === 'number' && limit > 0) {
+    query = query.limit(limit)
+  }
+
+  if (typeof offset === 'number' && offset > 0) {
+    query = query.offset(offset)
+  }
+
+  try {
+    const rows = await query.execute()
+
+    const resultWithTagsArray = rows.map(row => {
+      return {
+        id: row.id,
+        title: row.title,
+        url: row.url,
+        description: row.description,
+        createdAt: row.createdAt,
+        tags: row.tagsString ? row.tagsString.split(',').filter(t => t) : [],
+      }
+    })
+
+    return resultWithTagsArray
+  } catch (error) {
+    console.error('Error fetching filtered links:', error)
+    throw new Error('Could not retrieve links.')
   }
 }
