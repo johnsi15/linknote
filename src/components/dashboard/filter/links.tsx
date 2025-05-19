@@ -61,7 +61,7 @@ export function LinksFilterClient({ allLinks, availableTags }: LinksFilterClient
   return (
     <>
       <FilterPanel filters={filters} availableTags={availableTags} onFilterChange={setFilters} />
-      {loading ? <div className='text-center py-8'>Cargando...</div> : <LinkList links={links} />}
+      {loading ? <div className='text-center py-8'>Loading...</div> : <LinkList links={links} />}
     </>
   )
 }

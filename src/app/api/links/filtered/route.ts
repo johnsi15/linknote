@@ -15,8 +15,6 @@ export async function GET(req: NextRequest) {
   const dateRange = searchParams.get('dateRange') || 'all'
   const sort = searchParams.get('sort') || 'newest'
 
-  console.log({ sort })
-
   const links = await getUserLinksFiltered({
     userId,
     search,
