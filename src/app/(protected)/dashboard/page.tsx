@@ -1,4 +1,5 @@
-import { Link } from 'lucide-react'
+import Link from 'next/link'
+import { Link as LinkIcon } from 'lucide-react'
 import { LinkCard } from '@/components/dashboard/link-card'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
 import { Button } from '@/components/ui/button'
@@ -20,7 +21,7 @@ export default async function DashboardPage() {
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
               <h2 className='text-xl font-semibold'>Recent Links</h2>
-              <Link href='/dashboard/links'>
+              <Link href='/links'>
                 <Button variant='ghost' size='sm'>
                   View All
                 </Button>
@@ -49,7 +50,7 @@ export default async function DashboardPage() {
 
               {success && links?.length === 0 && (
                 <div className='flex flex-col items-center justify-center p-8 text-center border rounded-lg bg-muted/20'>
-                  <Link className='h-12 w-12 text-muted-foreground mb-3' />
+                  <LinkIcon className='h-12 w-12 text-muted-foreground mb-3' />
                   <h3 className='text-lg font-medium mb-1'>No links found</h3>
                   <p className='text-sm text-muted-foreground mb-4'>
                     You haven't created any links yet. Start by adding your first link.
@@ -65,7 +66,7 @@ export default async function DashboardPage() {
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
               <h2 className='text-xl font-semibold'>Your Tags</h2>
-              <Link href='/dashboard/tags'>
+              <Link href='/tags'>
                 <Button variant='ghost' size='sm'>
                   Manage
                 </Button>
