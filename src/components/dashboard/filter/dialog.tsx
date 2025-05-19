@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,13 +22,31 @@ export interface FilterOptions {
   sort?: 'newest' | 'oldest' | 'az' | 'za'
 }
 
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(handler)
+  }, [value, delay])
+  return debouncedValue
+}
+
 export function FilterDialog({ onFilterChange, availableTags, currentFilters }: FilterDialogProps) {
   const [filters, setFilters] = useState<FilterOptions>(currentFilters)
+  const [search, setSearch] = useState(filters.search)
+  const debouncedSearch = useDebouncedValue(search, 400)
+
+  useEffect(() => {
+    if (debouncedSearch !== filters.search) {
+      const newFilters = { ...filters, search: debouncedSearch }
+      setFilters(newFilters)
+      onFilterChange(newFilters)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newFilters = { ...filters, search: e.target.value }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    setSearch(e.target.value)
   }
 
   const toggleTag = (tag: string) => {
@@ -77,11 +95,7 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
             <Label>Search</Label>
-            <Input
-              placeholder='Search in title and description...'
-              value={filters.search}
-              onChange={handleSearchChange}
-            />
+            <Input placeholder='Search in title and description...' value={search} onChange={handleSearchChange} />
           </div>
 
           <div className='space-y-2'>

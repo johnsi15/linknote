@@ -10,10 +10,12 @@ export async function GET(req: NextRequest) {
 
   const searchParams = req.nextUrl.searchParams
 
-  const search = searchParams.get('q') || ''
+  const search = searchParams.get('search') || ''
   const tags = searchParams.get('tags')?.split(',').filter(Boolean) || []
   const dateRange = searchParams.get('dateRange') || 'all'
   const sort = searchParams.get('sort') || 'newest'
+
+  console.log({ sort })
 
   const links = await getUserLinksFiltered({
     userId,

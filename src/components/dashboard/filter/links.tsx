@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FilterPanel } from '@/components/dashboard/filter/panel'
 import { type FilterOptions } from '@/components/dashboard/filter/dialog'
 import { LinkList } from '@/components/dashboard/link-list'
@@ -11,6 +11,15 @@ interface LinksFilterClientProps {
   availableTags: string[]
 }
 
+function useDebouncedValue<T>(value: T, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value)
+  useEffect(() => {
+    const handler = setTimeout(() => setDebouncedValue(value), delay)
+    return () => clearTimeout(handler)
+  }, [value, delay])
+  return debouncedValue
+}
+
 export function LinksFilterClient({ allLinks, availableTags }: LinksFilterClientProps) {
   const [filters, setFilters] = useState<FilterOptions>({
     search: '',
@@ -19,65 +28,40 @@ export function LinksFilterClient({ allLinks, availableTags }: LinksFilterClient
     sort: 'newest',
   })
 
-  // const filteredLinks = allLinks.filter(link => {
-  //   const matchesTags = filters?.tags?.every(tag => link.tags.includes(tag)) ?? true
-  //   const matchesSearch = filters?.search
-  //     ? link.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-  //       link.description?.toLowerCase().includes(filters.search.toLowerCase())
-  //     : true
-  //   return matchesTags && matchesSearch
-  // })
+  const [links, setLinks] = useState<Link[]>(allLinks)
+  const [loading, setLoading] = useState(false)
+  const debouncedFilters = useDebouncedValue(filters, 400)
 
-  const now = new Date()
-  const filteredLinks = allLinks.filter(link => {
-    const matchesTags = filters?.tags?.every(tag => link.tags.includes(tag)) ?? true
-    const matchesSearch = filters?.search
-      ? link.title.toLowerCase().includes(filters.search.toLowerCase()) ||
-        link.description?.toLowerCase().includes(filters.search.toLowerCase())
-      : true
+  useEffect(() => {
+    const hasActiveFilters =
+      filters.search !== '' ||
+      (filters.tags && filters.tags.length > 0) ||
+      (filters.dateRange && filters.dateRange !== 'all') ||
+      (filters.sort && filters.sort !== 'newest')
 
-    let matchesDate = true
-    if (filters.dateRange && filters.dateRange !== 'all') {
-      const createdAt = new Date(link.createdAt ?? '')
-      switch (filters.dateRange) {
-        case 'today':
-          matchesDate = createdAt.toDateString() === now.toDateString()
-          break
-        case 'week':
-          const weekAgo = new Date(now)
-          weekAgo.setDate(now.getDate() - 7)
-          matchesDate = createdAt >= weekAgo
-          break
-        case 'month':
-          const monthAgo = new Date(now)
-          monthAgo.setMonth(now.getMonth() - 1)
-          matchesDate = createdAt >= monthAgo
-          break
-      }
+    if (!hasActiveFilters) {
+      setLinks(allLinks)
+      return
     }
 
-    return matchesTags && matchesSearch && matchesDate
-  })
-
-  const sortedLinks = [...filteredLinks].sort((a, b) => {
-    switch (filters.sort) {
-      case 'newest':
-        return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
-      case 'oldest':
-        return new Date(a.createdAt ?? 0).getTime() - new Date(b.createdAt ?? 0).getTime()
-      case 'az':
-        return a.title.localeCompare(b.title)
-      case 'za':
-        return b.title.localeCompare(a.title)
-      default:
-        return 0
-    }
-  })
+    setLoading(true)
+    const params = new URLSearchParams({
+      search: debouncedFilters.search,
+      tags: debouncedFilters.tags.join(','),
+      dateRange: debouncedFilters.dateRange,
+      sort: debouncedFilters.sort ?? '',
+    })
+    fetch(`/api/links/filtered?${params}`)
+      .then(res => res.json())
+      .then(data => setLinks(data.links))
+      .finally(() => setLoading(false))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedFilters, allLinks])
 
   return (
     <>
       <FilterPanel filters={filters} availableTags={availableTags} onFilterChange={setFilters} />
-      <LinkList links={sortedLinks} />
+      {loading ? <div className='text-center py-8'>Cargando...</div> : <LinkList links={links} />}
     </>
   )
 }

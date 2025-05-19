@@ -410,10 +410,10 @@ export async function getUserLinksFiltered({
     case 'oldest':
       query = query.orderBy(asc(links.createdAt))
       break
-    case 'titleAsc':
+    case 'az':
       query = query.orderBy(sql`lower(${links.title}) ASC`)
       break
-    case 'titleDesc':
+    case 'za':
       query = query.orderBy(sql`lower(${links.title}) DESC`)
       break
     case 'newest':
