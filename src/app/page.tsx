@@ -3,8 +3,9 @@ import { FeatureSection } from '@/components/landing/feature-section'
 import Link from 'next/link'
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { GithubIcon } from '@/components/icons/github'
-import { XIcon } from 'lucide-react'
+import { LockIcon, UserPlusIcon, XIcon } from 'lucide-react'
 import { IgIcon } from '@/components/icons/ig'
+import { Button } from '@/components/ui/button'
 
 export default function Home() {
   return (
@@ -18,11 +19,22 @@ export default function Home() {
           </div>
           <div className='flex items-center gap-4'>
             <SignedOut>
-              <SignInButton mode='modal'>Login</SignInButton>
+              <SignInButton mode='modal'>
+                <Button variant='outline' className='gap-2'>
+                  <LockIcon size={16} />
+                  Login
+                </Button>
+              </SignInButton>
             </SignedOut>
             <SignedOut>
-              <SignUpButton mode='modal'>Sign Up</SignUpButton>
+              <SignUpButton mode='modal'>
+                <Button variant='default' className='gap-2'>
+                  <UserPlusIcon size={16} />
+                  Sign Up
+                </Button>
+              </SignUpButton>
             </SignedOut>
+
             <SignedIn>
               <UserButton
                 appearance={{
