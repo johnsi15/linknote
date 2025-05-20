@@ -104,7 +104,7 @@ export function HeroSection() {
               <div className='bg-secondary/50 p-4 rounded-lg'>
                 <h3 className='font-medium mb-2'>Recently Added</h3>
                 <ul className='space-y-3 text-sm'>
-                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3.5 border hover:shadow transition'>
+                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3 border hover:shadow transition'>
                     <LinkIcon size={16} />
                     <div>
                       <div className='font-semibold text-left'>How to use React Context</div>
@@ -113,14 +113,14 @@ export function HeroSection() {
                       </div>
                     </div>
                   </li>
-                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3.5 border hover:shadow transition'>
+                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3 border hover:shadow transition'>
                     <LinkIcon size={16} />
                     <div>
                       <div className='font-semibold text-left'>Linux CLI Cheat Sheet</div>
                       <div className='text-blue-500 text-xs truncate max-w-[160px]'>cheatography.com/linux-cli</div>
                     </div>
                   </li>
-                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3.5 border hover:shadow transition'>
+                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3 border hover:shadow transition'>
                     <LinkIcon size={16} />
                     <div>
                       <div className='font-semibold text-left'>TypeScript Utility Types</div>
@@ -129,7 +129,7 @@ export function HeroSection() {
                       </div>
                     </div>
                   </li>
-                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3.5 border hover:shadow transition'>
+                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3 border hover:shadow transition'>
                     <LinkIcon size={16} />
                     <div>
                       <div className='font-semibold text-left'>CSS Flexbox Guide</div>
@@ -138,7 +138,7 @@ export function HeroSection() {
                       </div>
                     </div>
                   </li>
-                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3.5 border hover:shadow transition'>
+                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3 border hover:shadow transition'>
                     <LinkIcon size={16} />
                     <div>
                       <div className='font-semibold text-left'>Understanding Async/Await in JS</div>
@@ -147,7 +147,7 @@ export function HeroSection() {
                       </div>
                     </div>
                   </li>
-                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3.5 border hover:shadow transition'>
+                  <li className='flex items-start gap-3 bg-card rounded-md px-2 py-3 border hover:shadow transition'>
                     <LinkIcon size={16} />
                     <div>
                       <div className='font-semibold text-left'>MDN Web Docs: Array.prototype.map()</div>
