@@ -43,7 +43,7 @@ export function HeroSection() {
         transition={{ duration: 0.5 }}
         className='max-w-3xl'
       >
-        <h1 className='text-4xl md:text-6xl font-bold tracking-tight mb-6'>
+        <h1 className='text-4xl md:text-6xl font-bold tracking-tight mb-6 font-mono'>
           Save & organize your coding resources
           <span className='text-primary'> efficiently</span>
         </h1>
@@ -53,12 +53,13 @@ export function HeroSection() {
         </p>
         <div className='flex justify-center gap-4'>
           {isLoaded && !isSignedIn && (
-            <div className={`${classButton} gap-2`}>
+            <div className={`${classButton} gap-2 cursor-pointer`}>
               <BookmarkIcon size={18} />
 
-              <SignedOut>
-                <SignUpButton mode='modal'>Get Started</SignUpButton>
-              </SignedOut>
+              <SignUpButton mode='modal'>
+                <button className='cursor-pointer'>Get Started</button>
+              </SignUpButton>
+              <SignedOut></SignedOut>
             </div>
           )}
 
@@ -92,10 +93,10 @@ export function HeroSection() {
                   <TagIcon size={16} /> Tags
                 </h3>
                 <div className='flex flex-wrap gap-2'>
-                  <span className='px-2 py-1 rounded-md bg-blue-600/10 text-blue-600 text-xs'>javascript</span>
+                  <span className='px-2 py-1 rounded-md bg-[#f1dd35]/10 text-[#f1dd35] text-xs'>javascript</span>
                   <span className='px-2 py-1 rounded-md bg-green-600/10 text-green-600 text-xs'>linux</span>
                   <span className='px-2 py-1 rounded-md bg-purple-600/10 text-purple-600 text-xs'>productivity</span>
-                  <span className='px-2 py-1 rounded-md bg-amber-600/10 text-amber-600 text-xs'>typescript</span>
+                  <span className='px-2 py-1 rounded-md bg-[#3178c6]/10 text-[#3178c6] text-xs'>typescript</span>
                   <span className='px-2 py-1 rounded-md bg-red-600/10 text-red-600 text-xs'>algorithms</span>
                 </div>
               </div>

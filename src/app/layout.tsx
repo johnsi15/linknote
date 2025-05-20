@@ -26,7 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='es' suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} style={{ colorScheme: 'dark' }}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
+        style={{ colorScheme: 'dark' }}
+      >
         <Providers>
           {children}
           <Toaster />
