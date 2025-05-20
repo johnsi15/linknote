@@ -5,7 +5,6 @@ import { CodeIcon, BookmarkIcon, TagIcon, Link as LinkIcon } from 'lucide-react'
 import Link from 'next/link'
 import { motion } from 'motion/react'
 import { SignedOut, SignUpButton } from '@clerk/nextjs'
-import { useAuth } from '@clerk/nextjs'
 import { Highlight, themes } from 'prism-react-renderer'
 
 const codeExample = `// Example: Creating a React Context
@@ -28,8 +27,6 @@ function Toolbar() {
 `
 
 export function HeroSection() {
-  const { isLoaded, isSignedIn } = useAuth()
-
   const classButton = buttonVariants({
     variant: 'default',
     size: 'lg',
@@ -52,16 +49,15 @@ export function HeroSection() {
           snippets, and intelligent tagging.
         </p>
         <div className='flex justify-center gap-4'>
-          {isLoaded && !isSignedIn && (
+          <SignedOut>
             <div className={`${classButton} gap-2 cursor-pointer`}>
               <BookmarkIcon size={18} />
 
               <SignUpButton mode='modal'>
                 <button className='cursor-pointer'>Get Started</button>
               </SignUpButton>
-              <SignedOut></SignedOut>
             </div>
-          )}
+          </SignedOut>
 
           <Link href='/dashboard'>
             <Button size='lg' variant='outline' className='gap-2'>
@@ -171,14 +167,9 @@ export function HeroSection() {
                   </div>
                 </div>
 
-                <a
-                  href='https://react.dev/reference/react/Context'
-                  className='text-blue-500 text-sm hover:underline break-all mb-4 block'
-                  target='_blank'
-                  rel='noopener noreferrer'
-                >
-                  https://react.dev/reference/react/Context
-                </a>
+                <Link href='#' className='text-blue-500 text-sm hover:underline break-all mb-4 block'>
+                  https://react.dev/reference/react/useContext
+                </Link>
 
                 <div className='mt-4 mb-6 text-left'>
                   <p className='text-muted-foreground mb-4'>
