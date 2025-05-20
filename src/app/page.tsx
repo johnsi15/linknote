@@ -48,7 +48,12 @@ export default function Home() {
       <footer className='relative z-10 border-border/40 border-t bg-background/80 backdrop-blur-sm'>
         <div className='container mx-auto flex h-8 max-w-2xl items-center justify-between px-4'>
           <div className='flex items-center gap-4 text-muted-foreground text-xs'>
-            <a href='https://github.com/' target='_blank' rel='noopener noreferrer' className='hover:text-foreground'>
+            <a
+              href='https://github.com/johnsi15/linknote'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='hover:text-foreground'
+            >
               <GithubIcon className='h-3.5 w-3.5' />
             </a>
             <a

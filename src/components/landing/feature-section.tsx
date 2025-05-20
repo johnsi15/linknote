@@ -37,7 +37,7 @@ export function FeatureSection() {
   return (
     <div className='container mx-auto px-4 py-20'>
       <div className='text-center mb-16'>
-        <h2 className='text-3xl font-bold mb-4'>Features for Developers</h2>
+        <h2 className='text-3xl font-bold mb-4 font-mono'>Features for Developers</h2>
         <p className='text-muted-foreground max-w-2xl mx-auto'>
           Built with the unique needs of programmers in mind, Linknote helps you save and organize your coding resources
           more effectively.
