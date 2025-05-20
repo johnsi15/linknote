@@ -47,8 +47,6 @@ export async function createLink(formData: LinkFormData) {
 
     const linkId = nanoid()
 
-    console.log({ userId, linkId, validatedData })
-
     // Insertar el enlace
     await db.insert(links).values({
       id: linkId,
