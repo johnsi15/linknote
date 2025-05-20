@@ -24,7 +24,17 @@ export default function Home() {
               <SignUpButton mode='modal'>Sign Up</SignUpButton>
             </SignedOut>
             <SignedIn>
-              <UserButton />
+              <UserButton
+                appearance={{
+                  elements: {
+                    rootBox: 'flex! items-center! justify-center! rounded-full!',
+                    userButtonTrigger: 'w-8! h-8! hover:bg-muted! focus:outline-none! p-0! px-0!',
+                    userButton: 'w-8! h-8!',
+                    userButtonAvatarBox: 'w-8! h-8!',
+                    userButtonAvatarImage: 'w-8! h-8!',
+                  },
+                }}
+              />
             </SignedIn>
           </div>
         </nav>
