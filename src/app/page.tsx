@@ -3,9 +3,10 @@ import { FeatureSection } from '@/components/landing/feature-section'
 import Link from 'next/link'
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
 import { GithubIcon } from '@/components/icons/github'
-import { LockIcon, UserPlusIcon, XIcon } from 'lucide-react'
+import { CodeIcon, LockIcon, UserPlusIcon, XIcon } from 'lucide-react'
 import { IgIcon } from '@/components/icons/ig'
 import { Button } from '@/components/ui/button'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export default function Home() {
   return (
@@ -35,7 +36,14 @@ export default function Home() {
               </SignUpButton>
             </SignedOut>
 
+            <ModeToggle />
             <SignedIn>
+              <Link href='/dashboard'>
+                <Button variant='outline' className='gap-2'>
+                  <CodeIcon size={16} />
+                  Dashboard
+                </Button>
+              </Link>
               <UserButton
                 appearance={{
                   elements: {
