@@ -1,6 +1,8 @@
 import { TagsManager } from '@/components/tags/tags-manager'
 import { getUserTags } from '@/actions/tags'
 
+export const dynamic = 'force-dynamic'
+
 export default async function TagsPage() {
   const initialTags = await getUserTags()
 
