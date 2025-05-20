@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -52,6 +53,7 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const initialRender = useRef(true)
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
+  const router = useRouter()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -103,7 +105,7 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
             setAutoSaveStatus('saved')
             // Restablece el formulario con los valores guardados para actualizar el estado isDirty
             form.reset(cleanedValues)
-
+            router.refresh()
             // Cambiar el estado a 'idle' después de 3 segundos
             setTimeout(() => {
               setAutoSaveStatus('idle')
@@ -122,6 +124,7 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
         autoSaveData()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFormValues, autoSave, isSubmitting, isEditing, linkId, onSubmit, form, formSchema])
 
   const handleSubmit = async (values: FormValues) => {
@@ -173,9 +176,9 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
           name='title'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Título</FormLabel>
+              <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder='Título del enlace' {...field} />
+                <Input placeholder='Link title' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -189,7 +192,7 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input placeholder='https://ejemplo.com' {...field} />
+                <Input placeholder='https://johnserrano.co' {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -201,14 +204,9 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
           name='description'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Descripción</FormLabel>
+              <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder='Descripción del enlace'
-                  className='resize-none'
-                  {...field}
-                  value={field.value || ''}
-                />
+                <Textarea placeholder='Link description' className='resize-none' {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -220,7 +218,7 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
           name='tags'
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Etiquetas</FormLabel>
+              <FormLabel>Tags</FormLabel>
               <FormControl>
                 <TagInput tags={field.value} setTags={field.onChange} suggestedTags={suggestedTags} />
               </FormControl>
@@ -229,9 +227,10 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
           )}
         />
 
-        <Button type='submit' disabled={isSubmitting}>
-          {isSubmitting && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-          Guardar
+        <Button type='submit' disabled={isSubmitting || autoSaveStatus === 'saving'}>
+          {(isSubmitting || autoSaveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+
+          {isSubmitting || autoSaveStatus === 'saving' ? 'Saving...' : isEditing ? 'Update' : 'Create'}
         </Button>
       </form>
     </Form>

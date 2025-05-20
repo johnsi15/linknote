@@ -30,6 +30,7 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
 
       if (isAutoSaveEvent) {
         toast.success('Enlace guardado automáticamente')
+        router.refresh()
       } else {
         toast.success(isActualUpdateForBackend ? 'Enlace actualizado' : 'Enlace creado', {
           description: 'El enlace se ha guardado correctamente',
