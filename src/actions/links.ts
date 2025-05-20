@@ -96,6 +96,7 @@ export async function createLink(formData: LinkFormData) {
     }
 
     revalidatePath('/dashboard')
+    revalidatePath(`/links/${linkId}`)
     return { success: true, linkId }
   } catch (error) {
     console.error('Error al crear enlace:', error)
@@ -244,10 +245,9 @@ export async function updateLink(id: string, formData: LinkFormData) {
     })
 
     if (!existingLink) {
-      return { success: false, error: 'Enlace no encontrado' }
+      return { success: false, error: 'Link no found' }
     }
 
-    // Actualizar el enlace
     await db
       .update(links)
       .set({
@@ -263,7 +263,8 @@ export async function updateLink(id: string, formData: LinkFormData) {
 
     // Procesar etiquetas nuevamente
     if (validatedData.tags.length > 0) {
-      // Obtener etiquetas existentes del usuario
+      const uniqueTags = Array.from(new Set(validatedData.tags))
+
       const existingTags = await db.query.tags.findMany({
         where: eq(tags.userId, userId),
       })
@@ -272,7 +273,7 @@ export async function updateLink(id: string, formData: LinkFormData) {
       const existingTagsMap = Object.fromEntries(existingTags.map(tag => [tag.name, tag.id]))
 
       // Crear nuevas etiquetas si es necesario
-      const newTags = validatedData.tags.filter(tag => !existingTagNames.includes(tag))
+      const newTags = uniqueTags.filter(tag => !existingTagNames.includes(tag))
 
       if (newTags.length > 0) {
         const newTagsData = newTags.map(tagName => ({
@@ -325,6 +326,7 @@ export async function deleteLink(id: string) {
     await db.delete(links).where(eq(links.id, id))
 
     revalidatePath('/dashboard')
+    revalidatePath(`/links/${id}`)
     return { success: true }
   } catch (error) {
     console.error('Error al eliminar enlace:', error)
