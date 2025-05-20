@@ -106,7 +106,7 @@ export function TagInput({
         </div>
       )}
 
-      <p className='text-xs text-muted-foreground mt-1'>Presiona Enter o coma para agregar una etiqueta</p>
+      <p className='text-xs text-muted-foreground mt-1'>Press Enter or comma to add a label</p>
     </div>
   )
 }

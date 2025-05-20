@@ -48,7 +48,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
 
       if (result.success) {
         if (!isAutoSaveEvent) {
-          toast.success('Enlace actualizado', { description: 'El enlace se ha actualizado correctamente' })
+          toast.success('Link updated', { description: 'The link has been updated successfully' })
           setIsEditModalOpen(false)
           // Recargar la página para ver los cambios
           window.location.reload()
@@ -60,14 +60,14 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
         return { success: false, error: result.error || 'Error desconocido' }
       }
     } catch (error) {
-      console.error('Error al actualizar enlace:', error)
-      toast.error('Error', { description: 'No se pudo actualizar el enlace' })
-      return { success: false, error: 'Error al actualizar el enlace' }
+      console.error('Error link update:', error)
+      toast.error('Error', { description: 'The link could not be updated.' })
+      return { success: false, error: 'Error link update' }
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (confirm('¿Estás seguro de que deseas eliminar este enlace?')) {
+    if (confirm('¿Are you sure you want to remove this link?')) {
       setIsDeleting(true)
       // TODO...
       const result = await fetch(`/api/links/${id}`, {
@@ -78,7 +78,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
       }).then(res => res.json())
 
       if (result.success) {
-        toast.success('Enlace eliminado', { description: 'El enlace se ha eliminado correctamente' })
+        toast.success('Link removed', { description: 'The link has been removed successfully' })
         // router.push('/dashboard')
         window.location.reload()
       } else {
@@ -158,7 +158,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent className='sm:max-w-3xl'>
           <DialogHeader>
-            <DialogTitle>Editar Enlace</DialogTitle>
+            <DialogTitle>Edit Link</DialogTitle>
           </DialogHeader>
           <LinkForm
             defaultValues={{
