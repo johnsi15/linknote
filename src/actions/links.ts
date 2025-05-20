@@ -143,16 +143,67 @@ export async function getLinkById(id: string) {
 }
 
 // Obtener todos los enlaces del usuario
-export async function getUserLinks() {
+export async function getUserLinks({ tag }: { tag?: string } = {}) {
   try {
     const { userId } = await getSecureSession()
+
+    if (tag) {
+      const tagRow = await db.select({ id: tags.id }).from(tags).where(eq(tags.name, tag)).limit(1)
+
+      if (tagRow.length === 0) {
+        return { success: true, links: [] }
+      }
+
+      const tagId = tagRow[0].id
+
+      const linkIds = await db.select({ linkId: linkTags.linkId }).from(linkTags).where(eq(linkTags.tagId, tagId))
+
+      if (linkIds.length === 0) {
+        return { success: true, links: [] }
+      }
+
+      const userLinks = await db.query.links.findMany({
+        where: and(
+          eq(links.userId, userId),
+          inArray(
+            links.id,
+            linkIds.map(row => row.linkId)
+          )
+        ),
+        orderBy: (links, { desc }) => [desc(links.createdAt)],
+      })
+
+      const linksWithTags = await Promise.all(
+        userLinks.map(async link => {
+          const linkTagsRows = await db
+            .select({ tagId: linkTags.tagId })
+            .from(linkTags)
+            .where(eq(linkTags.linkId, link.id))
+
+          const tagNames = []
+
+          if (linkTagsRows.length > 0) {
+            const tagIds = linkTagsRows.map(row => row.tagId)
+            const tagRows = await db.select({ name: tags.name }).from(tags).where(inArray(tags.id, tagIds))
+
+            tagNames.push(...tagRows.map(t => t.name))
+          }
+
+          return {
+            ...link,
+            tags: tagNames,
+          }
+        })
+      )
+
+      return { success: true, links: linksWithTags }
+    }
 
     const userLinks = await db.query.links.findMany({
       where: eq(links.userId, userId),
       orderBy: (links, { desc }) => [desc(links.createdAt)],
     })
 
-    // Para cada enlace, obtener sus etiquetas
     const linksWithTags = await Promise.all(
       userLinks.map(async link => {
         const linkTagsRows = await db

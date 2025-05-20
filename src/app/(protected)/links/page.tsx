@@ -6,8 +6,15 @@ import { getUserLinks } from '@/actions/links'
 import { NewLinkButton } from '@/components/dashboard/new-link/button'
 import { Link } from '@/types/link'
 
-export default async function LinksPage() {
-  const { success, links, error } = await getUserLinks()
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
+
+export default async function LinksPage({ searchParams }: { searchParams: SearchParams }) {
+  const query = await searchParams
+
+  const tagFromUrl = Array.isArray(query?.tag) ? query.tag[0] : query?.tag
+  const tag = tagFromUrl ? decodeURIComponent(tagFromUrl) : undefined
+
+  const { success, links, error } = await getUserLinks({ tag })
   const availableTags = Array.from(new Set(links?.flatMap((link: Link) => link.tags)))
 
   return (

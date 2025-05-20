@@ -81,6 +81,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       try {
         await db.insert(linkTags).values(linkTagsData)
       } catch (error) {
+        console.log(error)
         // Si hay un error de restricción única, insertamos uno por uno ignorando errores
         for (const linkTag of linkTagsData) {
           try {
