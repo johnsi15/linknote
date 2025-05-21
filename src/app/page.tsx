@@ -66,7 +66,7 @@ export default function Home() {
       </main>
 
       <footer className='relative z-10 border-border/40 border-t bg-background/80 backdrop-blur-sm'>
-        <div className='container mx-auto flex h-8 max-w-2xl items-center justify-between px-4'>
+        <div className='container mx-auto flex h-12 md:h-10 max-w-2xl items-center justify-between px-4'>
           <div className='flex items-center gap-4 text-muted-foreground text-xs'>
             <a
               href='https://github.com/johnsi15/linknote'
