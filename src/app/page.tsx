@@ -65,9 +65,9 @@ export default function Home() {
         <FeatureSection />
       </main>
 
-      <footer className='relative z-10 border-border/40 border-t bg-background/80 backdrop-blur-sm'>
+      <footer className='relative z-10 border-t border-gray-200 dark:border-border/40 bg-white dark:bg-background/80 backdrop-blur-sm'>
         <div className='container mx-auto flex h-12 md:h-10 max-w-2xl items-center justify-between px-4'>
-          <div className='flex items-center gap-4 text-muted-foreground text-xs'>
+          <div className='flex items-center gap-4 text-gray-700 dark:text-muted-foreground text-xs'>
             <a
               href='https://github.com/johnsi15/linknote'
               target='_blank'
@@ -95,7 +95,7 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <div className='text-muted-foreground text-xs'>
+          <div className='text-gray-700 dark:text-muted-foreground text-xs'>
             Built by{' '}
             <a
               href='https://github.com/johnsi15'
