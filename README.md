@@ -61,4 +61,4 @@ Si te gusta este proyecto o te ha resultado útil, considera [darle una estrella
 
 ## 🌐 Enlaces
 
-🔗 Enlace al proyecto: [En desarrollo]
+🔗 Enlace al proyecto: https://linknotejs.netlify.app/
