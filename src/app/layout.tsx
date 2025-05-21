@@ -81,7 +81,12 @@ export default function RootLayout({
   return (
     <html lang='es' suppressHydrationWarning>
       <head>
-        <Script src='https://analytics.ahrefs.com/analytics.js' data-key='oWHvWnPViKQiADQmKCGRJg' async />
+        <Script
+          src='https://analytics.ahrefs.com/analytics.js'
+          data-key='oWHvWnPViKQiADQmKCGRJg'
+          async
+          strategy='beforeInteractive'
+        />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
