@@ -48,10 +48,21 @@ export function DashboardNav({ className }: { className?: string }) {
           <TagIcon className='mr-2 h-4 w-4' />
           Tags
         </Link>
-        <Button variant='default' size='sm' className='flex items-center' onClick={() => setIsNewLinkModalOpen(true)}>
+        <Button
+          variant='default'
+          size='sm'
+          className='flex items-center mr-3'
+          onClick={() => setIsNewLinkModalOpen(true)}
+        >
           <PlusIcon className='mr-2 h-4 w-4' />
           New Link
         </Button>
+        <span
+          className='ml-auto flex items-center justify-center h-8 flex-shrink-0 rounded bg-muted px-2 py-1 text-xs font-mono text-muted-foreground border border-neutral-200 dark:border-neutral-800'
+          title='Open command palette'
+        >
+          <span className='hidden sm:inline'>⌘</span>K
+        </span>
       </nav>
 
       <NewLinkModal isOpen={isNewLinkModalOpen} onClose={() => setIsNewLinkModalOpen(false)} />
