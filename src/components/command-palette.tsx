@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Command } from 'cmdk'
 import { LayoutDashboard, Link2, LogOut, Search, Tag, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+// import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useClerk } from '@clerk/nextjs'
 
 export function CommandPalette() {
@@ -24,6 +24,7 @@ export function CommandPalette() {
         setOpen(false)
       }
     }
+
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
   }, [open])
@@ -37,9 +38,10 @@ export function CommandPalette() {
       aria-labelledby='command-palette-title'
     >
       <div className='w-full max-w-[450px] rounded-md border bg-popover shadow-md'>
-        <VisuallyHidden>
-          <h2 id='command-palette-title'>Command Palette</h2>
-        </VisuallyHidden>
+        <h2 id='command-palette-title' className='sr-only'>
+          Command Palette
+        </h2>
+
         <div className='flex items-center gap-2 border-b border-neutral-200 dark:border-neutral-800 px-4 py-3'>
           <Search className='h-5 w-5 text-neutral-400' />
           <Command.Input
