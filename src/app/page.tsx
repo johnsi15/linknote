@@ -7,6 +7,7 @@ import { CodeIcon, LockIcon, UserPlusIcon, XIcon } from 'lucide-react'
 import { IgIcon } from '@/components/icons/ig'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
+import { RainbowButton } from '@/components/magicui/rainbow-button'
 
 export default function Home() {
   return (
@@ -39,10 +40,9 @@ export default function Home() {
             <ModeToggle />
             <SignedIn>
               <Link href='/dashboard'>
-                <Button variant='outline' className='gap-2'>
-                  <CodeIcon size={16} />
-                  Dashboard
-                </Button>
+                <RainbowButton variant='outline' className='gap-2'>
+                  <CodeIcon size={16} /> Dashboard
+                </RainbowButton>
               </Link>
               <UserButton
                 appearance={{
