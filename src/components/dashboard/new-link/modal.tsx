@@ -4,7 +4,6 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
-// import NewLinkForm from '@/components/dashboard/new-link/form'
 import { LinkForm } from '@/components/dashboard/link-form'
 import { saveLink } from '@/actions/links'
 
@@ -51,7 +50,6 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
           <DialogTitle>Añadir Nuevo Link</DialogTitle>
           <DialogDescription>Añade información sobre el link que quieres guardar.</DialogDescription>
         </DialogHeader>
-        {/* <NewLinkForm onCancel={onClose} onSuccess={onClose} /> */}
 
         <LinkForm onSubmit={handleSubmit} autoSave={true} />
       </DialogContent>
