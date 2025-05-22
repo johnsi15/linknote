@@ -15,7 +15,6 @@ interface NewLinkModalProps {
 
 export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
   const router = useRouter()
-  const [suggestedTags, setSuggestedTags] = useState<string[]>([])
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
 
   const handleSubmit = async (formData: any, isAutoSaveEvent = false) => {
@@ -45,30 +44,6 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
     }
   }
 
-  // Función para obtener sugerencias de etiquetas basadas en la URL
-  const handleUrlChange = async (url: string) => {
-    if (!url || !url.startsWith('http')) return
-
-    try {
-      const response = await fetch('/api/suggest', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url }),
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.suggestedTags) {
-          setSuggestedTags(data.suggestedTags)
-        }
-      }
-    } catch (error) {
-      console.error('Error al obtener sugerencias:', error)
-    }
-  }
-
   return (
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className='sm:max-w-3xl'>
@@ -78,7 +53,7 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
         </DialogHeader>
         {/* <NewLinkForm onCancel={onClose} onSuccess={onClose} /> */}
 
-        <LinkForm onSubmit={handleSubmit} suggestedTags={suggestedTags} autoSave={true} />
+        <LinkForm onSubmit={handleSubmit} autoSave={true} />
       </DialogContent>
     </Dialog>
   )

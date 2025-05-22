@@ -40,20 +40,24 @@ export default function NewLinkForm({ onCancel, onSuccess }: NewLinkFormProps) {
     setIsGenerating(true)
 
     // Simulate API call
-    setTimeout(() => {
-      // Mock response
-      const mockTags = ['react', 'javascript', 'frontend', 'web-development']
-      const mockDescription =
-        'A comprehensive guide to React hooks and components with examples and best practices for building modern web applications.'
-
-      setSuggestedTags(mockTags)
-      setSuggestedDescription(mockDescription)
-      setIsGenerating(false)
-
+    try {
+      const res = await fetch('/api/suggest-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, title, description }),
+      })
+      const data = await res.json()
+      setSuggestedTags(data.tags)
+      // Si quieres también puedes pedir descripción a la IA y setearla aquí
       toast.success('Sugerencias generadas', {
         description: 'La IA ha analizado la URL y proporcionado sugerencias',
       })
-    }, 1500)
+    } catch (err) {
+      console.log(err)
+      toast.error('Error al generar sugerencias')
+    } finally {
+      setIsGenerating(false)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {

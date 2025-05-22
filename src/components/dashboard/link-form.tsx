@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Loader2, Save } from 'lucide-react'
+import { Loader2, Save, SparklesIcon } from 'lucide-react'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -27,7 +27,6 @@ interface LinkFormProps {
     values: FormValues,
     isAutoSaveEvent?: boolean
   ) => Promise<{ success: boolean; linkId?: string; error?: string }>
-  suggestedTags?: string[]
   autoSave?: boolean
 }
 
@@ -47,12 +46,15 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave = true }: LinkFormProps) {
+export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const initialRender = useRef(true)
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([])
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
+  const [noSuggestions, setNoSuggestions] = useState(false)
   const router = useRouter()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
@@ -150,6 +152,32 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
     }
   }
 
+  const fetchSuggestedTags = async (url: string, title: string, description: string, tags: string[]) => {
+    if (!url) return
+    setIsLoadingSuggestions(true)
+
+    try {
+      const res = await fetch('/api/suggest-tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url, title, description, tags }),
+      })
+
+      const data = await res.json()
+      setSuggestedTags(data.tags || [])
+      if (data.tags.length === 0) {
+        setNoSuggestions(true)
+      } else {
+        setNoSuggestions(false)
+      }
+    } catch (e) {
+      console.error('Error fetching suggested tags:', e)
+      setSuggestedTags([])
+    } finally {
+      setIsLoadingSuggestions(false)
+    }
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
@@ -219,9 +247,50 @@ export function LinkForm({ defaultValues, onSubmit, suggestedTags = [], autoSave
           render={({ field }) => (
             <FormItem>
               <FormLabel>Tags</FormLabel>
-              <FormControl>
-                <TagInput tags={field.value} setTags={field.onChange} suggestedTags={suggestedTags} />
-              </FormControl>
+              <div className='flex items-start gap-2'>
+                <FormControl>
+                  <TagInput tags={field.value} setTags={field.onChange} />
+                </FormControl>
+                <Button
+                  type='button'
+                  size='icon'
+                  variant='outline'
+                  onClick={() =>
+                    fetchSuggestedTags(
+                      form.getValues('url'),
+                      form.getValues('title'),
+                      form.getValues('description') ?? '',
+                      form.getValues('tags') ?? []
+                    )
+                  }
+                  disabled={isLoadingSuggestions || !form.getValues('url')}
+                  className='ml-2 self-start mt-1'
+                  title='Suggest AI tags'
+                >
+                  <SparklesIcon className='h-5 w-5' />
+                </Button>
+              </div>
+              {isLoadingSuggestions && <span className='text-xs text-muted-foreground'>Generating suggestions...</span>}
+              {suggestedTags.length > 0 && (
+                <div className='flex flex-wrap gap-2 mt-2'>
+                  {suggestedTags
+                    .filter(tag => !field.value.map((t: string) => t.toLowerCase()).includes(tag.toLowerCase()))
+                    .map(tag => (
+                      <Button
+                        key={tag}
+                        type='button'
+                        size='sm'
+                        variant='secondary'
+                        onClick={() => field.onChange([...new Set([...(field.value || []), tag])])}
+                      >
+                        {tag}
+                      </Button>
+                    ))}
+                </div>
+              )}
+              {!isLoadingSuggestions && noSuggestions && suggestedTags.length === 0 && (
+                <span className='text-xs text-muted-foreground'>No suggestions available</span>
+              )}
               <FormMessage />
             </FormItem>
           )}
