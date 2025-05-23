@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Loader2, Save, SparklesIcon } from 'lucide-react'
+import { Info, Loader2, Save, SparklesIcon } from 'lucide-react'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -236,6 +236,10 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
               <FormControl>
                 <Textarea placeholder='Link description' className='resize-none' {...field} value={field.value || ''} />
               </FormControl>
+              <span className='text-xs text-muted-foreground flex items-center gap-1 mt-1'>
+                <Info className='w-3 h-3' />
+                Soon you will be able to write rich content here...
+              </span>
               <FormMessage />
             </FormItem>
           )}
