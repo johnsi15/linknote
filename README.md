@@ -1,6 +1,24 @@
 # Linknote
 
-Linknote es una plataforma web creada para que desarrolladores de todos los niveles puedan guardar, organizar y descubrir enlaces útiles relacionados con la programación de manera intuitiva y eficiente. Imagina un centro personal y colaborativo donde encontrar recursos, documentación, tutoriales o compartir tus hallazgos es cuestión de segundos.
+[Linknote](https://linknote.dev/) es una plataforma web creada para que desarrolladores de todos los niveles puedan guardar, organizar y descubrir enlaces útiles relacionados con la programación de manera intuitiva y eficiente. Imagina un centro personal y colaborativo donde encontrar recursos, documentación, tutoriales o compartir tus hallazgos es cuestión de segundos.
+
+<div align="center">
+  <div align="center">
+    <a href="https://linknote.dev/">
+      <img
+      src="https://github.com/johnsi15/linknote/blob/main/public/screen-shot.png?raw=true"
+      alt="seocheckai"/>
+    </a>
+
+     
+  </div>
+
+![Next.js Badge](https://img.shields.io/badge/Next.js&nbsp;14-000?logo=nextdotjs&logoColor=fff&style=flat)
+![OpenAI](https://img.shields.io/badge/OpenAI-blue?logo=openai&logoColor=white&labelColor=gray)
+![GitHub stars](https://img.shields.io/github/stars/johnsi15/linknote)
+![GitHub releases](https://img.shields.io/github/release/johnsi15/linknote)
+![GitHub issues](https://img.shields.io/github/issues/johnsi15/linknote)
+</div>
 
 ## ✨ Características
 
