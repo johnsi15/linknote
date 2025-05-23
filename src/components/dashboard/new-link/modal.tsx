@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { LinkForm } from '@/components/dashboard/link-form'
 import { saveLink } from '@/actions/links'
+import { LinkFormData } from '@/types/link'
 
 interface NewLinkModalProps {
   isOpen: boolean
@@ -16,10 +17,14 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
   const router = useRouter()
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
 
-  const handleSubmit = async (formData: any, isAutoSaveEvent = false) => {
-    const isActualUpdateForBackend = Boolean(linkId)
+  const handleSubmit = async (formData: LinkFormData, isAutoSaveEvent = false) => {
+    const safeFormData = {
+      ...formData,
+      description: formData.description ?? '',
+    }
 
-    const result = await saveLink(formData, isActualUpdateForBackend, linkId)
+    const isActualUpdateForBackend = Boolean(linkId)
+    const result = await saveLink(safeFormData, isActualUpdateForBackend, linkId)
 
     if (result.success) {
       if (result.linkId) {

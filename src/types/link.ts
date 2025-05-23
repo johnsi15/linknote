@@ -8,3 +8,7 @@ export interface Link {
   createdAt: Date | null
   updatedAt: Date | null
 }
+
+export interface LinkFormData extends Omit<Link, 'id' | 'userId' | 'createdAt' | 'updatedAt' | 'description'> {
+  description?: string
+}
