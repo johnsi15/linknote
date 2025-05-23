@@ -2,12 +2,11 @@ import { HeroSection } from '@/components/landing/hero-section'
 import { FeatureSection } from '@/components/landing/feature-section'
 import Link from 'next/link'
 import { SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs'
-import { GithubIcon } from '@/components/icons/github'
-import { CodeIcon, LockIcon, UserPlusIcon, XIcon } from 'lucide-react'
-import { IgIcon } from '@/components/icons/ig'
+import { CodeIcon, LockIcon, UserPlusIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
 import { RainbowButton } from '@/components/magicui/rainbow-button'
+import { Footer } from '@/components/ui/footer'
 
 export default function Home() {
   return (
@@ -65,49 +64,7 @@ export default function Home() {
         <FeatureSection />
       </main>
 
-      <footer className='relative z-10 border-t border-gray-200 dark:border-border/40 bg-white dark:bg-background/80 backdrop-blur-sm'>
-        <div className='container mx-auto flex h-12 md:h-10 max-w-2xl items-center justify-between px-4'>
-          <div className='flex items-center gap-4 text-gray-700 dark:text-muted-foreground text-xs'>
-            <a
-              href='https://github.com/johnsi15/linknote'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='hover:text-foreground'
-            >
-              <GithubIcon className='h-3.5 w-3.5' />
-            </a>
-            <a
-              href='https://x.com/johnserranodev'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='hover:text-foreground'
-            >
-              <XIcon className='h-3.5 w-3.5' />
-            </a>
-            <div className='rounded-full  p-1'>
-              <a
-                href='https://www.instagram.com/johnserranodev'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='hover:text-foreground'
-              >
-                <IgIcon className='h-3.5 w-3.5' />
-              </a>
-            </div>
-          </div>
-          <div className='text-gray-700 dark:text-muted-foreground text-xs'>
-            Built by{' '}
-            <a
-              href='https://github.com/johnsi15'
-              target='_blank'
-              rel='noopener noreferrer'
-              className='hover:text-foreground'
-            >
-              John Serrano
-            </a>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }
