@@ -5,6 +5,8 @@ import { ModeToggle } from '@/components/mode-toggle'
 import { CommandPalette } from '@/components/command-palette'
 import { getUser } from '@/lib/auth/server'
 import { ReportBug } from '@/components/report-bug'
+import { BetaBanner } from '@/components/beta-banner'
+import { Footer } from '@/components/ui/footer'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
@@ -42,7 +44,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </div>
         </div>
       </header>
-      <section className='flex-1 container mx-auto py-6'>{children}</section>
+      <BetaBanner />
+      <main className='flex-1 container mx-auto py-6'>{children}</main>
+      <Footer />
     </div>
   )
 }
