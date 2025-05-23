@@ -1,13 +1,16 @@
 import Link from 'next/link'
 import { Link as LinkIcon } from 'lucide-react'
-import { LinkCard } from '@/components/dashboard/link-card'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
 import { Button } from '@/components/ui/button'
 import { NewLinkButton } from '@/components/dashboard/new-link/button'
 import { getUserLinks } from '@/actions/links'
+import { Card } from '@/components/ui/card'
+import { LinksFilterClient } from '@/components/dashboard/filter/links'
+import { Link as LinkType } from '@/types/link'
 
 export default async function DashboardPage() {
   const { links, success, error } = await getUserLinks()
+  const availableTags = Array.from(new Set(links?.flatMap((link: LinkType) => link.tags)))
 
   return (
     <div className='space-y-8'>
@@ -28,19 +31,14 @@ export default async function DashboardPage() {
               </Link>
             </div>
             <div className='grid grid-cols-1 gap-4'>
-              {success &&
-                links &&
-                links.map(({ id, title, url, description, tags, createdAt }) => (
-                  <LinkCard
-                    key={id}
-                    title={title}
-                    url={url}
-                    description={description ?? ''}
-                    tags={tags}
-                    createdAt={new Date(createdAt ?? '').toISOString()}
-                    id={id}
-                  />
-                ))}
+              <Card className='p-4'>
+                {success && links && <LinksFilterClient allLinks={links} availableTags={availableTags} />}
+                {error && (
+                  <div className='text-center py-12'>
+                    <p className='text-muted-foreground'>{error}</p>
+                  </div>
+                )}
+              </Card>
 
               {!success && error && (
                 <div className='flex items-center justify-center p-8 text-center border rounded-lg bg-muted/20'>
