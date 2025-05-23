@@ -14,14 +14,14 @@ Linknote es una plataforma web creada para que desarrolladores de todos los nive
 
 ## 🛠️ Tecnologías Utilizadas
 
-Next.js – Framework web moderno para aplicaciones rápidas y optimizadas.
-React – Para la creación de componentes interactivos y dinámicos.
-Tailwind CSS – Para estilos rápidos y responsivos.
-Clerk – Para autenticación de usuarios segura y sencilla.
-Turso – Base de datos en la nube robusta y escalable.
-Drizzle ORM – Acceso a base de datos tipado y seguro.
-Zod – Validación de formularios y datos.
-Sonner – Notificaciones modernas y personalizables.
+* Next.js – Framework web moderno para aplicaciones rápidas y optimizadas.
+* React – Para la creación de componentes interactivos y dinámicos.
+* Tailwind CSS – Para estilos rápidos y responsivos.
+* Clerk – Para autenticación de usuarios segura y sencilla.
+* Turso – Base de datos en la nube robusta y escalable.
+* Drizzle ORM – Acceso a base de datos tipado y seguro.
+* Zod – Validación de formularios y datos.
+* Sonner – Notificaciones modernas y personalizables.
 
 ## 🚀 Cómo iniciar el proyecto en modo desarrollo
 
@@ -52,7 +52,9 @@ El proyecto estará disponible en [http://localhost:3000](http://localhost:3000)
 Linknote utiliza Clerk como sistema de autenticación principal, permitiendo:
 
 Registro e inicio de sesión de usuarios mediante OAuth (por ejemplo, GitHub).
+
 Protección de rutas: solo los usuarios autenticados pueden crear y gestionar enlaces.
+
 Middleware para asegurar la seguridad de las páginas privadas.
 
 ## ⭐ ¡Dale una estrella al repositorio!
@@ -61,4 +63,4 @@ Si te gusta este proyecto o te ha resultado útil, considera [darle una estrella
 
 ## 🌐 Enlaces
 
-🔗 Enlace al proyecto: https://linknotejs.netlify.app/
+🔗 Enlace al proyecto: https://linknote.dev
