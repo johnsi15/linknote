@@ -4,6 +4,7 @@ import { UserButton } from '@clerk/nextjs'
 import { ModeToggle } from '@/components/mode-toggle'
 import { CommandPalette } from '@/components/command-palette'
 import { getUser } from '@/lib/auth/server'
+import { ReportBug } from '@/components/report-bug'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const user = await getUser()
@@ -22,6 +23,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className='flex flex-1 items-center justify-end space-x-4'>
             <CommandPalette />
             <nav className='flex items-center space-x-2'>
+              <ReportBug />
               <ModeToggle />
               <div className=''>
                 <UserButton
