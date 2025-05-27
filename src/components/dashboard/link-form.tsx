@@ -7,10 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+// import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
 import { Info, Loader2, Save, SparklesIcon } from 'lucide-react'
+import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -234,7 +235,8 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder='Link description' className='resize-none' {...field} value={field.value || ''} />
+                {/* <Textarea placeholder='Link description' className='resize-none' {...field} value={field.value || ''} /> */}
+                <RichTextEditor value={field.value || ''} onChange={(value) => field.onChange(value)} />
               </FormControl>
               <span className='text-xs text-muted-foreground flex items-center gap-1 mt-1'>
                 <Info className='w-3 h-3' />
