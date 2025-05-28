@@ -7,8 +7,9 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { LinkForm } from './link-form'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { LinkForm } from '@/components/dashboard/link-form'
+import ClientHtml from '@/components/dashboard/client-html'
 
 interface LinkCardProps {
   id?: string
@@ -20,6 +21,7 @@ interface LinkCardProps {
 }
 
 export function LinkCard({ id = 'mock-id', title, url, description, tags, createdAt }: LinkCardProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCopied, setIsCopied] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -37,7 +39,6 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
 
   const handleUpdate = async (formData: any, isAutoSaveEvent = false) => {
     try {
-      // todo...
       const result = await fetch(`/api/links/${id}`, {
         method: 'PUT',
         headers: {
@@ -50,7 +51,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
         if (!isAutoSaveEvent) {
           toast.success('Link updated', { description: 'The link has been updated successfully' })
           setIsEditModalOpen(false)
-          // Recargar la página para ver los cambios
+
           window.location.reload()
         }
 
@@ -69,7 +70,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
   const handleDelete = async (id: string) => {
     if (confirm('¿Are you sure you want to remove this link?')) {
       setIsDeleting(true)
-      // TODO...
+
       const result = await fetch(`/api/links/${id}`, {
         method: 'DELETE',
         headers: {
@@ -79,7 +80,6 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
 
       if (result.success) {
         toast.success('Link removed', { description: 'The link has been removed successfully' })
-        // router.push('/dashboard')
         window.location.reload()
       } else {
         toast.error('Error', { description: result.error })
@@ -124,7 +124,8 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           </div>
         </CardHeader>
         <CardContent className='pb-2'>
-          <p className='text-sm text-muted-foreground'>{description}</p>
+          {/* <p className='text-sm text-muted-foreground'>{description}</p> */}
+          <ClientHtml html={description} className='text-sm text-muted-foreground' />
         </CardContent>
         <CardFooter className='flex items-center justify-between pt-2'>
           <div className='flex flex-wrap gap-1'>
@@ -146,6 +147,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
                   size='icon'
                   className='h-7 w-7 text-destructive'
                   onClick={() => handleDelete(id)}
+                  disabled={isDeleting}
                 >
                   <TrashIcon className='h-3.5 w-3.5' />
                 </Button>
