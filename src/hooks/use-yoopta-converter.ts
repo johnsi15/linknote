@@ -14,17 +14,14 @@ export function useYooptaConverter() {
    * @returns YooptaContentValue or undefined if conversion fails
    */
   const htmlToYoopta = (htmlString: string): YooptaContentValue | undefined => {
-    console.log({ htmlString })
     // If no HTML, return undefined
     if (!htmlString || typeof htmlString !== 'string' || htmlString.trim() === '') {
-      console.log('HTML is empty or invalid')
       return undefined
     }
 
     try {
       // Deserialize the HTML using Yoopta API
       const deserializedValue = html.deserialize(editor, htmlString)
-      console.log({ deserializedValue })
 
       return deserializedValue
     } catch (error) {
