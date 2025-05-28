@@ -47,7 +47,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormProps) {
+export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
@@ -238,7 +238,6 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
                 <RichTextEditor
                   value={field.value || ''}
                   onChange={newValue => {
-                    console.log('Nuevo valor del editor:', newValue)
                     field.onChange(newValue)
                   }}
                 />

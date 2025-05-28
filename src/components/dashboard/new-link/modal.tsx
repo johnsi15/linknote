@@ -56,7 +56,7 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
           <DialogDescription>Añade información sobre el link que quieres guardar.</DialogDescription>
         </DialogHeader>
 
-        <LinkForm onSubmit={handleSubmit} autoSave={true} />
+        <LinkForm onSubmit={handleSubmit} autoSave={false} />
       </DialogContent>
     </Dialog>
   )

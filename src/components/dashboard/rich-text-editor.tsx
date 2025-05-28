@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import YooptaEditor, { YooptaContentValue } from '@yoopta/editor'
 import Paragraph from '@yoopta/paragraph'
 import Code from '@yoopta/code'
@@ -33,13 +33,22 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
-  const { editor, htmlToYoopta, yooptaToHtml } = useYooptaConverter()
+  const { editor, htmlToYoopta, yooptaToHtml, setEditorValue } = useYooptaConverter()
   const selectionRef = useRef(null)
+  const initializationDoneRef = useRef(false)
 
-  // Convertir HTML a formato Yoopta
-  const initialValue = htmlToYoopta(value)
+  // Initialize the editor only once when the component mounts
+  useEffect(() => {
+    if (!initializationDoneRef.current) {
+      const yooptaValue = htmlToYoopta(value)
 
-  console.log({ initialValue })
+      if (yooptaValue) {
+        setEditorValue(yooptaValue)
+        initializationDoneRef.current = true
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleEditorChange = (editorValue: YooptaContentValue) => {
     try {
@@ -58,7 +67,6 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         editor={editor}
         plugins={plugins}
         tools={TOOLS}
-        value={initialValue}
         onChange={handleEditorChange}
         selectionBoxRoot={selectionRef}
         placeholder="Type '/' for commands"
