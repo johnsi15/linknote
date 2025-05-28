@@ -10,6 +10,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { LinkForm } from '@/components/dashboard/link-form'
 import ClientHtml from '@/components/dashboard/client-html'
+import { LinkFormData } from '@/types/link'
 
 interface LinkCardProps {
   id?: string
@@ -37,7 +38,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
     }, 2000)
   }
 
-  const handleUpdate = async (formData: any, isAutoSaveEvent = false) => {
+  const handleUpdate = async (formData: LinkFormData, isAutoSaveEvent = false) => {
     try {
       const result = await fetch(`/api/links/${id}`, {
         method: 'PUT',
