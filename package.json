@@ -32,6 +32,7 @@
     "clsx": "2.1.1",
     "cmdk": "1.1.1",
     "date-fns": "4.1.0",
+    "dompurify": "3.2.6",
     "drizzle-orm": "^0.43.1",
     "lucide-react": "0.510.0",
     "motion": "12.11.4",
@@ -53,6 +54,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "3",
     "@tailwindcss/postcss": "4.1.7",
+    "@types/dompurify": "^3.2.0",
     "@types/node": "20",
     "@types/react": "19",
     "@types/react-dom": "19",
