@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { LinkForm } from '@/components/dashboard/link-form'
 import ClientHtml from '@/components/dashboard/client-html'
 import { LinkFormData } from '@/types/link'
+import { useRouter } from 'next/navigation'
 
 interface LinkCardProps {
   id?: string
@@ -26,6 +27,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
   const [isCopied, setIsCopied] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -53,7 +55,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           toast.success('Link updated', { description: 'The link has been updated successfully' })
           setIsEditModalOpen(false)
 
-          window.location.reload()
+          router.refresh()
         }
 
         return { success: true, linkId: id }
@@ -81,7 +83,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
 
       if (result.success) {
         toast.success('Link removed', { description: 'The link has been removed successfully' })
-        window.location.reload()
+        router.refresh()
       } else {
         toast.error('Error', { description: result.error })
         setIsDeleting(false)
@@ -171,7 +173,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
               tags: tags || [],
             }}
             onSubmit={handleUpdate}
-            autoSave={true}
+            autoSave={false}
           />
         </DialogContent>
       </Dialog>

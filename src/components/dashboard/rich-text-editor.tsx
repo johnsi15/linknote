@@ -9,7 +9,6 @@ import ActionMenu, { DefaultActionMenuRender } from '@yoopta/action-menu-list'
 import Toolbar, { DefaultToolbarRender } from '@yoopta/toolbar'
 import { useYooptaConverter } from '@/hooks/use-yoopta-converter'
 
-// Asegúrate de que los plugins estén correctamente configurados
 const plugins = [Paragraph, Code]
 
 const TOOLS = {

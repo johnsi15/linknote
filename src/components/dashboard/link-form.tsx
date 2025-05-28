@@ -309,7 +309,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
         <Button type='submit' disabled={isSubmitting || autoSaveStatus === 'saving'}>
           {(isSubmitting || autoSaveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
 
-          {isSubmitting || autoSaveStatus === 'saving' ? 'Saving...' : isEditing ? 'Update' : 'Create'}
+          {isSubmitting || autoSaveStatus === 'saving' ? 'Saving...' : 'Save'}
         </Button>
       </form>
     </Form>

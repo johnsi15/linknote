@@ -52,8 +52,8 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
     <Dialog open={isOpen} onOpenChange={open => !open && onClose()}>
       <DialogContent className='sm:max-w-3xl'>
         <DialogHeader>
-          <DialogTitle>Añadir Nuevo Link</DialogTitle>
-          <DialogDescription>Añade información sobre el link que quieres guardar.</DialogDescription>
+          <DialogTitle>Add New Link</DialogTitle>
+          <DialogDescription>Add information about the link you want to save.</DialogDescription>
         </DialogHeader>
 
         <LinkForm onSubmit={handleSubmit} autoSave={false} />
