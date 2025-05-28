@@ -4,10 +4,13 @@ import { useEffect, useRef } from 'react'
 import YooptaEditor, { YooptaContentValue } from '@yoopta/editor'
 import Paragraph from '@yoopta/paragraph'
 import Code from '@yoopta/code'
+import { Bold, Italic, CodeMark, Underline, Strike, Highlight } from '@yoopta/marks'
 import LinkTool, { DefaultLinkToolRender } from '@yoopta/link-tool'
 import ActionMenu, { DefaultActionMenuRender } from '@yoopta/action-menu-list'
 import Toolbar, { DefaultToolbarRender } from '@yoopta/toolbar'
 import { useYooptaConverter } from '@/hooks/use-yoopta-converter'
+
+const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight]
 
 const plugins = [Paragraph, Code]
 
@@ -70,6 +73,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         selectionBoxRoot={selectionRef}
         placeholder="Type '/' for commands"
         className='w-full!'
+        marks={MARKS}
       />
     </div>
   )
