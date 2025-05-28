@@ -30,7 +30,6 @@ export function HtmlContent({ html, className = '' }: HtmlContentProps) {
   }, [])
 
   useEffect(() => {
-    // Sanitizar el HTML con DOMPurify
     const clean = DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
     setSanitizedHtml(clean)
   }, [html])
@@ -38,7 +37,6 @@ export function HtmlContent({ html, className = '' }: HtmlContentProps) {
   useEffect(() => {
     if (!contentRef.current) return
 
-    // Limpiar raíces anteriores
     rootsRef.current.forEach(root => {
       try {
         root.unmount()
@@ -49,6 +47,7 @@ export function HtmlContent({ html, className = '' }: HtmlContentProps) {
     })
     rootsRef.current = []
 
+    // Search pre elements
     const preElements = contentRef.current.querySelectorAll('pre')
 
     Array.from(preElements).forEach((pre, index) => {
