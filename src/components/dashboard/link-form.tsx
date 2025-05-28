@@ -235,8 +235,13 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                {/* <Textarea placeholder='Link description' className='resize-none' {...field} value={field.value || ''} /> */}
-                <RichTextEditor value={field.value || ''} onChange={field.onChange} />
+                <RichTextEditor
+                  value={field.value || ''}
+                  onChange={newValue => {
+                    console.log('Nuevo valor del editor:', newValue)
+                    field.onChange(newValue)
+                  }}
+                />
               </FormControl>
               <span className='text-xs text-muted-foreground flex items-center gap-1 mt-1'>
                 <Info className='w-3 h-3' />
