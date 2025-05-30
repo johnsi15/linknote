@@ -1,21 +1,18 @@
 'use client'
 
-import { useState } from 'react'
 import { PlusIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { NewLinkModal } from '@/components/dashboard/new-link/modal'
+import { useRouter } from 'next/navigation'
 
 export function NewLinkButton() {
-  const [isNewLinkModalOpen, setIsNewLinkModalOpen] = useState(false)
+  const router = useRouter()
 
   return (
     <>
-      <Button className='gap-2' onClick={() => setIsNewLinkModalOpen(true)}>
+      <Button className='gap-2' onClick={() => router.push('/links/new')}>
         <PlusIcon className='h-4 w-4' />
         Add Link
       </Button>
-
-      <NewLinkModal isOpen={isNewLinkModalOpen} onClose={() => setIsNewLinkModalOpen(false)} />
     </>
   )
 }
