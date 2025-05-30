@@ -9,6 +9,7 @@ import LinkTool, { DefaultLinkToolRender } from '@yoopta/link-tool'
 import ActionMenu, { DefaultActionMenuRender } from '@yoopta/action-menu-list'
 import Toolbar, { DefaultToolbarRender } from '@yoopta/toolbar'
 import { useYooptaConverter } from '@/hooks/use-yoopta-converter'
+import { cn } from '@/lib/utils'
 
 const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight]
 
@@ -32,9 +33,10 @@ const TOOLS = {
 interface RichTextEditorProps {
   value: string
   onChange: (value: string) => void
+  className?: string
 }
 
-export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
+export function RichTextEditor({ className, value, onChange }: RichTextEditorProps) {
   const { editor, htmlToYoopta, yooptaToHtml, setEditorValue } = useYooptaConverter()
   const selectionRef = useRef(null)
   const initializationDoneRef = useRef(false)
@@ -63,7 +65,12 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
   }
 
   return (
-    <div className='dark:bg-zinc-900 dark:text-white border rounded-md pt-3 pb-3 pr-3 pl-12 min-h-[120px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 w-full'>
+    <div
+      className={cn(
+        'dark:bg-zinc-900 dark:text-white border rounded-md pt-3 pb-3 pr-3 pl-12 min-h-[120px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 w-full',
+        className
+      )}
+    >
       <div ref={selectionRef} />
       <YooptaEditor
         editor={editor}
