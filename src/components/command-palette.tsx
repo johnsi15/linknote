@@ -25,6 +25,10 @@ export function CommandPalette() {
       }
     }
 
+    if (!open) {
+      setLoading(false)
+    }
+
     document.addEventListener('keydown', down)
     return () => document.removeEventListener('keydown', down)
   }, [open])
@@ -59,17 +63,20 @@ export function CommandPalette() {
             }
             className='mb-2'
           >
-            {/* <Command.Item
+            <Command.Item
               className='cursor-pointer px-4 py-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition'
               onSelect={() => {
-
+                setLoading(true)
+                router.push('/links/new')
+                setOpen(false)
               }}
             >
               Add new link
-            </Command.Item> */}
+            </Command.Item>
             <Command.Item
               className='cursor-pointer font-light px-4 py-2 flex items-center gap-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition'
               onSelect={() => {
+                setLoading(true)
                 router.push('/links')
                 setOpen(false)
               }}
@@ -80,6 +87,7 @@ export function CommandPalette() {
             <Command.Item
               className='cursor-pointer font-light px-4 py-2 flex items-center gap-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition'
               onSelect={() => {
+                setLoading(true)
                 router.push('/tags')
                 setOpen(false)
               }}
@@ -98,6 +106,7 @@ export function CommandPalette() {
             <Command.Item
               className='cursor-pointer font-light px-4 py-2 flex items-center gap-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition'
               onSelect={() => {
+                setLoading(true)
                 router.push('/dashboard')
                 setOpen(false)
               }}
@@ -116,6 +125,7 @@ export function CommandPalette() {
             <Command.Item
               className='cursor-pointer font-light px-4 py-2 flex items-center gap-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition'
               onSelect={() => {
+                setLoading(true)
                 openUserProfile()
                 setOpen(false)
               }}
@@ -144,6 +154,7 @@ export function CommandPalette() {
             <Command.Item
               className='cursor-pointer font-light px-4 py-2 flex items-center gap-2 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 transition'
               onSelect={() => {
+                setLoading(true)
                 signOut()
                 setOpen(false)
               }}
