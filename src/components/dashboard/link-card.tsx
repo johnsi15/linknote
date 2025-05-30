@@ -6,12 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
-import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { LinkForm } from '@/components/dashboard/link-form'
 import ClientHtml from '@/components/dashboard/client-html'
-import { LinkFormData } from '@/types/link'
 import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
 
 interface LinkCardProps {
   id?: string
@@ -25,7 +22,6 @@ interface LinkCardProps {
 export function LinkCard({ id = 'mock-id', title, url, description, tags, createdAt }: LinkCardProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCopied, setIsCopied] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
 
@@ -38,36 +34,6 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
     setTimeout(() => {
       setIsCopied(false)
     }, 2000)
-  }
-
-  const handleUpdate = async (formData: LinkFormData, isAutoSaveEvent = false) => {
-    try {
-      const result = await fetch(`/api/links/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      }).then(res => res.json())
-
-      if (result.success) {
-        if (!isAutoSaveEvent) {
-          toast.success('Link updated', { description: 'The link has been updated successfully' })
-          setIsEditModalOpen(false)
-
-          router.refresh()
-        }
-
-        return { success: true, linkId: id }
-      } else {
-        toast.error('Error', { description: result.error })
-        return { success: false, error: result.error || 'Error desconocido' }
-      }
-    } catch (error) {
-      console.error('Error link update:', error)
-      toast.error('Error', { description: 'The link could not be updated.' })
-      return { success: false, error: 'Error link update' }
-    }
   }
 
   const handleDelete = async (id: string) => {
@@ -142,7 +108,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
             <span>{formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
             {id && (
               <div className='flex space-x-1 ml-2'>
-                <Button variant='ghost' size='icon' className='h-7 w-7' onClick={() => setIsEditModalOpen(true)}>
+                <Button variant='ghost' size='icon' className='h-7 w-7' onClick={() => router.push(`/links/${id}`)}>
                   <PencilIcon className='h-3.5 w-3.5' />
                 </Button>
                 <Button
@@ -159,24 +125,6 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           </div>
         </CardFooter>
       </Card>
-
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className='sm:max-w-3xl'>
-          <DialogHeader>
-            <DialogTitle>Edit Link</DialogTitle>
-          </DialogHeader>
-          <LinkForm
-            defaultValues={{
-              title,
-              url,
-              description: description || '',
-              tags: tags || [],
-            }}
-            onSubmit={handleUpdate}
-            autoSave={false}
-          />
-        </DialogContent>
-      </Dialog>
     </>
   )
 }
