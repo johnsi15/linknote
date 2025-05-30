@@ -57,6 +57,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [noSuggestions, setNoSuggestions] = useState(false)
   const router = useRouter()
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -129,6 +130,12 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedFormValues, autoSave, isSubmitting, isEditing, linkId, onSubmit, form, formSchema])
+
+  useEffect(() => {
+    if (titleInputRef.current && !isEditing) {
+      titleInputRef.current.focus()
+    }
+  }, [isEditing])
 
   const handleSubmit = async (values: FormValues) => {
     const cleanedValues = {
@@ -207,7 +214,12 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder='Link title' {...field} />
+                <Input
+                  placeholder='Link title'
+                  {...field}
+                  ref={titleInputRef}
+                  className='h-12' // Input más alto
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -221,7 +233,11 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input placeholder='https://johnserrano.co' {...field} />
+                <Input
+                  placeholder='https://johnserrano.co'
+                  {...field}
+                  className='h-12' // Input más alto
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -235,12 +251,15 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <RichTextEditor
-                  value={field.value || ''}
-                  onChange={newValue => {
-                    field.onChange(newValue)
-                  }}
-                />
+                <div className='min-h-[300px]'>
+                  <RichTextEditor
+                    value={field.value || ''}
+                    onChange={newValue => {
+                      field.onChange(newValue)
+                    }}
+                    className='min-h-[300px]'
+                  />
+                </div>
               </FormControl>
               <span className='text-xs text-muted-foreground flex items-center gap-1 mt-1'>
                 <Info className='w-3 h-3' />
