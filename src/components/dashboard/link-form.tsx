@@ -7,11 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-// import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
 import { Info, Loader2, Save, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
+import { useAutoSave } from '@/hooks/use-auto-save'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -31,27 +31,8 @@ interface LinkFormProps {
   autoSave?: boolean
 }
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
-
 export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const initialRender = useRef(true)
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
@@ -72,64 +53,35 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
     },
   })
 
-  const formValues = form.watch()
-  const debouncedFormValues = useDebounce(formValues, 2000)
+  // Implementación del hook useAutoSave
+  const { saveStatus, lastSaved, cancelAutoSave } = useAutoSave({
+    form,
+    onSave: async (data: FormValues) => {
+      const cleanedValues = {
+        ...data,
+        title: data.title.trim(),
+        url: data.url.trim(),
+        description: data.description?.trim() || '',
+        tags: data.tags.map((tag: string) => tag.trim()).filter((tag: string) => tag !== ''),
+      }
 
-  useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false
-      return
-    }
+      const result = await onSubmit(cleanedValues, true)
 
-    const hasTitleAndUrl =
-      debouncedFormValues.title.trim() !== '' &&
-      debouncedFormValues.url.trim() !== '' &&
-      formSchema.safeParse(debouncedFormValues).success
-
-    if (autoSave && hasTitleAndUrl && !isSubmitting) {
-      const autoSaveData = async () => {
-        try {
-          setAutoSaveStatus('saving')
-
-          const cleanedValues = {
-            ...debouncedFormValues,
-            title: debouncedFormValues.title.trim(),
-            url: debouncedFormValues.url.trim(),
-            description: debouncedFormValues.description?.trim() || '',
-            tags: debouncedFormValues.tags.map(tag => tag.trim()).filter(tag => tag !== ''),
-          }
-
-          const result = await onSubmit(cleanedValues, true)
-
-          if (result.success) {
-            if (result.linkId && linkId !== result.linkId) {
-              setLinkId(result.linkId)
-            }
-            setLastSaved(new Date())
-            setAutoSaveStatus('saved')
-            // Restablece el formulario con los valores guardados para actualizar el estado isDirty
-            form.reset(cleanedValues)
-            router.refresh()
-            // Cambiar el estado a 'idle' después de 3 segundos
-            setTimeout(() => {
-              setAutoSaveStatus('idle')
-            }, 3000)
-          } else {
-            setAutoSaveStatus('error')
-            console.error('Error al guardar automáticamente:', result.error || 'Unknown error during auto-save')
-          }
-        } catch (error) {
-          console.error('Error al guardar automáticamente:', error)
-          setAutoSaveStatus('error')
+      if (result.success) {
+        if (result.linkId && linkId !== result.linkId) {
+          setLinkId(result.linkId)
         }
+        // Restablece el formulario con los valores guardados para actualizar el estado isDirty
+        form.reset(cleanedValues)
+        router.refresh()
       }
 
-      if (form.formState.isDirty) {
-        autoSaveData()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedFormValues, autoSave, isSubmitting, isEditing, linkId, onSubmit, form, formSchema])
+      return result
+    },
+    delay: 2000,
+    excludeFields: [],
+    linkId: linkId,
+  })
 
   useEffect(() => {
     if (titleInputRef.current && !isEditing) {
@@ -148,11 +100,13 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
 
     setIsSubmitting(true)
     try {
+      // Cancelar cualquier autoguardado pendiente antes de enviar el formulario
+      cancelAutoSave()
+
       const result = await onSubmit(cleanedValues, false)
 
       if (result.success && result.linkId) {
         setLinkId(result.linkId)
-        setLastSaved(new Date())
         form.reset(cleanedValues)
       }
     } finally {
@@ -189,21 +143,21 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        {autoSave && autoSaveStatus !== 'idle' && (
+        {autoSave && saveStatus !== 'idle' && (
           <div className='text-sm text-muted-foreground flex items-center gap-2 justify-end'>
-            {autoSaveStatus === 'saving' && (
+            {saveStatus === 'saving' && (
               <>
                 <Loader2 className='h-3 w-3 animate-spin' />
                 <span>Guardando...</span>
               </>
             )}
-            {autoSaveStatus === 'saved' && (
+            {saveStatus === 'saved' && (
               <>
                 <Save className='h-3 w-3' />
                 <span>Guardado {lastSaved ? `a las ${lastSaved.toLocaleTimeString()}` : ''}</span>
               </>
             )}
-            {autoSaveStatus === 'error' && <span className='text-destructive'>Error al guardar</span>}
+            {saveStatus === 'error' && <span className='text-destructive'>Error al guardar</span>}
           </div>
         )}
 
@@ -325,10 +279,10 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
           )}
         />
 
-        <Button type='submit' disabled={isSubmitting || autoSaveStatus === 'saving'}>
-          {(isSubmitting || autoSaveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+        <Button type='submit' disabled={isSubmitting || saveStatus === 'saving'}>
+          {(isSubmitting || saveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
 
-          {isSubmitting || autoSaveStatus === 'saving' ? 'Saving...' : 'Save'}
+          {isSubmitting || saveStatus === 'saving' ? 'Saving...' : 'Save'}
         </Button>
       </form>
     </Form>

@@ -20,6 +20,7 @@ export default function LinkDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [linkData, setLinkData] = useState<LinkData | null | undefined>(null)
   const [linkId, setLinkId] = useState<string | undefined>(isNew ? undefined : id)
+  const [hasBeenSaved, setHasBeenSaved] = useState(false)
 
   useEffect(() => {
     async function fetchLinkData() {
@@ -29,6 +30,7 @@ export default function LinkDetailPage() {
 
         if (result.success) {
           setLinkData(result.link)
+          setHasBeenSaved(true)
         } else {
           toast.error('Error', { description: result.error })
           router.push('/dashboard')
@@ -47,32 +49,39 @@ export default function LinkDetailPage() {
       description: formData.description ?? '',
     }
 
-    const isActualUpdateForBackend = Boolean(linkId)
-    const result = await saveLink(safeFormData, isActualUpdateForBackend, linkId)
+    const isActualUpdateForBackend = Boolean(linkId) && hasBeenSaved
 
-    if (result.success) {
-      if (result.linkId) {
-        setLinkId(result.linkId)
-      }
+    try {
+      const result = await saveLink(safeFormData, isActualUpdateForBackend, linkId)
 
-      if (isAutoSaveEvent) {
-        toast.success('Enlace guardado automáticamente')
-        router.refresh()
-      } else {
-        toast.success(isActualUpdateForBackend ? 'Enlace actualizado' : 'Enlace creado', {
-          description: 'El enlace se ha guardado correctamente',
-        })
-
-        // Redirigir al dashboard después de guardar (solo si no es autoguardado)
-        if (!isAutoSaveEvent) {
-          router.push('/dashboard')
+      if (result.success) {
+        if (result.linkId) {
+          setLinkId(result.linkId)
+          setHasBeenSaved(true)
         }
-      }
 
-      return result
-    } else {
-      toast.error('Error', { description: result.error || 'No se pudo crear el enlace' })
-      return { success: false, error: result.error || 'Error desconocido' }
+        if (isAutoSaveEvent) {
+          toast.success('Enlace guardado automáticamente', { duration: 2000 })
+          router.refresh()
+        } else {
+          toast.success(isActualUpdateForBackend ? 'Enlace actualizado' : 'Enlace creado', {
+            description: 'El enlace se ha guardado correctamente',
+          })
+
+          if (!isAutoSaveEvent) {
+            router.push('/dashboard')
+          }
+        }
+
+        return result
+      } else {
+        toast.error('Error', { description: result.error || 'No se pudo guardar el enlace' })
+        return { success: false, error: result.error || 'Error desconocido' }
+      }
+    } catch (error) {
+      console.error('Error al guardar enlace:', error)
+      toast.error('Error inesperado', { description: 'Ocurrió un error al guardar el enlace' })
+      return { success: false, error: 'Error inesperado' }
     }
   }
 
@@ -95,17 +104,6 @@ export default function LinkDetailPage() {
           </Link>
           <h1 className='text-2xl font-bold'>{isNew ? 'Add Link' : 'Edit Link'}</h1>
         </div>
-
-        {/* <div className='flex gap-2'>
-          <Button variant='outline' onClick={() => setIsEditModalOpen(true)}>
-            <PencilIcon className='h-4 w-4 mr-2' />
-            Editar
-          </Button>
-          <Button variant='destructive' onClick={handleDelete} disabled={isDeleting}>
-            {isDeleting ? <Loader2 className='h-4 w-4 animate-spin mr-2' /> : null}
-            Eliminar
-          </Button>
-        </div> */}
 
         <LinkForm
           defaultValues={
