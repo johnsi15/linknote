@@ -1,16 +1,17 @@
 import { useRef, useEffect, useState } from 'react'
-import { UseFormReturn } from 'react-hook-form'
+import { UseFormReturn, FieldValues } from 'react-hook-form'
 import { useDebouncedCallback } from 'use-debounce'
+import type { LinkFormData } from '@/types/link'
 
-interface UseAutoSaveOptions<T = any> {
-  form: UseFormReturn<any>
-  onSave: (data: any) => Promise<T>
+interface UseAutoSaveOptions<T extends FieldValues = LinkFormData> {
+  form: UseFormReturn<T>
+  onSave: (data: T) => Promise<void>
   delay?: number
   excludeFields?: string[]
-  linkId?: string // Para identificar si es update o create
+  linkId?: string
 }
 
-export function useAutoSave<T = any>({
+export function useAutoSave<T extends FieldValues = LinkFormData>({
   form,
   onSave,
   delay = 2000,
@@ -25,16 +26,16 @@ export function useAutoSave<T = any>({
   const lastSavedDataRef = useRef<string>('')
 
   const debouncedSave = useDebouncedCallback(
-    async (data: any) => {
+    async (data: T) => {
       if (isSavingRef.current) return
 
       const filteredData = Object.keys(data).reduce((acc, key) => {
         if (!excludeFields.includes(key)) {
-          acc[key] = data[key]
+          acc[key as keyof T] = data[key as keyof T]
         }
 
         return acc
-      }, {} as any)
+      }, {} as T)
 
       const currentDataString = JSON.stringify(filteredData)
 
@@ -50,7 +51,7 @@ export function useAutoSave<T = any>({
         setSaveStatus('saving')
         lastSavedDataRef.current = currentDataString
 
-        await onSave({ ...filteredData, id: linkId })
+        await onSave({ ...filteredData, id: linkId } as T)
 
         setSaveStatus('saved')
         setLastSaved(new Date())
@@ -73,7 +74,7 @@ export function useAutoSave<T = any>({
   useEffect(() => {
     const subscription = watch(data => {
       if (formState.isValid && !formState.isSubmitting) {
-        debouncedSave(data)
+        debouncedSave(data as T)
       }
     })
 

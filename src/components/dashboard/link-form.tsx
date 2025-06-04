@@ -54,7 +54,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
   })
 
   // Implementación del hook useAutoSave
-  const { saveStatus, lastSaved, cancelAutoSave } = useAutoSave({
+  const { saveStatus, lastSaved, cancelAutoSave } = useAutoSave<FormValues>({
     form,
     onSave: async (data: FormValues) => {
       const cleanedValues = {
@@ -76,7 +76,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
         router.refresh()
       }
 
-      return result
+      // return result
     },
     delay: 2000,
     excludeFields: [],
