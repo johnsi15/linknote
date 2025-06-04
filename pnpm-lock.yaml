@@ -53,6 +53,9 @@ importers:
       '@yoopta/exports':
         specifier: ^4.9.7
         version: 4.9.7(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      '@yoopta/link':
+        specifier: ^4.9.8
+        version: 4.9.8(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@yoopta/link-tool':
         specifier: ^4.9.7
         version: 4.9.7(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -132,7 +135,7 @@ importers:
         specifier: 3.3.0
         version: 3.3.0
       use-debounce:
-        specifier: ^10.0.4
+        specifier: 10.0.4
         version: 10.0.4(react@19.0.0)
       zod:
         specifier: ^3.24.4
@@ -172,7 +175,7 @@ importers:
         specifier: 4.1.7
         version: 4.1.7
       tsx:
-        specifier: ^4.19.4
+        specifier: 4.19.4
         version: 4.19.4
       tw-animate-css:
         specifier: 1.2.9
@@ -1967,6 +1970,13 @@ packages:
       react: '>=17.0.2'
       react-dom: '>=17.0.2'
 
+  '@yoopta/link@4.9.8':
+    resolution: {integrity: sha512-/4IGdn2pEqnDQbQPCsGfvVjkycyNo6lznZnFTqn8x6iwsGYaT6QS/lukA6uJSwpHKkif3La3qNLU3s0l0Sk+eA==}
+    peerDependencies:
+      '@yoopta/editor': '>=4.0.0'
+      react: '>=17.0.2'
+      react-dom: '>=17.0.2'
+
   '@yoopta/marks@4.9.8':
     resolution: {integrity: sha512-JBhlWXvozg8a2pPRa9eGNT+YzB+MnBBvVMF7K8P+MkfJVkyQ4kOWjWkpfFhJVNYqiFGX1ivn7H9Qyrbp4DfuQw==}
     peerDependencies:
@@ -3094,6 +3104,11 @@ packages:
 
   lower-case@2.0.2:
     resolution: {integrity: sha512-7fm3l3NAF9WfN6W3JOmf5drwpVqX78JtoGJ3A6W0a6ZnldM41w2fV5D490psKFTpMds8TJse/eHLFFsNHHjHgg==}
+
+  lucide-react@0.379.0:
+    resolution: {integrity: sha512-KcdeVPqmhRldldAAgptb8FjIunM2x2Zy26ZBh1RsEUcdLIvsEmbcw7KpzFYUy5BbpGeWhPu9Z9J5YXfStiXwhg==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0
 
   lucide-react@0.469.0:
     resolution: {integrity: sha512-28vvUnnKQ/dBwiCQtwJw7QauYnE7yd2Cyp4tTTJpvglX4EMpbflcdBgrgToX2j71B3YvugK/NH3BGUk+E/p/Fw==}
@@ -5748,6 +5763,13 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
+  '@yoopta/link@4.9.8(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+    dependencies:
+      '@yoopta/editor': 4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0)
+      lucide-react: 0.379.0(react@19.0.0)
+      react: 19.0.0
+      react-dom: 19.0.0(react@19.0.0)
+
   '@yoopta/marks@4.9.8(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@yoopta/editor': 4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0)
@@ -7033,6 +7055,10 @@ snapshots:
   lower-case@2.0.2:
     dependencies:
       tslib: 2.8.1
+
+  lucide-react@0.379.0(react@19.0.0):
+    dependencies:
+      react: 19.0.0
 
   lucide-react@0.469.0(react@19.0.0):
     dependencies:
