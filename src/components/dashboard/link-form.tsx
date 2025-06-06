@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Info, Loader2, Save, SparklesIcon } from 'lucide-react'
+import { Loader2, Save, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
 
@@ -71,12 +71,10 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
         if (result.linkId && linkId !== result.linkId) {
           setLinkId(result.linkId)
         }
-        // Restablece el formulario con los valores guardados para actualizar el estado isDirty
+
         form.reset(cleanedValues)
         router.refresh()
       }
-
-      // return result
     },
     delay: 2000,
     excludeFields: [],
@@ -100,7 +98,6 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
 
     setIsSubmitting(true)
     try {
-      // Cancelar cualquier autoguardado pendiente antes de enviar el formulario
       cancelAutoSave()
 
       const result = await onSubmit(cleanedValues, false)
@@ -143,7 +140,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        {autoSave && saveStatus !== 'idle' && (
+        {/* {autoSave && saveStatus !== 'idle' && (
           <div className='text-sm text-muted-foreground flex items-center gap-2 justify-end'>
             {saveStatus === 'saving' && (
               <>
@@ -159,7 +156,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
             )}
             {saveStatus === 'error' && <span className='text-destructive'>Error al guardar</span>}
           </div>
-        )}
+        )} */}
 
         <FormField
           control={form.control}
@@ -215,10 +212,6 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
                   />
                 </div>
               </FormControl>
-              <span className='text-xs text-muted-foreground flex items-center gap-1 mt-1'>
-                <Info className='w-3 h-3' />
-                Soon you will be able to write rich content here...
-              </span>
               <FormMessage />
             </FormItem>
           )}
