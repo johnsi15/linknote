@@ -164,6 +164,11 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
+
+  --color-base-100: oklch(0.205 0 0);
+  --color-base-200: oklch(0.269 0 0);
+  --color-base-300: oklch(0.269 0 0 / 80%);
+  --color-base-content: oklch(0.985 0 0);
 }
 
 .dark {
@@ -219,21 +224,27 @@
   }
 }
 
-/* .yoopta-block-actions {
-  position: absolute !important;
-  left: -0px !important;
-  top: 0 !important;
-  z-index: 50 !important;
-} */
+.yoopta-editor ::selection {
+  background: oklch(0.5 0.2 250);
+  color: white;
+}
 
-/* .yoopta-editor [data-yoopta-block] {
-  position: relative !important;
-} */
+.dark .yoopta-editor ::selection {
+  background: oklch(0.7 0.2 250);
+  color: white;
+}
 
-/* .yoopta-editor {
-  position: relative !important;
-  width: 100% !important;
-} */
+.yoopta-editor pre[class*='language-'] ::selection,
+.yoopta-editor code[class*='language-'] ::selection {
+  background: oklch(0.7 0.2 250);
+  color: white;
+}
+
+.dark .yoopta-editor pre[class*='language-'] ::selection,
+.dark .yoopta-editor code[class*='language-'] ::selection {
+  background: oklch(0.8 0.2 250);
+  color: white;
+}
 
 .dark,
 [data-theme='dark'] {
@@ -307,4 +318,46 @@
     background-color: var(--color-base-100) !important;
     border-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
   }
+}
+
+.yoo-code-text-popover-foreground .yoopta-button[data-active='true'] {
+  background-color: oklch(0.5 0.2 250) !important;
+  color: white !important;
+  outline: 2px solid oklch(0.5 0.2 250) !important;
+  outline-offset: -1px !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button[data-active='true'] {
+  background-color: oklch(0.6 0.2 250) !important;
+  color: white !important;
+  outline: 2px solid oklch(0.7 0.2 250) !important;
+}
+
+.yoo-code-text-popover-foreground .yoopta-button[aria-selected='true'] {
+  background-color: oklch(0.5 0.2 250) !important;
+  color: white !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button[aria-selected='true'] {
+  background-color: oklch(0.6 0.2 250) !important;
+  color: white !important;
+}
+
+.yoo-code-text-popover-foreground .yoopta-button:not([data-active='true']):hover {
+  background-color: oklch(0.9 0.1 250 / 0.5) !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button:not([data-active='true']):hover {
+  background-color: oklch(0.3 0.1 250 / 0.5) !important;
+}
+
+.yoo-code-text-popover-foreground .yoopta-button:focus-visible {
+  outline: 2px solid oklch(0.5 0.2 250) !important;
+  outline-offset: 2px !important;
+  background-color: transparent !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button:focus-visible {
+  outline: 2px solid oklch(0.7 0.2 250) !important;
+  background-color: transparent !important;
 }
