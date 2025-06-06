@@ -4,6 +4,9 @@ import { useEffect, useRef } from 'react'
 import YooptaEditor, { YooptaContentValue } from '@yoopta/editor'
 import Paragraph from '@yoopta/paragraph'
 import Code from '@yoopta/code'
+import { NumberedList, BulletedList, TodoList } from '@yoopta/lists'
+import { HeadingOne, HeadingTwo, HeadingThree } from '@yoopta/headings'
+import Divider from '@yoopta/divider'
 import { Bold, Italic, CodeMark, Underline, Strike, Highlight } from '@yoopta/marks'
 import LinkTool, { DefaultLinkToolRender } from '@yoopta/link-tool'
 import NextLink from 'next/link'
@@ -16,8 +19,12 @@ import { cn } from '@/lib/utils'
 const MARKS = [Bold, Italic, CodeMark, Underline, Strike, Highlight]
 
 const plugins = [
+  HeadingOne,
+  HeadingTwo,
+  HeadingThree,
   Paragraph,
   Code,
+  Divider,
   Link.extend({
     renders: {
       link: ({ attributes, children, element }) => (
@@ -34,6 +41,9 @@ const plugins = [
       ),
     },
   }),
+  NumberedList,
+  BulletedList,
+  TodoList,
 ]
 
 const TOOLS = {
@@ -86,12 +96,7 @@ export function RichTextEditor({ className, value, onChange }: RichTextEditorPro
   }
 
   return (
-    <div
-      className={cn(
-        'dark:bg-zinc-900 dark:text-white border rounded-md pt-3 pb-3 pr-3 pl-12 min-h-[120px] focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 w-full',
-        className
-      )}
-    >
+    <div className={cn('dark:bg-transparent dark:text-white min-h-[120px] w-full', className)}>
       <div ref={selectionRef} />
       <YooptaEditor
         editor={editor}
