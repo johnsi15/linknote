@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Loader2, Save, SparklesIcon } from 'lucide-react'
+import { Loader2, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
 
@@ -31,7 +31,7 @@ interface LinkFormProps {
   autoSave?: boolean
 }
 
-export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkFormProps) {
+export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
@@ -53,8 +53,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
     },
   })
 
-  // Implementación del hook useAutoSave
-  const { saveStatus, lastSaved, cancelAutoSave } = useAutoSave<FormValues>({
+  const { saveStatus, cancelAutoSave } = useAutoSave<FormValues>({
     form,
     onSave: async (data: FormValues) => {
       const cleanedValues = {
@@ -72,12 +71,10 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
           setLinkId(result.linkId)
         }
 
-        form.reset(cleanedValues)
         router.refresh()
       }
     },
-    delay: 2000,
-    excludeFields: [],
+    delay: 1000,
     linkId: linkId,
   })
 
@@ -140,24 +137,6 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        {/* {autoSave && saveStatus !== 'idle' && (
-          <div className='text-sm text-muted-foreground flex items-center gap-2 justify-end'>
-            {saveStatus === 'saving' && (
-              <>
-                <Loader2 className='h-3 w-3 animate-spin' />
-                <span>Guardando...</span>
-              </>
-            )}
-            {saveStatus === 'saved' && (
-              <>
-                <Save className='h-3 w-3' />
-                <span>Guardado {lastSaved ? `a las ${lastSaved.toLocaleTimeString()}` : ''}</span>
-              </>
-            )}
-            {saveStatus === 'error' && <span className='text-destructive'>Error al guardar</span>}
-          </div>
-        )} */}
-
         <FormField
           control={form.control}
           name='title'
@@ -207,6 +186,7 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
                     value={field.value || ''}
                     onChange={newValue => {
                       field.onChange(newValue)
+                      form.trigger('description')
                     }}
                     className='min-h-[300px]'
                   />
@@ -272,11 +252,12 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = false }: LinkForm
           )}
         />
 
-        <Button type='submit' disabled={isSubmitting || saveStatus === 'saving'}>
-          {(isSubmitting || saveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-
-          {isSubmitting || saveStatus === 'saving' ? 'Saving...' : 'Save'}
-        </Button>
+        {!isEditing && (
+          <Button type='submit' disabled={isSubmitting || saveStatus === 'saving'}>
+            {(isSubmitting || saveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            {isSubmitting || saveStatus === 'saving' ? 'Saving...' : 'Save'}
+          </Button>
+        )}
       </form>
     </Form>
   )
