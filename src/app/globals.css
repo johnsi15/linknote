@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -43,24 +43,30 @@
   --radius-xl: calc(var(--radius) + 4px);
   --animate-shiny-text: shiny-text 8s infinite;
   @keyframes shiny-text {
-  0%, 90%, 100% {
-    background-position: calc(-100% - var(--shiny-width)) 0;
+    0%,
+    90%,
+    100% {
+      background-position: calc(-100% - var(--shiny-width)) 0;
     }
-  30%, 60% {
-    background-position: calc(100% + var(--shiny-width)) 0;
+    30%,
+    60% {
+      background-position: calc(100% + var(--shiny-width)) 0;
     }
   }
-  --animate-meteor: meteor 5s linear infinite
-;
+  --animate-meteor: meteor 5s linear infinite;
   @keyframes meteor {
-  0% {
-    transform: rotate(var(--angle)) translateX(0);
-    opacity: 1;}
-  70% {
-    opacity: 1;}
-  100% {
-    transform: rotate(var(--angle)) translateX(-500px);
-    opacity: 0;}}
+    0% {
+      transform: rotate(var(--angle)) translateX(0);
+      opacity: 1;
+    }
+    70% {
+      opacity: 1;
+    }
+    100% {
+      transform: rotate(var(--angle)) translateX(-500px);
+      opacity: 0;
+    }
+  }
   --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
   --color-color-5: var(--color-5);
   --color-color-4: var(--color-4);
@@ -68,37 +74,57 @@
   --color-color-2: var(--color-2);
   --color-color-1: var(--color-1);
   @keyframes rainbow {
-  0% {
-    background-position: 0%;}
-  100% {
-    background-position: 200%;}}
+    0% {
+      background-position: 0%;
+    }
+    100% {
+      background-position: 200%;
+    }
+  }
   --animate-shimmer-slide: shimmer-slide var(--speed) ease-in-out infinite alternate;
   --animate-spin-around: spin-around calc(var(--speed) * 2) infinite linear;
   @keyframes shimmer-slide {
-  to {
-    transform: translate(calc(100cqw - 100%), 0);}}
+    to {
+      transform: translate(calc(100cqw - 100%), 0);
+    }
+  }
   @keyframes spin-around {
-  0% {
-    transform: translateZ(0) rotate(0);}
-  15%, 35% {
-    transform: translateZ(0) rotate(90deg);}
-  65%, 85% {
-    transform: translateZ(0) rotate(270deg);}
-  100% {
-    transform: translateZ(0) rotate(360deg);}}
+    0% {
+      transform: translateZ(0) rotate(0);
+    }
+    15%,
+    35% {
+      transform: translateZ(0) rotate(90deg);
+    }
+    65%,
+    85% {
+      transform: translateZ(0) rotate(270deg);
+    }
+    100% {
+      transform: translateZ(0) rotate(360deg);
+    }
+  }
   --animate-pulse: pulse var(--duration) ease-out infinite;
   @keyframes pulse {
-  0%, 100% {
-    boxShadow: 0 0 0 0 var(--pulse-color);}
-  50% {
-    boxShadow: 0 0 0 8px var(--pulse-color);}}
+    0%,
+    100% {
+      boxshadow: 0 0 0 0 var(--pulse-color);
+    }
+    50% {
+      boxshadow: 0 0 0 8px var(--pulse-color);
+    }
+  }
   --animate-rippling: rippling var(--duration) ease-out;
   @keyframes rippling {
-  0% {
-    opacity: 1;}
-  100% {
-    transform: scale(2);
-    opacity: 0;}}}
+    0% {
+      opacity: 1;
+    }
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+}
 
 :root {
   --radius: 0.625rem;
@@ -138,6 +164,11 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
+
+  --color-base-100: oklch(0.205 0 0);
+  --color-base-200: oklch(0.269 0 0);
+  --color-base-300: oklch(0.269 0 0 / 80%);
+  --color-base-content: oklch(0.985 0 0);
 }
 
 .dark {
@@ -177,6 +208,11 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
+
+  --color-base-100: oklch(0.205 0 0);
+  --color-base-200: oklch(0.269 0 0);
+  --color-base-300: oklch(0.269 0 0 / 80%);
+  --color-base-content: oklch(0.985 0 0);
 }
 
 @layer base {
@@ -186,4 +222,142 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.yoopta-editor ::selection {
+  background: oklch(0.5 0.2 250);
+  color: white;
+}
+
+.dark .yoopta-editor ::selection {
+  background: oklch(0.7 0.2 250);
+  color: white;
+}
+
+.yoopta-editor pre[class*='language-'] ::selection,
+.yoopta-editor code[class*='language-'] ::selection {
+  background: oklch(0.7 0.2 250);
+  color: white;
+}
+
+.dark .yoopta-editor pre[class*='language-'] ::selection,
+.dark .yoopta-editor code[class*='language-'] ::selection {
+  background: oklch(0.8 0.2 250);
+  color: white;
+}
+
+.dark,
+[data-theme='dark'] {
+  .yoopta-toolbar-root {
+    background-color: var(--color-base-100) !important;
+    border-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
+  }
+
+  .yoopta-toolbar-separator {
+    background-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
+  }
+
+  .yoopta-toolbar-item:hover,
+  .yoopta-toolbar-item-mark:hover {
+    background-color: var(--color-base-300) !important;
+  }
+
+  .yoopta-mark-code {
+    background-color: var(--color-base-300) !important;
+  }
+
+  .yoopta-extended-block-actions {
+    background-color: var(--color-base-100) !important;
+  }
+
+  .yoopta-block-options-menu-content {
+    background-color: var(--color-base-100) !important;
+    border-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
+  }
+
+  .yoopta-block-options-button:hover {
+    background-color: var(--color-base-300) !important;
+  }
+
+  .yoo-code-text-popover-foreground {
+    background-color: var(--color-base-200) !important;
+  }
+
+  .yoo-code-text-popover-foreground > * > .yoopta-button:hover {
+    background-color: var(--color-base-300) !important;
+  }
+
+  .yoopta-action-menu-list-content {
+    background-color: var(--color-base-100) !important;
+    border-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
+  }
+
+  .yoopta-action-menu-list-content > * > * > .yoopta-button:hover {
+    background-color: var(--color-base-300) !important;
+  }
+
+  .yoopta-action-menu-list-content > * > * > .yoopta-button[aria-selected='true'] {
+    background-color: var(--color-base-300) !important;
+  }
+
+  .yoopta-action-menu-list-content > * > * > .yoopta-button > .yoo-action-menu-flex {
+    background-color: var(--color-base-200) !important;
+  }
+
+  .yoopta-block-actions-plus,
+  .yoopta-block-actions-drag {
+    color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
+  }
+
+  .yoopta-block-actions-plus:hover,
+  .yoopta-block-actions-drag:hover {
+    color: color-mix(in oklab, var(--color-base-content) 60%, transparent) !important;
+  }
+
+  .yoopta-link-preview {
+    background-color: var(--color-base-100) !important;
+    border-color: color-mix(in oklab, var(--color-base-content) 30%, transparent) !important;
+  }
+}
+
+.yoo-code-text-popover-foreground .yoopta-button[data-active='true'] {
+  background-color: oklch(0.5 0.2 250) !important;
+  color: white !important;
+  outline: 2px solid oklch(0.5 0.2 250) !important;
+  outline-offset: -1px !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button[data-active='true'] {
+  background-color: oklch(0.6 0.2 250) !important;
+  color: white !important;
+  outline: 2px solid oklch(0.7 0.2 250) !important;
+}
+
+.yoo-code-text-popover-foreground .yoopta-button[aria-selected='true'] {
+  background-color: oklch(0.5 0.2 250) !important;
+  color: white !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button[aria-selected='true'] {
+  background-color: oklch(0.6 0.2 250) !important;
+  color: white !important;
+}
+
+.yoo-code-text-popover-foreground .yoopta-button:not([data-active='true']):hover {
+  background-color: oklch(0.9 0.1 250 / 0.5) !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button:not([data-active='true']):hover {
+  background-color: oklch(0.3 0.1 250 / 0.5) !important;
+}
+
+.yoo-code-text-popover-foreground .yoopta-button:focus-visible {
+  outline: 2px solid oklch(0.5 0.2 250) !important;
+  outline-offset: 2px !important;
+  background-color: transparent !important;
+}
+
+.dark .yoo-code-text-popover-foreground .yoopta-button:focus-visible {
+  outline: 2px solid oklch(0.7 0.2 250) !important;
+  background-color: transparent !important;
 }

@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LinkIcon, ExternalLinkIcon, CopyIcon, PencilIcon, TrashIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
+// import ClientHtml from '@/components/dashboard/client-html'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../ui/dialog'
-import { LinkForm } from './link-form'
+import { extractSummary } from '@/lib/utils'
 
 interface LinkCardProps {
   id?: string
@@ -20,9 +21,16 @@ interface LinkCardProps {
 }
 
 export function LinkCard({ id = 'mock-id', title, url, description, tags, createdAt }: LinkCardProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCopied, setIsCopied] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter()
+
+  const [summary, setSummary] = useState('')
+
+  useEffect(() => {
+    setSummary(extractSummary(description))
+  }, [description])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -35,41 +43,10 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
     }, 2000)
   }
 
-  const handleUpdate = async (formData: any, isAutoSaveEvent = false) => {
-    try {
-      // todo...
-      const result = await fetch(`/api/links/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      }).then(res => res.json())
-
-      if (result.success) {
-        if (!isAutoSaveEvent) {
-          toast.success('Link updated', { description: 'The link has been updated successfully' })
-          setIsEditModalOpen(false)
-          // Recargar la página para ver los cambios
-          window.location.reload()
-        }
-
-        return { success: true, linkId: id }
-      } else {
-        toast.error('Error', { description: result.error })
-        return { success: false, error: result.error || 'Error desconocido' }
-      }
-    } catch (error) {
-      console.error('Error link update:', error)
-      toast.error('Error', { description: 'The link could not be updated.' })
-      return { success: false, error: 'Error link update' }
-    }
-  }
-
   const handleDelete = async (id: string) => {
     if (confirm('¿Are you sure you want to remove this link?')) {
       setIsDeleting(true)
-      // TODO...
+
       const result = await fetch(`/api/links/${id}`, {
         method: 'DELETE',
         headers: {
@@ -79,8 +56,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
 
       if (result.success) {
         toast.success('Link removed', { description: 'The link has been removed successfully' })
-        // router.push('/dashboard')
-        window.location.reload()
+        router.refresh()
       } else {
         toast.error('Error', { description: result.error })
         setIsDeleting(false)
@@ -124,7 +100,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           </div>
         </CardHeader>
         <CardContent className='pb-2'>
-          <p className='text-sm text-muted-foreground'>{description}</p>
+          {summary && <p className='text-sm text-muted-foreground line-clamp-2'>{summary}</p>}
         </CardContent>
         <CardFooter className='flex items-center justify-between pt-2'>
           <div className='flex flex-wrap gap-1'>
@@ -138,7 +114,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
             <span>{formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
             {id && (
               <div className='flex space-x-1 ml-2'>
-                <Button variant='ghost' size='icon' className='h-7 w-7' onClick={() => setIsEditModalOpen(true)}>
+                <Button variant='ghost' size='icon' className='h-7 w-7' onClick={() => router.push(`/links/${id}`)}>
                   <PencilIcon className='h-3.5 w-3.5' />
                 </Button>
                 <Button
@@ -146,6 +122,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
                   size='icon'
                   className='h-7 w-7 text-destructive'
                   onClick={() => handleDelete(id)}
+                  disabled={isDeleting}
                 >
                   <TrashIcon className='h-3.5 w-3.5' />
                 </Button>
@@ -154,24 +131,6 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           </div>
         </CardFooter>
       </Card>
-
-      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className='sm:max-w-3xl'>
-          <DialogHeader>
-            <DialogTitle>Edit Link</DialogTitle>
-          </DialogHeader>
-          <LinkForm
-            defaultValues={{
-              title,
-              url,
-              description: description || '',
-              tags: tags || [],
-            }}
-            onSubmit={handleUpdate}
-            autoSave={true}
-          />
-        </DialogContent>
-      </Dialog>
     </>
   )
 }

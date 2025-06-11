@@ -7,10 +7,11 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Info, Loader2, Save, SparklesIcon } from 'lucide-react'
+import { Loader2, SparklesIcon } from 'lucide-react'
+import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
+import { useAutoSave } from '@/hooks/use-auto-save'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -30,32 +31,14 @@ interface LinkFormProps {
   autoSave?: boolean
 }
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedValue(value)
-    }, delay)
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [value, delay])
-
-  return debouncedValue
-}
-
-export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormProps) {
+export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [lastSaved, setLastSaved] = useState<Date | null>(null)
-  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const initialRender = useRef(true)
   const [linkId, setLinkId] = useState<string | undefined>(undefined)
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [noSuggestions, setNoSuggestions] = useState(false)
   const router = useRouter()
+  const titleInputRef = useRef<HTMLInputElement>(null)
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -70,64 +53,36 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
     },
   })
 
-  const formValues = form.watch()
-  const debouncedFormValues = useDebounce(formValues, 2000)
+  const { saveStatus, cancelAutoSave } = useAutoSave<FormValues>({
+    form,
+    onSave: async (data: FormValues) => {
+      const cleanedValues = {
+        ...data,
+        title: data.title.trim(),
+        url: data.url.trim(),
+        description: data.description?.trim() || '',
+        tags: data.tags.map((tag: string) => tag.trim()).filter((tag: string) => tag !== ''),
+      }
+
+      const result = await onSubmit(cleanedValues, true)
+
+      if (result.success) {
+        if (result.linkId && linkId !== result.linkId) {
+          setLinkId(result.linkId)
+        }
+
+        router.refresh()
+      }
+    },
+    delay: 1000,
+    linkId: linkId,
+  })
 
   useEffect(() => {
-    if (initialRender.current) {
-      initialRender.current = false
-      return
+    if (titleInputRef.current && !isEditing) {
+      titleInputRef.current.focus()
     }
-
-    const hasTitleAndUrl =
-      debouncedFormValues.title.trim() !== '' &&
-      debouncedFormValues.url.trim() !== '' &&
-      formSchema.safeParse(debouncedFormValues).success
-
-    if (autoSave && hasTitleAndUrl && !isSubmitting) {
-      const autoSaveData = async () => {
-        try {
-          setAutoSaveStatus('saving')
-
-          const cleanedValues = {
-            ...debouncedFormValues,
-            title: debouncedFormValues.title.trim(),
-            url: debouncedFormValues.url.trim(),
-            description: debouncedFormValues.description?.trim() || '',
-            tags: debouncedFormValues.tags.map(tag => tag.trim()).filter(tag => tag !== ''),
-          }
-
-          const result = await onSubmit(cleanedValues, true)
-
-          if (result.success) {
-            if (result.linkId && linkId !== result.linkId) {
-              setLinkId(result.linkId)
-            }
-            setLastSaved(new Date())
-            setAutoSaveStatus('saved')
-            // Restablece el formulario con los valores guardados para actualizar el estado isDirty
-            form.reset(cleanedValues)
-            router.refresh()
-            // Cambiar el estado a 'idle' después de 3 segundos
-            setTimeout(() => {
-              setAutoSaveStatus('idle')
-            }, 3000)
-          } else {
-            setAutoSaveStatus('error')
-            console.error('Error al guardar automáticamente:', result.error || 'Unknown error during auto-save')
-          }
-        } catch (error) {
-          console.error('Error al guardar automáticamente:', error)
-          setAutoSaveStatus('error')
-        }
-      }
-
-      if (form.formState.isDirty) {
-        autoSaveData()
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedFormValues, autoSave, isSubmitting, isEditing, linkId, onSubmit, form, formSchema])
+  }, [isEditing])
 
   const handleSubmit = async (values: FormValues) => {
     const cleanedValues = {
@@ -140,11 +95,12 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
 
     setIsSubmitting(true)
     try {
+      cancelAutoSave()
+
       const result = await onSubmit(cleanedValues, false)
 
       if (result.success && result.linkId) {
         setLinkId(result.linkId)
-        setLastSaved(new Date())
         form.reset(cleanedValues)
       }
     } finally {
@@ -181,24 +137,6 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-        {autoSave && autoSaveStatus !== 'idle' && (
-          <div className='text-sm text-muted-foreground flex items-center gap-2 justify-end'>
-            {autoSaveStatus === 'saving' && (
-              <>
-                <Loader2 className='h-3 w-3 animate-spin' />
-                <span>Guardando...</span>
-              </>
-            )}
-            {autoSaveStatus === 'saved' && (
-              <>
-                <Save className='h-3 w-3' />
-                <span>Guardado {lastSaved ? `a las ${lastSaved.toLocaleTimeString()}` : ''}</span>
-              </>
-            )}
-            {autoSaveStatus === 'error' && <span className='text-destructive'>Error al guardar</span>}
-          </div>
-        )}
-
         <FormField
           control={form.control}
           name='title'
@@ -206,7 +144,12 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder='Link title' {...field} />
+                <Input
+                  placeholder='Link title'
+                  {...field}
+                  ref={titleInputRef}
+                  className='h-12' // Input más alto
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -220,7 +163,11 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input placeholder='https://johnserrano.co' {...field} />
+                <Input
+                  placeholder='https://johnserrano.co'
+                  {...field}
+                  className='h-12' // Input más alto
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -234,12 +181,17 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Textarea placeholder='Link description' className='resize-none' {...field} value={field.value || ''} />
+                <div className='min-h-[300px]'>
+                  <RichTextEditor
+                    value={field.value || ''}
+                    onChange={newValue => {
+                      field.onChange(newValue)
+                      form.trigger('description')
+                    }}
+                    className='min-h-[300px]'
+                  />
+                </div>
               </FormControl>
-              <span className='text-xs text-muted-foreground flex items-center gap-1 mt-1'>
-                <Info className='w-3 h-3' />
-                Soon you will be able to write rich content here...
-              </span>
               <FormMessage />
             </FormItem>
           )}
@@ -300,11 +252,12 @@ export function LinkForm({ defaultValues, onSubmit, autoSave = true }: LinkFormP
           )}
         />
 
-        <Button type='submit' disabled={isSubmitting || autoSaveStatus === 'saving'}>
-          {(isSubmitting || autoSaveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
-
-          {isSubmitting || autoSaveStatus === 'saving' ? 'Saving...' : isEditing ? 'Update' : 'Create'}
-        </Button>
+        {!isEditing && (
+          <Button type='submit' disabled={isSubmitting || saveStatus === 'saving'}>
+            {(isSubmitting || saveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
+            {isSubmitting || saveStatus === 'saving' ? 'Saving...' : 'Save'}
+          </Button>
+        )}
       </form>
     </Form>
   )

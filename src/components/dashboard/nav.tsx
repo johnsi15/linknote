@@ -1,16 +1,14 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { BookmarkIcon, PlusIcon, TagIcon, LayoutGridIcon } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { NewLinkModal } from '@/components/dashboard/new-link/modal'
 
 export function DashboardNav({ className }: { className?: string }) {
   const pathname = usePathname()
-  const [isNewLinkModalOpen, setIsNewLinkModalOpen] = useState(false)
+  const router = useRouter()
 
   return (
     <>
@@ -52,7 +50,7 @@ export function DashboardNav({ className }: { className?: string }) {
           variant='default'
           size='sm'
           className='flex items-center mr-3'
-          onClick={() => setIsNewLinkModalOpen(true)}
+          onClick={() => router.push('/links/new')}
         >
           <PlusIcon className='mr-2 h-4 w-4' />
           New Link
@@ -64,8 +62,6 @@ export function DashboardNav({ className }: { className?: string }) {
           <span className='hidden sm:inline'>⌘</span>K
         </span>
       </nav>
-
-      <NewLinkModal isOpen={isNewLinkModalOpen} onClose={() => setIsNewLinkModalOpen(false)} />
     </>
   )
 }
