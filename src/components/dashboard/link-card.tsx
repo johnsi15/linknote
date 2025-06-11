@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LinkIcon, ExternalLinkIcon, CopyIcon, PencilIcon, TrashIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
-import ClientHtml from '@/components/dashboard/client-html'
+// import ClientHtml from '@/components/dashboard/client-html'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { extractSummary } from '@/lib/utils'
 
 interface LinkCardProps {
   id?: string
@@ -24,6 +25,12 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
   const [isCopied, setIsCopied] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
+
+  const [summary, setSummary] = useState('')
+
+  useEffect(() => {
+    setSummary(extractSummary(description))
+  }, [description])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -93,8 +100,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
           </div>
         </CardHeader>
         <CardContent className='pb-2'>
-          {/* <p className='text-sm text-muted-foreground'>{description}</p> */}
-          <ClientHtml html={description} className='text-sm text-muted-foreground' />
+          {summary && <p className='text-sm text-muted-foreground line-clamp-2'>{summary}</p>}
         </CardContent>
         <CardFooter className='flex items-center justify-between pt-2'>
           <div className='flex flex-wrap gap-1'>
