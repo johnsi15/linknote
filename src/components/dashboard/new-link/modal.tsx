@@ -32,19 +32,19 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
       }
 
       if (isAutoSaveEvent) {
-        toast.success('Enlace guardado automáticamente')
+        toast.success('Link saved')
         router.refresh()
       } else {
-        toast.success(isActualUpdateForBackend ? 'Enlace actualizado' : 'Enlace creado', {
-          description: 'El enlace se ha guardado correctamente',
+        toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
+          description: 'The link has been saved successfully',
         })
         onClose()
       }
 
       return result
     } else {
-      toast.error('Error', { description: result.error || 'No se pudo crear el enlace' })
-      return { success: false, error: result.error || 'Error desconocido' }
+      toast.error('Error', { description: result.error || 'Error creating link' })
+      return { success: false, error: result.error || 'Error creating link' }
     }
   }
 

@@ -61,11 +61,11 @@ export default function LinkDetailPage() {
         }
 
         if (isAutoSaveEvent) {
-          toast.success('Enlace guardado automáticamente', { duration: 2000 })
+          toast.success('Link saved', { duration: 2000 })
           router.refresh()
         } else {
-          toast.success(isActualUpdateForBackend ? 'Enlace actualizado' : 'Enlace creado', {
-            description: 'El enlace se ha guardado correctamente',
+          toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
+            description: 'The link has been saved successfully',
           })
 
           if (!isAutoSaveEvent) {
@@ -75,13 +75,13 @@ export default function LinkDetailPage() {
 
         return result
       } else {
-        toast.error('Error', { description: result.error || 'No se pudo guardar el enlace' })
-        return { success: false, error: result.error || 'Error desconocido' }
+        toast.error('Error', { description: result.error || 'Error saving link' })
+        return { success: false, error: result.error || 'Error saving link' }
       }
     } catch (error) {
-      console.error('Error al guardar enlace:', error)
-      toast.error('Error inesperado', { description: 'Ocurrió un error al guardar el enlace' })
-      return { success: false, error: 'Error inesperado' }
+      console.error('Error saving link:', error)
+      toast.error('Error', { description: 'An error occurred while saving the link' })
+      return { success: false, error: 'An error occurred while saving the link' }
     }
   }
 
