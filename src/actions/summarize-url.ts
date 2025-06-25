@@ -1,9 +1,14 @@
+'use server'
+
 import { extract, type ArticleData } from '@extractus/article-extractor'
 import { createStreamableValue } from 'ai/rsc'
 import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 
+// leer la doc: https://ai-sdk.dev/docs/ai-sdk-core/generating-text#streamtext
 export async function summarizeUrl(url: string) {
+  'use server'
+
   if (!url || !isValidUrl(url)) {
     throw new Error('URL inválida')
   }
@@ -34,7 +39,7 @@ export async function summarizeUrl(url: string) {
 
     ;(async () => {
       try {
-        const { textStream } = await streamText({
+        const { textStream } = streamText({
           model: openai('gpt-4o-mini'),
           messages: [
             {
@@ -45,12 +50,12 @@ export async function summarizeUrl(url: string) {
             {
               role: 'user',
               content: `Resume este artículo en 2-3 párrafos claros y útiles:
-
+  
               Título: ${article.title || 'Sin título'}
               ${article.description ? `Descripción: ${article.description}` : ''}
               ${article.author ? `Autor: ${article.author}` : ''}
               ${article.published ? `Fecha: ${article.published}` : ''}
-
+  
               Contenido principal:
               ${contentForAI}
               `,
@@ -66,7 +71,11 @@ export async function summarizeUrl(url: string) {
 
         stream.done()
       } catch (error) {
-        stream.error(error.message)
+        if (error instanceof Error) {
+          console.log(error.message)
+        } else {
+          console.log(String(error))
+        }
       }
     })()
 
