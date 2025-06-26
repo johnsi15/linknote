@@ -33,3 +33,26 @@ export function extractSummary(html: string, maxLength: number = 100): string {
 
   return text.substring(0, lastSpace).trim() + '...'
 }
+
+export function concatenateHtmlContent(existingContent: string, newContent: string): string {
+  if (!existingContent || isDescriptionEmpty(existingContent)) {
+    return newContent
+  }
+
+  if (!newContent) {
+    return existingContent
+  }
+
+  // Si ambos tienen contenido, concatenar de forma inteligente
+  // Remover las etiquetas de cierre del contenido existente y las de apertura del nuevo
+  const cleanExisting = existingContent.replace(/<\/body>\s*$/, '')
+  const cleanNew = newContent.replace(/^<body[^>]*>\s*/, '')
+
+  return cleanExisting + cleanNew
+}
+
+export function isDescriptionEmpty(desc: string) {
+  // Detecta string vacío o body Yoopta vacío (sin contenido visible)
+  if (!desc) return true
+  return /^<body[^>]*>\s*<p[^>]*>\s*<\/p>\s*<\/body>$/.test(desc.trim())
+}

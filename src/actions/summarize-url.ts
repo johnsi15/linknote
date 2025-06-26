@@ -6,6 +6,8 @@ import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
 
 // leer la doc: https://ai-sdk.dev/docs/ai-sdk-core/generating-text#streamtext
+// https://ai-sdk.dev/cookbook/rsc/stream-text-with-chat-prompt
+// https://www.youtube.com/watch?v=wBowRKZXx0I&list=WL&index=4&t=391s
 export async function summarizeUrl(url: string) {
   'use server'
 
