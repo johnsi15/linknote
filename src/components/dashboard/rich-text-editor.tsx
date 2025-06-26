@@ -70,20 +70,24 @@ interface RichTextEditorProps {
 export function RichTextEditor({ className, value, onChange }: RichTextEditorProps) {
   const { editor, htmlToYoopta, yooptaToHtml, setEditorValue } = useYooptaConverter()
   const selectionRef = useRef(null)
-  const initializationDoneRef = useRef(false)
+  const lastValueRef = useRef(value)
 
-  // Initialize the editor only once when the component mounts
+  // Update editor when value changes
   useEffect(() => {
-    if (!initializationDoneRef.current) {
-      const yooptaValue = htmlToYoopta(value)
+    // Only update if value has actually changed
+    if (value !== lastValueRef.current) {
+      lastValueRef.current = value
 
-      if (yooptaValue) {
-        setEditorValue(yooptaValue)
-        initializationDoneRef.current = true
+      try {
+        const yooptaValue = htmlToYoopta(value || '')
+        if (yooptaValue) {
+          setEditorValue(yooptaValue)
+        }
+      } catch (error) {
+        console.error('Error updating editor value:', error)
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [value, htmlToYoopta, setEditorValue])
 
   const handleEditorChange = (editorValue: YooptaContentValue) => {
     try {

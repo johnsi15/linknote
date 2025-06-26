@@ -12,6 +12,8 @@ import { TagInput } from '@/components/dashboard/tag-input'
 import { Loader2, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
+import { useUrlSummary } from '@/hooks/use-url-summary'
+import { isDescriptionEmpty } from '@/lib/utils'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -39,6 +41,8 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const [noSuggestions, setNoSuggestions] = useState(false)
   const router = useRouter()
   const titleInputRef = useRef<HTMLInputElement>(null)
+  // const { summary, summarize } = useUrlSummary()
+  const [summary, setSummary] = useState('Hello text is of test')
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -77,6 +81,44 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
     delay: 1000,
     linkId: linkId,
   })
+
+  useEffect(() => {
+    console.log('Summary received:', summary)
+
+    if (summary && summary.trim()) {
+      const currentDesc = form.getValues('description') || ''
+      console.log('Current description:', currentDesc)
+
+      // Verificar si el summary ya está incluido para evitar duplicados
+      const summaryText = summary.replace(/<[^>]+>/g, '').trim()
+      const currentText = currentDesc.replace(/<[^>]+>/g, '').trim()
+
+      if (!currentText.includes(summaryText)) {
+        // Preparar el HTML del summary
+        const isHtml = summary.trim().startsWith('<')
+        let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
+
+        // Limpiar el HTML si viene con body tags
+        if (/<body[\s>]/i.test(htmlSummary)) {
+          const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+          htmlSummary = match ? match[1] : htmlSummary
+        }
+
+        let finalContent = htmlSummary
+
+        // Si ya hay contenido, concatenar
+        if (currentDesc && currentDesc.trim() && !isDescriptionEmpty(currentDesc)) {
+          // Agregar el summary al final del contenido existente
+          finalContent = currentDesc + '\n' + htmlSummary
+        }
+
+        console.log('Setting final content:', finalContent)
+        form.setValue('description', finalContent)
+      } else {
+        console.log('Summary already included in description, skipping')
+      }
+    }
+  }, [summary, form])
 
   useEffect(() => {
     if (titleInputRef.current && !isEditing) {
@@ -165,8 +207,13 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
               <FormControl>
                 <Input
                   placeholder='https://johnserrano.co'
-                  {...field}
                   className='h-12' // Input más alto
+                  {...field}
+                  onBlur={async () => {
+                    field.onBlur?.()
+                    // if (field.value) await summarize(field.value)
+                    if (field.value) setSummary('Hello text is of test INPUT')
+                  }}
                 />
               </FormControl>
               <FormMessage />
@@ -186,7 +233,6 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
                     value={field.value || ''}
                     onChange={newValue => {
                       field.onChange(newValue)
-                      form.trigger('description')
                     }}
                     className='min-h-[300px]'
                   />
