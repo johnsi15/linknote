@@ -23,7 +23,6 @@ interface GetUserLinksFilteredParams {
 
 export async function saveLink(formData: LinkFormData, isUpdate: boolean = false, linkId?: string) {
   try {
-    // const { userId } = await getSecureSession()
     const validatedData = linkSchema.parse(formData)
 
     if (isUpdate && linkId) {
