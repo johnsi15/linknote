@@ -1,6 +1,12 @@
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useCallback } from 'react'
 import { readStreamableValue } from 'ai/rsc'
 import { summarizeUrl } from '@/actions/summarize-url'
+
+export interface SummaryError {
+  message: string
+  isBlocked: boolean
+  statusCode?: number
+}
 
 interface ArticleInfo {
   title?: string
@@ -14,14 +20,14 @@ interface ArticleInfo {
 export function useUrlSummary() {
   const [summary, setSummary] = useState('')
   const [articleInfo, setArticleInfo] = useState<ArticleInfo | null>(null)
-  const [error, setError] = useState('')
+  const [error, setError] = useState<SummaryError | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const handleSummarize = async (url: string) => {
+  const handleSummarize = useCallback(async (url: string) => {
     if (!url) return
 
     setSummary('')
-    setError('')
+    setError(null)
     setArticleInfo(null)
 
     startTransition(async () => {
@@ -37,11 +43,20 @@ export function useUrlSummary() {
           }
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err))
+        const errorMessage = err instanceof Error ? err.message : String(err)
+        const isBlocked = errorMessage.includes('403') || errorMessage.toLowerCase().includes('blocked')
+
+        const errorObj: SummaryError = {
+          message: errorMessage,
+          isBlocked,
+          statusCode: errorMessage.includes('403') ? 403 : undefined,
+        }
+
+        setError(errorObj)
         console.error('Error summarizing URL:', err)
       }
     })
-  }
+  }, [])
 
   return {
     summary,
@@ -52,7 +67,7 @@ export function useUrlSummary() {
     reset: () => {
       setSummary('')
       setArticleInfo(null)
-      setError('')
+      setError(null)
     },
   }
 }
