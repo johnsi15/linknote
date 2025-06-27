@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import YooptaEditor, { YooptaContentValue } from '@yoopta/editor'
 import Paragraph from '@yoopta/paragraph'
 import Code from '@yoopta/code'
@@ -68,41 +68,136 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ className, value, onChange }: RichTextEditorProps) {
-  const { editor, htmlToYoopta, yooptaToHtml, setEditorValue } = useYooptaConverter()
-  const selectionRef = useRef(null)
+  const [isMounted, setIsMounted] = useState(false)
+  const [isEditorReady, setIsEditorReady] = useState(false)
+  const { editor, htmlToYoopta, yooptaToHtml, setEditorValue, cleanYooptaHtml } = useYooptaConverter()
+  const selectionRef = useRef<HTMLDivElement>(null)
   const lastValueRef = useRef(value)
+  const [editorValue, setEditorValueState] = useState<YooptaContentValue>()
+  const isUpdatingRef = useRef(false)
 
-  // Update editor when value changes
+  // Initialize editor on mount
   useEffect(() => {
-    // Only update if value has actually changed
-    if (value !== lastValueRef.current) {
-      lastValueRef.current = value
+    setIsMounted(true)
+    // Wait a bit for editor to be fully initialized
+    const timer = setTimeout(() => {
+      setIsEditorReady(true)
+    }, 100)
 
+    return () => {
+      setIsMounted(false)
+      clearTimeout(timer)
+    }
+  }, [])
+
+  // Initialize editor with initial value
+  useEffect(() => {
+    if (!isMounted || !isEditorReady || !editor) return
+
+    // Force initialization if we have a value but editor is empty
+    const hasInitialValue = value && value.trim() !== ''
+    const needsInitialization = !lastValueRef.current || !editorValue
+
+    if (hasInitialValue && needsInitialization) {
       try {
-        const yooptaValue = htmlToYoopta(value || '')
+        const yooptaValue = htmlToYoopta(value)
+
         if (yooptaValue) {
-          setEditorValue(yooptaValue)
+          isUpdatingRef.current = true
+
+          // Force a complete reset of the editor
+          editor.setEditorValue({})
+
+          // Small delay to ensure the reset is processed
+          setTimeout(() => {
+            setEditorValue(yooptaValue)
+            setEditorValueState(yooptaValue)
+            lastValueRef.current = value
+
+            // Reset the flag after another delay
+            setTimeout(() => {
+              isUpdatingRef.current = false
+            }, 100)
+          }, 50)
         }
       } catch (error) {
-        console.error('Error updating editor value:', error)
+        console.error('Error initializing editor value:', error)
+        isUpdatingRef.current = false
       }
     }
-  }, [value, htmlToYoopta, setEditorValue])
+  }, [value, isMounted, isEditorReady, editor, htmlToYoopta, setEditorValue, editorValue])
 
-  const handleEditorChange = (editorValue: YooptaContentValue) => {
-    try {
-      const htmlContent = yooptaToHtml(editorValue)
-      onChange(htmlContent)
-    } catch (error) {
-      console.error('Error serializing to HTML:', error)
-      onChange('')
+  // Update editor when value changes from outside (but not from internal changes)
+  useEffect(() => {
+    if (!isMounted || !isEditorReady || !editor || isUpdatingRef.current) return
+
+    // Skip if this is the first mount and we're handling it in the initialization effect
+    if (!lastValueRef.current && value) return
+
+    // Simple comparison - avoid complex HTML cleaning for comparison
+    if (value === lastValueRef.current) {
+      return
     }
+
+    // If both values exist, do a more thorough comparison
+    if (value && lastValueRef.current) {
+      const cleanedNew = cleanYooptaHtml(value)
+      const cleanedLast = cleanYooptaHtml(lastValueRef.current)
+
+      if (cleanedNew === cleanedLast) {
+        return
+      }
+    }
+
+    try {
+      isUpdatingRef.current = true
+      const yooptaValue = htmlToYoopta(value || '')
+      if (yooptaValue) {
+        setEditorValue(yooptaValue)
+        setEditorValueState(yooptaValue)
+        lastValueRef.current = value
+      }
+      // Reset the flag after a short delay
+      setTimeout(() => {
+        isUpdatingRef.current = false
+      }, 100)
+    } catch (error) {
+      console.error('Error updating editor value:', error)
+      isUpdatingRef.current = false
+    }
+  }, [value, isMounted, isEditorReady, editor, htmlToYoopta, setEditorValue, cleanYooptaHtml])
+
+  const handleEditorChange = (newValue: YooptaContentValue) => {
+    if (isUpdatingRef.current) {
+      return
+    }
+
+    try {
+      setEditorValueState(newValue)
+      const html = yooptaToHtml(newValue)
+
+      if (html !== lastValueRef.current) {
+        lastValueRef.current = html
+        onChange(html)
+      }
+    } catch (error) {
+      console.error('Error converting editor content to HTML:', error)
+    }
+  }
+
+  if (!isMounted || !isEditorReady) {
+    return (
+      <div className={cn('dark:bg-transparent dark:text-white min-h-[120px] w-full p-4', className)}>
+        Loading editor...
+      </div>
+    )
   }
 
   return (
     <div className={cn('dark:bg-transparent dark:text-white min-h-[120px] w-full', className)}>
       <div ref={selectionRef} />
       <YooptaEditor
+        key='yoopta-editor'
         editor={editor}
         plugins={plugins}
         tools={TOOLS}
@@ -111,6 +206,8 @@ export function RichTextEditor({ className, value, onChange }: RichTextEditorPro
         placeholder="Type '/' for commands"
         className='w-full!'
         marks={MARKS}
+        value={editorValue}
+        autoFocus
       />
     </div>
   )

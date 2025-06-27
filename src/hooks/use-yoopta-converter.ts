@@ -9,44 +9,184 @@ export function useYooptaConverter() {
   const editor: YooEditor = useMemo(() => createYooptaEditor(), [])
 
   /**
+   * Cleans HTML from Yoopta-specific attributes and structure
+   */
+  const cleanYooptaHtml = (htmlString: string): string => {
+    if (!htmlString || typeof htmlString !== 'string') return ''
+
+    try {
+      // Parse the HTML to properly handle the content
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(htmlString, 'text/html')
+
+      // If we have a Yoopta body, get its innerHTML
+      const yooptaBody = doc.querySelector('body#yoopta-clipboard')
+      if (yooptaBody) {
+        const content = yooptaBody.innerHTML.trim()
+        return content
+      }
+
+      // Otherwise, clean up any Yoopta-specific attributes from the content
+      const body = doc.body || doc.documentElement
+      const elements = body.querySelectorAll('*')
+
+      elements.forEach(el => {
+        // Remove Yoopta-specific attributes
+        const attrs = el.getAttributeNames()
+        attrs.forEach(attr => {
+          if (
+            attr.startsWith('data-meta-') ||
+            attr.startsWith('data-yoopta-') ||
+            attr === 'data-editor-id' ||
+            attr.startsWith('data-slate-')
+          ) {
+            el.removeAttribute(attr)
+          }
+        })
+      })
+
+      // Return the cleaned HTML without the body tag
+      const result = body.innerHTML.trim()
+
+      // Handle empty content cases
+      if (!result || result === '<p></p>' || result === '<div></div>') {
+        return ''
+      }
+
+      return result
+    } catch (error) {
+      console.error('Error cleaning HTML:', error)
+      return htmlString
+    }
+  }
+
+  /**
    * Converts HTML to Yoopta format
-   * @param htmlString HTML string to convert
-   * @returns YooptaContentValue or undefined if conversion fails
    */
   const htmlToYoopta = (htmlString: string): YooptaContentValue | undefined => {
-    // If no HTML, return undefined
+    console.log('Converting HTML to Yoopta:', htmlString)
+
+    // If no HTML, return default empty paragraph
     if (!htmlString || typeof htmlString !== 'string' || htmlString.trim() === '') {
-      return undefined
+      console.log('Empty HTML, returning default paragraph')
+      return {
+        '1': {
+          id: '1',
+          type: 'paragraph',
+          value: [{ text: '' }],
+          meta: { order: 0, depth: 0 },
+        },
+      }
     }
 
     try {
-      // Deserialize the HTML using Yoopta API
-      const deserializedValue = html.deserialize(editor, htmlString)
+      // Check if this is already Yoopta HTML structure
+      if (htmlString.includes('body#yoopta-clipboard')) {
+        console.log('Detected Yoopta HTML structure')
 
-      return deserializedValue
+        // Extract the content from the Yoopta body
+        const cleanedHtml = cleanYooptaHtml(htmlString)
+        console.log('Cleaned HTML from Yoopta structure:', cleanedHtml)
+
+        if (!cleanedHtml) {
+          return {
+            '1': {
+              id: '1',
+              type: 'paragraph',
+              value: [{ text: '' }],
+              meta: { order: 0, depth: 0 },
+            },
+          }
+        }
+
+        // Try to deserialize the cleaned content
+        const result = html.deserialize(editor, cleanedHtml)
+        console.log('Deserialized result from Yoopta HTML:', result)
+        return result
+      }
+
+      // Handle regular HTML
+      const cleanedHtml = cleanYooptaHtml(htmlString)
+      console.log('Cleaned HTML:', cleanedHtml)
+
+      // If cleaned HTML is empty, return empty paragraph
+      if (!cleanedHtml) {
+        return {
+          '1': {
+            id: '1',
+            type: 'paragraph',
+            value: [{ text: '' }],
+            meta: { order: 0, depth: 0 },
+          },
+        }
+      }
+
+      // Try to deserialize the HTML
+      let htmlToDeserialize = cleanedHtml
+
+      // If the HTML doesn't contain block elements, wrap it in a paragraph
+      if (
+        !cleanedHtml.includes('<p') &&
+        !cleanedHtml.includes('<div') &&
+        !cleanedHtml.includes('<h1') &&
+        !cleanedHtml.includes('<h2') &&
+        !cleanedHtml.includes('<h3') &&
+        !cleanedHtml.includes('<ul') &&
+        !cleanedHtml.includes('<ol') &&
+        !cleanedHtml.includes('<blockquote')
+      ) {
+        htmlToDeserialize = `<p>${cleanedHtml}</p>`
+      }
+
+      console.log('HTML to deserialize:', htmlToDeserialize)
+      const result = html.deserialize(editor, htmlToDeserialize)
+      console.log('Deserialized result:', result)
+
+      return result
     } catch (error) {
       console.error('Error deserializing HTML:', error)
-      return undefined
+      console.error('HTML that caused error:', htmlString)
+
+      // Return a paragraph with the raw content as fallback
+      const textContent = htmlString.replace(/<[^>]*>/g, '') // Strip HTML tags
+      return {
+        '1': {
+          id: '1',
+          type: 'paragraph',
+          value: [{ text: textContent || 'Error loading content' }],
+          meta: { order: 0, depth: 0 },
+        },
+      }
     }
   }
 
   /**
    * Converts Yoopta format to HTML
-   * @param yooptaValue YooptaContentValue to convert
-   * @returns HTML string or empty string if conversion fails
    */
   const yooptaToHtml = (yooptaValue: YooptaContentValue): string => {
     try {
-      return html.serialize(editor, yooptaValue)
+      if (!yooptaValue || Object.keys(yooptaValue).length === 0) {
+        return ''
+      }
+
+      const result = html.serialize(editor, yooptaValue)
+      console.log('Serialized HTML:', result)
+      return result
     } catch (error) {
       console.error('Error serializing to HTML:', error)
+      console.error('Yoopta value that caused error:', yooptaValue)
       return ''
     }
   }
 
   const setEditorValue = (value: YooptaContentValue) => {
-    editor.setEditorValue(value)
+    try {
+      console.log('Setting editor value:', value)
+      editor.setEditorValue(value)
+    } catch (error) {
+      console.error('Error setting editor value:', error)
+    }
   }
 
-  return { editor, htmlToYoopta, yooptaToHtml, setEditorValue }
+  return { editor, htmlToYoopta, yooptaToHtml, setEditorValue, cleanYooptaHtml }
 }
