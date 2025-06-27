@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Loader2, SparklesIcon } from 'lucide-react'
+import { Loader2, SparklesIcon, AlertTriangle } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
 import { useUrlSummary } from '@/hooks/use-url-summary'
@@ -41,8 +41,7 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const [noSuggestions, setNoSuggestions] = useState(false)
   const router = useRouter()
   const titleInputRef = useRef<HTMLInputElement>(null)
-  // const { summary, summarize } = useUrlSummary()
-  const [summary, setSummary] = useState('Hello text is of test')
+  const { summary, summarize, error: summaryError } = useUrlSummary()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -89,36 +88,41 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
       const currentDesc = form.getValues('description') || ''
       console.log('Current description:', currentDesc)
 
-      // Verificar si el summary ya está incluido para evitar duplicados
-      const summaryText = summary.replace(/<[^>]+>/g, '').trim()
-      const currentText = currentDesc.replace(/<[^>]+>/g, '').trim()
+      // Determinar si es un enlace nuevo o la descripción está vacía
+      const isNewLink = !defaultValues?.description && !linkId
+      const isEmptyDescription = !currentDesc.trim() || isDescriptionEmpty(currentDesc)
+      const shouldReplace = isNewLink || isEmptyDescription
 
-      if (!currentText.includes(summaryText)) {
-        // Preparar el HTML del summary
-        const isHtml = summary.trim().startsWith('<')
-        let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
+      // Preparar el HTML del summary
+      const isHtml = summary.trim().startsWith('<')
+      let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
 
-        // Limpiar el HTML si viene con body tags
-        if (/<body[\s>]/i.test(htmlSummary)) {
-          const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
-          htmlSummary = match ? match[1] : htmlSummary
-        }
+      // Limpiar el HTML si viene con body tags
+      if (/<body[\s>]/i.test(htmlSummary)) {
+        const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+        htmlSummary = match ? match[1] : htmlSummary
+      }
 
-        let finalContent = htmlSummary
-
-        // Si ya hay contenido, concatenar
-        if (currentDesc && currentDesc.trim() && !isDescriptionEmpty(currentDesc)) {
-          // Agregar el summary al final del contenido existente
-          finalContent = currentDesc + '\n' + htmlSummary
-        }
-
-        console.log('Setting final content:', finalContent)
-        form.setValue('description', finalContent)
+      if (shouldReplace) {
+        // Reemplazar completamente la descripción
+        console.log('Replacing description with summary')
+        form.setValue('description', htmlSummary)
       } else {
-        console.log('Summary already included in description, skipping')
+        // Verificar si el summary ya está incluido para evitar duplicados
+        const summaryText = summary.replace(/<[^>]+>/g, '').trim()
+        const currentText = currentDesc.replace(/<[^>]+>/g, '').trim()
+
+        if (!currentText.includes(summaryText)) {
+          // Agregar el summary al final del contenido existente
+          const finalContent = currentDesc + '\n\n' + htmlSummary
+          console.log('Appending summary to existing description')
+          form.setValue('description', finalContent)
+        } else {
+          console.log('Summary already included in description, skipping')
+        }
       }
     }
-  }, [summary, form])
+  }, [summary])
 
   useEffect(() => {
     if (titleInputRef.current && !isEditing) {
@@ -205,16 +209,31 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input
-                  placeholder='https://johnserrano.co'
-                  className='h-12' // Input más alto
-                  {...field}
-                  onBlur={async () => {
-                    field.onBlur?.()
-                    // if (field.value) await summarize(field.value)
-                    if (field.value) setSummary('Hello text is of test INPUT')
-                  }}
-                />
+                <div className='space-y-2'>
+                  <Input
+                    placeholder='https://johnserrano.co'
+                    className='h-12' // Input más alto
+                    {...field}
+                    onBlur={async () => {
+                      field.onBlur?.()
+                      if (field.value) await summarize(field.value)
+                    }}
+                  />
+                  {summaryError?.isBlocked && (
+                    <div className='flex items-start gap-2 p-3 text-sm text-yellow-600 bg-yellow-50 rounded-md'>
+                      <AlertTriangle className='h-4 w-4 mt-0.5 flex-shrink-0' />
+                      <div>
+                        <p className='font-medium'>No se pudo acceder al contenido</p>
+                        <p className='mt-1'>El sitio web ha bloqueado la extracción automática de contenido.</p>
+                        <ul className='list-disc pl-5 mt-1 space-y-1'>
+                          <li>Intenta copiar el contenido manualmente</li>
+                          <li>Verifica si el enlace es accesible sin iniciar sesión</li>
+                          <li>Algunos sitios tienen protecciones contra bots</li>
+                        </ul>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
