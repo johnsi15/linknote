@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { TagInput } from '@/components/dashboard/tag-input'
-import { Loader2, SparklesIcon, AlertTriangle } from 'lucide-react'
+import { Loader2, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
 import { useUrlSummary } from '@/hooks/use-url-summary'
@@ -39,9 +39,11 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [noSuggestions, setNoSuggestions] = useState(false)
+  const [streamInitialized, setStreamInitialized] = useState(false)
   const router = useRouter()
   const titleInputRef = useRef<HTMLInputElement>(null)
-  const { summary, summarize, error: summaryError } = useUrlSummary()
+  const originalDescRef = useRef<string | null>(null)
+  const { summary, summarize, error: summaryError, isLoading: isLoadingSummary } = useUrlSummary()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -82,18 +84,15 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   })
 
   useEffect(() => {
+    setStreamInitialized(false)
+    originalDescRef.current = form.getValues('description') || ''
+    console.log('originalDescRef', originalDescRef.current)
+  }, [linkId])
+
+  useEffect(() => {
     console.log('Summary received:', summary)
 
     if (summary && summary.trim()) {
-      const currentDesc = form.getValues('description') || ''
-      console.log('Current description:', currentDesc)
-
-      // Determinar si es un enlace nuevo o la descripción está vacía
-      const isNewLink = !defaultValues?.description && !linkId
-      const isEmptyDescription = !currentDesc.trim() || isDescriptionEmpty(currentDesc)
-      const shouldReplace = isNewLink || isEmptyDescription
-
-      // Preparar el HTML del summary
       const isHtml = summary.trim().startsWith('<')
       let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
 
@@ -103,23 +102,41 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
         htmlSummary = match ? match[1] : htmlSummary
       }
 
-      if (shouldReplace) {
-        // Reemplazar completamente la descripción
-        console.log('Replacing description with summary')
-        form.setValue('description', htmlSummary)
-      } else {
-        // Verificar si el summary ya está incluido para evitar duplicados
-        const summaryText = summary.replace(/<[^>]+>/g, '').trim()
-        const currentText = currentDesc.replace(/<[^>]+>/g, '').trim()
+      // Obtener el contenido original como referencia
+      const originalDesc = originalDescRef.current || ''
 
-        if (!currentText.includes(summaryText)) {
-          // Agregar el summary al final del contenido existente
-          const finalContent = currentDesc + '\n\n' + htmlSummary
-          console.log('Appending summary to existing description')
-          form.setValue('description', finalContent)
-        } else {
-          console.log('Summary already included in description, skipping')
-        }
+      // Limpiar el HTML original si viene con body tags
+      let cleanedOriginal = originalDesc
+      if (/<body[\s>]/i.test(cleanedOriginal)) {
+        const match = cleanedOriginal.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+        cleanedOriginal = match ? match[1] : cleanedOriginal
+      }
+
+      // Limpiar el HTML original de metadatos innecesarios
+      cleanedOriginal = cleanedOriginal
+        .replace(/\s*data-meta-[^=]*="[^"]*"/g, '')
+        .replace(/\s*style="[^"]*"/g, '')
+        .replace(/<p\s+>/g, '<p>')
+        .replace(/<p><\/p>/g, '')
+        .trim()
+
+      // Determinar el nuevo contenido
+      let newContent = ''
+      const isNewLink = !defaultValues?.description && !linkId
+      const isEmptyDescription = !cleanedOriginal.trim() || isDescriptionEmpty(cleanedOriginal)
+
+      if (isNewLink || isEmptyDescription) {
+        newContent = htmlSummary
+      } else {
+        // Concatenar el resumen al contenido original (sin el stream anterior)
+        newContent = `${htmlSummary}${cleanedOriginal}`
+      }
+
+      console.log('Updating content with new summary + original content')
+      form.setValue('description', newContent, { shouldDirty: true })
+
+      if (!streamInitialized) {
+        setStreamInitialized(true)
       }
     }
   }, [summary])
@@ -219,18 +236,20 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
                       if (field.value) await summarize(field.value)
                     }}
                   />
-                  {summaryError?.isBlocked && (
+                  {isLoadingSummary && (
                     <div className='flex items-start gap-2 p-3 text-sm text-yellow-600 bg-yellow-50 rounded-md'>
-                      <AlertTriangle className='h-4 w-4 mt-0.5 flex-shrink-0' />
+                      <Loader2 className='h-4 w-4 mt-0.5 flex-shrink-0 animate-spin' />
                       <div>
-                        <p className='font-medium'>No se pudo acceder al contenido</p>
-                        <p className='mt-1'>El sitio web ha bloqueado la extracción automática de contenido.</p>
-                        <ul className='list-disc pl-5 mt-1 space-y-1'>
-                          <li>Intenta copiar el contenido manualmente</li>
-                          <li>Verifica si el enlace es accesible sin iniciar sesión</li>
-                          <li>Algunos sitios tienen protecciones contra bots</li>
-                        </ul>
+                        <p className='font-medium'>Generating summary...</p>
                       </div>
+                    </div>
+                  )}
+                  {summaryError && (
+                    <div className='text-red-500 p-4 bg-red-50 rounded-md'>
+                      {summaryError.message}
+                      {summaryError.isBlocked && (
+                        <p className='mt-2 text-sm'>Este sitio podría estar bloqueando solicitudes automatizadas.</p>
+                      )}
                     </div>
                   )}
                 </div>

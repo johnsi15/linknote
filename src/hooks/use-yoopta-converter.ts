@@ -68,7 +68,6 @@ export function useYooptaConverter() {
 
     // If no HTML, return default empty paragraph
     if (!htmlString || typeof htmlString !== 'string' || htmlString.trim() === '') {
-      console.log('Empty HTML, returning default paragraph')
       return {
         '1': {
           id: '1',
@@ -80,80 +79,20 @@ export function useYooptaConverter() {
     }
 
     try {
-      // Check if this is already Yoopta HTML structure
-      if (htmlString.includes('body#yoopta-clipboard')) {
-        console.log('Detected Yoopta HTML structure')
-
-        // Extract the content from the Yoopta body
-        const cleanedHtml = cleanYooptaHtml(htmlString)
-        console.log('Cleaned HTML from Yoopta structure:', cleanedHtml)
-
-        if (!cleanedHtml) {
-          return {
-            '1': {
-              id: '1',
-              type: 'paragraph',
-              value: [{ text: '' }],
-              meta: { order: 0, depth: 0 },
-            },
-          }
-        }
-
-        // Try to deserialize the cleaned content
-        const result = html.deserialize(editor, cleanedHtml)
-        console.log('Deserialized result from Yoopta HTML:', result)
-        return result
-      }
-
-      // Handle regular HTML
-      const cleanedHtml = cleanYooptaHtml(htmlString)
-      console.log('Cleaned HTML:', cleanedHtml)
-
-      // If cleaned HTML is empty, return empty paragraph
-      if (!cleanedHtml) {
-        return {
-          '1': {
-            id: '1',
-            type: 'paragraph',
-            value: [{ text: '' }],
-            meta: { order: 0, depth: 0 },
-          },
-        }
-      }
-
-      // Try to deserialize the HTML
-      let htmlToDeserialize = cleanedHtml
-
-      // If the HTML doesn't contain block elements, wrap it in a paragraph
-      if (
-        !cleanedHtml.includes('<p') &&
-        !cleanedHtml.includes('<div') &&
-        !cleanedHtml.includes('<h1') &&
-        !cleanedHtml.includes('<h2') &&
-        !cleanedHtml.includes('<h3') &&
-        !cleanedHtml.includes('<ul') &&
-        !cleanedHtml.includes('<ol') &&
-        !cleanedHtml.includes('<blockquote')
-      ) {
-        htmlToDeserialize = `<p>${cleanedHtml}</p>`
-      }
-
-      console.log('HTML to deserialize:', htmlToDeserialize)
-      const result = html.deserialize(editor, htmlToDeserialize)
-      console.log('Deserialized result:', result)
-
-      return result
+      // Usar html.deserialize para convertir el HTML a formato Yoopta
+      const deserialized = html.deserialize(editor, htmlString)
+      console.log('Deserialized content:', deserialized)
+      return deserialized
     } catch (error) {
       console.error('Error deserializing HTML:', error)
       console.error('HTML that caused error:', htmlString)
 
-      // Return a paragraph with the raw content as fallback
-      const textContent = htmlString.replace(/<[^>]*>/g, '') // Strip HTML tags
+      // Fallback: retornar párrafo con texto de error
       return {
         '1': {
           id: '1',
           type: 'paragraph',
-          value: [{ text: textContent || 'Error loading content' }],
+          value: [{ text: 'Error loading content' }],
           meta: { order: 0, depth: 0 },
         },
       }
