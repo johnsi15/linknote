@@ -34,19 +34,3 @@ export function isDescriptionEmpty(desc: string) {
 
   return text.length === 0
 }
-
-export function concatenateHtmlContent(currentContent: string, newContent: string): string {
-  if (!currentContent || !currentContent.trim()) {
-    return newContent
-  }
-
-  if (!newContent || !newContent.trim()) {
-    return currentContent
-  }
-
-  if (currentContent.trim().endsWith('</p>')) {
-    return currentContent + newContent
-  }
-
-  return currentContent + '<p></p>' + newContent
-}
