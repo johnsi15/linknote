@@ -34,25 +34,32 @@ export function extractSummary(html: string, maxLength: number = 100): string {
   return text.substring(0, lastSpace).trim() + '...'
 }
 
-export function concatenateHtmlContent(existingContent: string, newContent: string): string {
-  if (!existingContent || isDescriptionEmpty(existingContent)) {
+export function isDescriptionEmpty(desc: string) {
+  // Detecta string vacío o body Yoopta vacío (sin contenido visible)
+  // if (!desc) return true
+  // return /^<body[^>]*>\s*<p[^>]*>\s*<\/p>\s*<\/body>$/.test(desc.trim())
+
+  // Quita todas las etiquetas HTML y espacios
+  const text = desc.replace(/<[^>]+>/g, '').trim()
+  return text.length === 0
+}
+
+export function concatenateHtmlContent(currentContent: string, newContent: string): string {
+  // Si el contenido actual está vacío, solo devolver el nuevo
+  if (!currentContent || !currentContent.trim()) {
     return newContent
   }
 
-  if (!newContent) {
-    return existingContent
+  // Si el nuevo contenido está vacío, devolver el actual
+  if (!newContent || !newContent.trim()) {
+    return currentContent
   }
 
-  // Si ambos tienen contenido, concatenar de forma inteligente
-  // Remover las etiquetas de cierre del contenido existente y las de apertura del nuevo
-  const cleanExisting = existingContent.replace(/<\/body>\s*$/, '')
-  const cleanNew = newContent.replace(/^<body[^>]*>\s*/, '')
+  // Si el contenido actual termina con un párrafo, agregar el nuevo contenido después
+  if (currentContent.trim().endsWith('</p>')) {
+    return currentContent + newContent
+  }
 
-  return cleanExisting + cleanNew
-}
-
-export function isDescriptionEmpty(desc: string) {
-  // Detecta string vacío o body Yoopta vacío (sin contenido visible)
-  if (!desc) return true
-  return /^<body[^>]*>\s*<p[^>]*>\s*<\/p>\s*<\/body>$/.test(desc.trim())
+  // Si el contenido actual no termina con un párrafo, agregar un párrafo vacío como separador
+  return currentContent + '<p></p>' + newContent
 }
