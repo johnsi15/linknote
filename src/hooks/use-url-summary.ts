@@ -27,7 +27,6 @@ export function useUrlSummary() {
           const result = await summarizeUrl(url)
 
           if (!result.success) {
-            // Manejar error del servidor
             setError({
               message: result.error?.message || 'Error desconocido al procesar la URL',
               isBlocked: result.error?.isBlocked || false,
@@ -36,12 +35,10 @@ export function useUrlSummary() {
             return
           }
 
-          // Si llegamos aquí, la operación fue exitosa
           if (result.article) {
             setArticleInfo(result.article)
           }
 
-          // Leer el stream si está disponible
           if (result.summaryStream) {
             try {
               for await (const delta of readStreamableValue(result.summaryStream)) {

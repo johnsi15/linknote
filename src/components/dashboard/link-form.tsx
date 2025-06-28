@@ -86,33 +86,26 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   useEffect(() => {
     setStreamInitialized(false)
     originalDescRef.current = form.getValues('description') || ''
-    console.log('originalDescRef', originalDescRef.current)
   }, [linkId])
 
   useEffect(() => {
-    console.log('Summary received:', summary)
-
     if (summary && summary.trim()) {
       const isHtml = summary.trim().startsWith('<')
       let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
 
-      // Limpiar el HTML si viene con body tags
       if (/<body[\s>]/i.test(htmlSummary)) {
         const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
         htmlSummary = match ? match[1] : htmlSummary
       }
 
-      // Obtener el contenido original como referencia
       const originalDesc = originalDescRef.current || ''
 
-      // Limpiar el HTML original si viene con body tags
       let cleanedOriginal = originalDesc
       if (/<body[\s>]/i.test(cleanedOriginal)) {
         const match = cleanedOriginal.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
         cleanedOriginal = match ? match[1] : cleanedOriginal
       }
 
-      // Limpiar el HTML original de metadatos innecesarios
       cleanedOriginal = cleanedOriginal
         .replace(/\s*data-meta-[^=]*="[^"]*"/g, '')
         .replace(/\s*style="[^"]*"/g, '')
@@ -120,7 +113,6 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
         .replace(/<p><\/p>/g, '')
         .trim()
 
-      // Determinar el nuevo contenido
       let newContent = ''
       const isNewLink = !defaultValues?.description && !linkId
       const isEmptyDescription = !cleanedOriginal.trim() || isDescriptionEmpty(cleanedOriginal)
@@ -128,11 +120,9 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
       if (isNewLink || isEmptyDescription) {
         newContent = htmlSummary
       } else {
-        // Concatenar el resumen al contenido original (sin el stream anterior)
         newContent = `${htmlSummary}${cleanedOriginal}`
       }
 
-      console.log('Updating content with new summary + original content')
       form.setValue('description', newContent, { shouldDirty: true })
 
       if (!streamInitialized) {

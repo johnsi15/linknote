@@ -64,8 +64,6 @@ export function useYooptaConverter() {
    * Converts HTML to Yoopta format
    */
   const htmlToYoopta = (htmlString: string): YooptaContentValue | undefined => {
-    console.log('Converting HTML to Yoopta:', htmlString)
-
     // If no HTML, return default empty paragraph
     if (!htmlString || typeof htmlString !== 'string' || htmlString.trim() === '') {
       return {
@@ -79,14 +77,11 @@ export function useYooptaConverter() {
     }
 
     try {
-      // Usar html.deserialize para convertir el HTML a formato Yoopta
       const deserialized = html.deserialize(editor, htmlString)
-      console.log('Deserialized content:', deserialized)
+
       return deserialized
     } catch (error) {
       console.error('Error deserializing HTML:', error)
-      console.error('HTML that caused error:', htmlString)
-
       // Fallback: retornar párrafo con texto de error
       return {
         '1': {
@@ -109,7 +104,7 @@ export function useYooptaConverter() {
       }
 
       const result = html.serialize(editor, yooptaValue)
-      console.log('Serialized HTML:', result)
+
       return result
     } catch (error) {
       console.error('Error serializing to HTML:', error)
@@ -120,7 +115,6 @@ export function useYooptaConverter() {
 
   const setEditorValue = (value: YooptaContentValue) => {
     try {
-      console.log('Setting editor value:', value)
       editor.setEditorValue(value)
     } catch (error) {
       console.error('Error setting editor value:', error)

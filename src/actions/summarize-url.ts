@@ -37,10 +37,6 @@ export type SummarizeUrlResponse = {
   error?: ErrorResponse
 }
 
-// leer la doc: https://ai-sdk.dev/docs/ai-sdk-core/generating-text#streamtext
-// https://ai-sdk.dev/cookbook/rsc/stream-text-with-chat-prompt
-// https://www.youtube.com/watch?v=wBowRKZXx0I&list=WL&index=4&t=391s
-
 export async function summarizeUrl(url: string): Promise<SummarizeUrlResponse> {
   'use server'
 
