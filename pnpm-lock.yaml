@@ -75,8 +75,8 @@ importers:
         specifier: ^4.9.8
         version: 4.9.8(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@yoopta/paragraph':
-        specifier: ^4.9.7
-        version: 4.9.7(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+        specifier: ^4.9.9
+        version: 4.9.9(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
       '@yoopta/toolbar':
         specifier: ^4.9.7
         version: 4.9.7(@types/react-dom@19.1.5(@types/react@19.1.4))(@types/react@19.1.4)(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -2028,8 +2028,8 @@ packages:
       react: '>=17.0.2'
       react-dom: '>=17.0.2'
 
-  '@yoopta/paragraph@4.9.7':
-    resolution: {integrity: sha512-k//ot0xxNMVKlz+RNFqd3rvez9lkqHnQLfF7cUOIK5oxjHfMMW7TYDiAd4+jyZerYUYMK9bdchMAiuqFG9O6jQ==}
+  '@yoopta/paragraph@4.9.9':
+    resolution: {integrity: sha512-0luS6xtRoi6NQ4ZavWwN3KAY/FxAwQqrvuJQ8g4yII1iPedFJxbgf8Q9fUFk+JMqbKcwM7/tkM1I+vn+soNBNQ==}
     peerDependencies:
       '@yoopta/editor': '>=4.0.0'
       react: '>=17.0.2'
@@ -5935,7 +5935,7 @@ snapshots:
       react: 19.0.0
       react-dom: 19.0.0(react@19.0.0)
 
-  '@yoopta/paragraph@4.9.7(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
+  '@yoopta/paragraph@4.9.9(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
       '@yoopta/editor': 4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0)
       react: 19.0.0
