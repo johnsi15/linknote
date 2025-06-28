@@ -1,14 +1,47 @@
 'use server'
 
 import { extract, type ArticleData } from '@extractus/article-extractor'
-import { createStreamableValue } from 'ai/rsc'
+import { createStreamableValue, type StreamableValue } from 'ai/rsc'
 import { openai } from '@ai-sdk/openai'
 import { streamText } from 'ai'
+
+export type ArticleInfo = {
+  title?: string
+  description?: string
+  url?: string
+  author?: string
+  published?: string
+  readTime?: number
+}
+
+interface ExtendedError extends Error {
+  response?: {
+    status?: number
+    [key: string]: unknown
+  }
+  code?: string
+  status?: number
+  isExtractionError?: boolean
+}
+
+type ErrorResponse = {
+  message: string
+  isBlocked: boolean
+  statusCode?: number
+}
+
+export type SummarizeUrlResponse = {
+  success: boolean
+  article?: ArticleInfo
+  summaryStream?: StreamableValue<string>
+  error?: ErrorResponse
+}
 
 // leer la doc: https://ai-sdk.dev/docs/ai-sdk-core/generating-text#streamtext
 // https://ai-sdk.dev/cookbook/rsc/stream-text-with-chat-prompt
 // https://www.youtube.com/watch?v=wBowRKZXx0I&list=WL&index=4&t=391s
-export async function summarizeUrl(url: string) {
+
+export async function summarizeUrl(url: string): Promise<SummarizeUrlResponse> {
   'use server'
 
   if (!url || !isValidUrl(url)) {
@@ -89,8 +122,25 @@ export async function summarizeUrl(url: string) {
   } catch (error) {
     console.error('Error in summarizeUrl:', error)
 
-    const errorMessage = getSpecificErrorMessage(url, error as Error)
-    throw new Error(errorMessage)
+    const extendedError = error as ExtendedError
+    const errorMessage = getSpecificErrorMessage(url, extendedError)
+
+    const isBlocked =
+      extendedError.response?.status === 403 ||
+      extendedError.code === 'ECONNREFUSED' ||
+      errorMessage.toLowerCase().includes('bloqueado') ||
+      errorMessage.toLowerCase().includes('forbidden')
+
+    const errorResponse: ErrorResponse = {
+      message: errorMessage,
+      isBlocked,
+      statusCode: extendedError.response?.status || extendedError.status,
+    }
+
+    return {
+      success: false,
+      error: errorResponse,
+    }
   }
 }
 
@@ -189,10 +239,27 @@ async function extractWithFallbacks(url: string, userAgent: string) {
     console.log('Estrategia 3 falló:', error instanceof Error ? error.message : 'Error desconocido')
   }
 
-  throw new Error('Todas las estrategias de extracción fallaron')
+  const errorMessages = [
+    'No se pudo extraer el contenido del artículo.',
+    'Posibles causas:',
+    '- El sitio web podría estar bloqueando solicitudes automatizadas',
+    '- El contenido podría estar detrás de un paywall o requerir autenticación',
+    '- La estructura de la página podría no ser compatible con nuestras herramientas de extracción',
+    '\nSugerencia: Intenta copiar el contenido manualmente o verifica que la URL sea accesible desde un navegador.',
+  ]
+
+  const error = new Error(errorMessages.join('\n')) as ExtendedError
+  error.isExtractionError = true
+  throw error
 }
 
 function getSpecificErrorMessage(url: string, error: Error): string {
+  // Si es un error de extracción, devolver el mensaje original
+  const extendedError = error as ExtendedError
+  if (extendedError.isExtractionError) {
+    return error.message
+  }
+
   const domain = new URL(url).hostname.toLowerCase()
 
   const problematicSites = {

@@ -1,6 +1,6 @@
 import { useState, useTransition, useCallback } from 'react'
 import { readStreamableValue } from 'ai/rsc'
-import { summarizeUrl } from '@/actions/summarize-url'
+import { summarizeUrl, type ArticleInfo } from '@/actions/summarize-url'
 
 export interface SummaryError {
   message: string
@@ -8,18 +8,9 @@ export interface SummaryError {
   statusCode?: number
 }
 
-interface ArticleInfo {
-  title?: string
-  description?: string
-  url?: string
-  author?: string
-  published?: string
-  readTime?: number
-}
-
 export function useUrlSummary() {
   const [summary, setSummary] = useState('')
-  const [articleInfo, setArticleInfo] = useState<ArticleInfo | null>(null)
+  const [articleInfo, setArticleInfo] = useState<Partial<ArticleInfo> | null>(null)
   const [error, setError] = useState<SummaryError | null>(null)
   const [isPending, startTransition] = useTransition()
 
@@ -30,32 +21,57 @@ export function useUrlSummary() {
     setError(null)
     setArticleInfo(null)
 
-    startTransition(async () => {
-      try {
-        const result = await summarizeUrl(url)
+    try {
+      startTransition(async () => {
+        try {
+          const result = await summarizeUrl(url)
 
-        if (result?.success) {
-          setArticleInfo(result.article)
-
-          // Leer el stream
-          for await (const delta of readStreamableValue(result.summaryStream)) {
-            setSummary(currentSummary => currentSummary + (delta || ''))
+          if (!result.success) {
+            // Manejar error del servidor
+            setError({
+              message: result.error?.message || 'Error desconocido al procesar la URL',
+              isBlocked: result.error?.isBlocked || false,
+              statusCode: result.error?.statusCode,
+            })
+            return
           }
-        }
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : String(err)
-        const isBlocked = errorMessage.includes('403') || errorMessage.toLowerCase().includes('blocked')
 
-        const errorObj: SummaryError = {
-          message: errorMessage,
-          isBlocked,
-          statusCode: errorMessage.includes('403') ? 403 : undefined,
-        }
+          // Si llegamos aquí, la operación fue exitosa
+          if (result.article) {
+            setArticleInfo(result.article)
+          }
 
-        setError(errorObj)
-        console.error('Error summarizing URL:', err)
-      }
-    })
+          // Leer el stream si está disponible
+          if (result.summaryStream) {
+            try {
+              for await (const delta of readStreamableValue(result.summaryStream)) {
+                setSummary(currentSummary => currentSummary + (delta || ''))
+              }
+            } catch (err) {
+              console.error('Error al leer el stream:', err)
+              setError({
+                message: 'Error al procesar el contenido de la URL',
+                isBlocked: false,
+              })
+            }
+          }
+        } catch (err) {
+          console.error('Error al resumir la URL:', err)
+          const errorMessage = err instanceof Error ? err.message : 'Error desconocido al procesar la URL'
+          setError({
+            message: errorMessage,
+            isBlocked:
+              errorMessage.toLowerCase().includes('bloqueado') || errorMessage.toLowerCase().includes('forbidden'),
+          })
+        }
+      })
+    } catch (err) {
+      console.error('Error inesperado en handleSummarize:', err)
+      setError({
+        message: 'Error inesperado al procesar la solicitud',
+        isBlocked: false,
+      })
+    }
   }, [])
 
   return {
