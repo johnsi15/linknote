@@ -105,21 +105,17 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
     const isHtml = summary.trim().startsWith('<')
     let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
 
-    // Limpiar el HTML del resumen si es necesario
     if (/<body[\s>]/i.test(htmlSummary)) {
       const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
       htmlSummary = match ? match[1] : htmlSummary
     }
 
-    // Solo una vez, determinar si es nuevo o vacío
     const isNewLink = !defaultValues?.description && !linkId
     const isEmptyDescription = !cleanOriginalDescRef.current?.trim() || isDescriptionEmpty(cleanOriginalDescRef.current)
     const original = isNewLink || isEmptyDescription ? '' : cleanOriginalDescRef.current
 
-    // SIEMPRE construir el description como summary + original limpio (nunca concatenar summary)
     form.setValue('description', `${htmlSummary}${original}`, { shouldDirty: true })
 
-    // Solo inicializar el stream una vez
     if (!streamInitialized) setStreamInitialized(true)
   }, [summary])
 
