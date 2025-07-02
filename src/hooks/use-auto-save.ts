@@ -8,6 +8,7 @@ interface UseAutoSaveOptions<T extends FieldValues = LinkFormData> {
   onSave: (data: T) => Promise<void>
   delay?: number
   linkId?: string
+  disabled?: boolean
 }
 
 type WithTags = {
@@ -19,6 +20,7 @@ export function useAutoSave<T extends FieldValues = LinkFormData>({
   onSave,
   delay = 1000,
   linkId,
+  disabled,
 }: UseAutoSaveOptions<T>) {
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -43,6 +45,7 @@ export function useAutoSave<T extends FieldValues = LinkFormData>({
 
   const debouncedSave = useDebouncedCallback(
     async (data: T) => {
+      if (disabled) return
       if (isSavingRef.current) return
 
       const normalizedData = normalizeData(data)

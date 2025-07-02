@@ -13,7 +13,8 @@ import { Loader2, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
 import { useUrlSummary } from '@/hooks/use-url-summary'
-import { isDescriptionEmpty } from '@/lib/utils'
+import { cleanHtmlContent, isDescriptionEmpty } from '@/lib/utils'
+import { useDebounce } from 'use-debounce'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -43,6 +44,8 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const router = useRouter()
   const titleInputRef = useRef<HTMLInputElement>(null)
   const originalDescRef = useRef<string | null>(null)
+  const cleanOriginalDescRef = useRef<string | null>(null)
+  const [isSummaryStreaming, setIsSummaryStreaming] = useState(false)
   const { summary, summarize, error: summaryError, isLoading: isLoadingSummary } = useUrlSummary()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
@@ -81,54 +84,43 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
     },
     delay: 1000,
     linkId: linkId,
+    disabled: isSummaryStreaming,
   })
 
+  const urlValue = form.watch('url')
+  const [debouncedUrl] = useDebounce(urlValue, 400)
+
   useEffect(() => {
+    const currentDesc = form.getValues('description') || ''
+
+    originalDescRef.current = currentDesc
+    cleanOriginalDescRef.current = cleanHtmlContent(currentDesc)
+
     setStreamInitialized(false)
-    originalDescRef.current = form.getValues('description') || ''
-  }, [linkId])
+  }, [linkId, debouncedUrl])
 
   useEffect(() => {
-    if (summary && summary.trim()) {
-      const isHtml = summary.trim().startsWith('<')
-      let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
+    if (!summary || !summary.trim()) return
 
-      if (/<body[\s>]/i.test(htmlSummary)) {
-        const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
-        htmlSummary = match ? match[1] : htmlSummary
-      }
+    const isHtml = summary.trim().startsWith('<')
+    let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
 
-      const originalDesc = originalDescRef.current || ''
-
-      let cleanedOriginal = originalDesc
-      if (/<body[\s>]/i.test(cleanedOriginal)) {
-        const match = cleanedOriginal.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
-        cleanedOriginal = match ? match[1] : cleanedOriginal
-      }
-
-      cleanedOriginal = cleanedOriginal
-        .replace(/\s*data-meta-[^=]*="[^"]*"/g, '')
-        .replace(/\s*style="[^"]*"/g, '')
-        .replace(/<p\s+>/g, '<p>')
-        .replace(/<p><\/p>/g, '')
-        .trim()
-
-      let newContent = ''
-      const isNewLink = !defaultValues?.description && !linkId
-      const isEmptyDescription = !cleanedOriginal.trim() || isDescriptionEmpty(cleanedOriginal)
-
-      if (isNewLink || isEmptyDescription) {
-        newContent = htmlSummary
-      } else {
-        newContent = `${htmlSummary}${cleanedOriginal}`
-      }
-
-      form.setValue('description', newContent, { shouldDirty: true })
-
-      if (!streamInitialized) {
-        setStreamInitialized(true)
-      }
+    // Limpiar el HTML del resumen si es necesario
+    if (/<body[\s>]/i.test(htmlSummary)) {
+      const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+      htmlSummary = match ? match[1] : htmlSummary
     }
+
+    // Solo una vez, determinar si es nuevo o vacío
+    const isNewLink = !defaultValues?.description && !linkId
+    const isEmptyDescription = !cleanOriginalDescRef.current?.trim() || isDescriptionEmpty(cleanOriginalDescRef.current)
+    const original = isNewLink || isEmptyDescription ? '' : cleanOriginalDescRef.current
+
+    // SIEMPRE construir el description como summary + original limpio (nunca concatenar summary)
+    form.setValue('description', `${htmlSummary}${original}`, { shouldDirty: true })
+
+    // Solo inicializar el stream una vez
+    if (!streamInitialized) setStreamInitialized(true)
   }, [summary])
 
   useEffect(() => {
@@ -136,6 +128,10 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
       titleInputRef.current.focus()
     }
   }, [isEditing])
+
+  useEffect(() => {
+    setIsSummaryStreaming(isLoadingSummary)
+  }, [isLoadingSummary])
 
   const handleSubmit = async (values: FormValues) => {
     const cleanedValues = {

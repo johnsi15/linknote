@@ -34,3 +34,21 @@ export function isDescriptionEmpty(desc: string) {
 
   return text.length === 0
 }
+
+export function cleanHtmlContent(html: string | null | undefined): string {
+  if (!html) return ''
+
+  let cleaned = html
+
+  if (/<body[\s>]/i.test(cleaned)) {
+    const match = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+    cleaned = match ? match[1] : cleaned
+  }
+
+  return cleaned
+    .replace(/\s*data-meta-[^=]*="[^"]*"/g, '')
+    .replace(/\s*style="[^"]*"/g, '')
+    .replace(/<p\s+>/g, '<p>')
+    .replace(/<p><\/p>/g, '')
+    .trim()
+}
