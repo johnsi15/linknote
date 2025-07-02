@@ -146,7 +146,11 @@ export async function getUserLinks({ tag }: { tag?: string } = {}) {
     const { userId } = await getSecureSession()
 
     if (tag) {
-      const tagRow = await db.select({ id: tags.id }).from(tags).where(eq(tags.name, tag)).limit(1)
+      const tagRow = await db
+        .select({ id: tags.id })
+        .from(tags)
+        .where(and(eq(sql`LOWER(${tags.name})`, tag.toLowerCase()), eq(tags.userId, userId)))
+        .limit(1)
 
       if (tagRow.length === 0) {
         return { success: true, links: [] }
@@ -160,39 +164,46 @@ export async function getUserLinks({ tag }: { tag?: string } = {}) {
         return { success: true, links: [] }
       }
 
-      const userLinks = await db.query.links.findMany({
-        where: and(
-          eq(links.userId, userId),
-          inArray(
-            links.id,
-            linkIds.map(row => row.linkId)
-          )
-        ),
-        orderBy: (links, { desc }) => [desc(links.createdAt)],
-      })
-
-      const linksWithTags = await Promise.all(
-        userLinks.map(async link => {
-          const linkTagsRows = await db
-            .select({ tagId: linkTags.tagId })
-            .from(linkTags)
-            .where(eq(linkTags.linkId, link.id))
-
-          const tagNames = []
-
-          if (linkTagsRows.length > 0) {
-            const tagIds = linkTagsRows.map(row => row.tagId)
-            const tagRows = await db.select({ name: tags.name }).from(tags).where(inArray(tags.id, tagIds))
-
-            tagNames.push(...tagRows.map(t => t.name))
-          }
-
-          return {
-            ...link,
-            tags: tagNames,
-          }
+      const userLinks = await db
+        .select({
+          id: links.id,
+          userId: links.userId,
+          title: links.title,
+          url: links.url,
+          description: links.description,
+          createdAt: links.createdAt,
+          updatedAt: links.updatedAt,
         })
-      )
+        .from(links)
+        .innerJoin(linkTags, eq(links.id, linkTags.linkId))
+        .where(and(eq(links.userId, userId), eq(linkTags.tagId, tagId)))
+        .orderBy(desc(links.createdAt))
+
+      const userLinkIds = userLinks.map(link => link.id)
+
+      const allLinkTags = await db
+        .select({
+          linkId: linkTags.linkId,
+          tagName: tags.name,
+        })
+        .from(linkTags)
+        .innerJoin(tags, eq(linkTags.tagId, tags.id))
+        .where(inArray(linkTags.linkId, userLinkIds))
+
+      const tagsByLinkId = allLinkTags.reduce((acc, { linkId, tagName }) => {
+        if (!acc[linkId]) {
+          acc[linkId] = []
+        }
+
+        acc[linkId].push(tagName)
+
+        return acc
+      }, {} as Record<string, string[]>)
+
+      const linksWithTags = userLinks.map(link => ({
+        ...link,
+        tags: tagsByLinkId[link.id] || [],
+      }))
 
       return { success: true, links: linksWithTags }
     }
