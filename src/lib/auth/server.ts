@@ -1,16 +1,24 @@
 import { auth, currentUser } from '@clerk/nextjs/server'
 
 export async function getUser() {
-  const user = await currentUser()
+  try {
+    const user = await currentUser()
 
-  if (!user) {
+    if (!user) {
+      return {
+        id: process.env.DEFAULT_USER_ID ?? '',
+        fullName: 'Guest',
+      }
+    }
+
+    return user
+  } catch (error) {
+    console.error('Error getting user:', error)
     return {
-      id: process.env.DEFAULT_USER_ID ?? '',
-      fullName: 'Guest',
+      id: 'error',
+      fullName: 'Error loading user',
     }
   }
-
-  return user
 }
 
 export async function getSecureSession() {
