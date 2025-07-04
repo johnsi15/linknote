@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 import { Input } from '@/components/ui/input'
 import { FilterDialog, type FilterOptions } from '@/components/dashboard/filter/dialog'
 
@@ -10,29 +11,24 @@ interface FilterPanelProps {
   availableTags: string[]
 }
 
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(handler)
-  }, [value, delay])
-  return debouncedValue
-}
-
 export function FilterPanel({ filters, onFilterChange, availableTags }: FilterPanelProps) {
   const [search, setSearch] = useState(filters.search)
-  const debouncedSearch = useDebouncedValue(search, 400)
-
-  useEffect(() => {
-    if (debouncedSearch !== filters.search) {
-      onFilterChange({ ...filters, search: debouncedSearch })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value)
+    const newSearch = e.target.value
+    setSearch(newSearch)
+
+    // Actualizar inmediatamente el estado local
+    const newFilters = { ...filters, search: newSearch }
+
+    // Usar debounce solo para la llamada a la API
+    debouncedOnFilterChange(newFilters)
   }
+
+  // Mover el debounce al nivel del efecto que hace la llamada a la API
+  const debouncedOnFilterChange = useDebouncedCallback((newFilters: FilterOptions) => {
+    onFilterChange(newFilters)
+  }, 400)
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     onFilterChange({ ...filters, sort: e.target.value as FilterOptions['sort'] })

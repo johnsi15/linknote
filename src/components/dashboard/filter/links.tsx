@@ -1,23 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDebouncedCallback } from 'use-debounce'
 import { FilterPanel } from '@/components/dashboard/filter/panel'
 import { type FilterOptions } from '@/components/dashboard/filter/dialog'
 import { LinkList } from '@/components/dashboard/link-list'
 import { Link } from '@/types/link'
+import { LinkCardSkeletons } from '@/components/ui/skeleton/link-card-skeleton'
 
 interface LinksFilterClientProps {
   allLinks: Link[]
   availableTags: string[]
-}
-
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(handler)
-  }, [value, delay])
-  return debouncedValue
 }
 
 export function LinksFilterClient({ allLinks, availableTags }: LinksFilterClientProps) {
@@ -30,14 +23,13 @@ export function LinksFilterClient({ allLinks, availableTags }: LinksFilterClient
 
   const [links, setLinks] = useState<Link[]>(allLinks)
   const [loading, setLoading] = useState(false)
-  const debouncedFilters = useDebouncedValue(filters, 400)
 
-  useEffect(() => {
+  const fetchFilteredLinks = useDebouncedCallback((currentFilters: FilterOptions) => {
     const hasActiveFilters =
-      filters.search !== '' ||
-      (filters.tags && filters.tags.length > 0) ||
-      (filters.dateRange && filters.dateRange !== 'all') ||
-      (filters.sort && filters.sort !== 'newest')
+      currentFilters.search !== '' ||
+      (currentFilters.tags && currentFilters.tags.length > 0) ||
+      (currentFilters.dateRange && currentFilters.dateRange !== 'all') ||
+      (currentFilters.sort && currentFilters.sort !== 'newest')
 
     if (!hasActiveFilters) {
       setLinks(allLinks)
@@ -46,22 +38,34 @@ export function LinksFilterClient({ allLinks, availableTags }: LinksFilterClient
 
     setLoading(true)
     const params = new URLSearchParams({
-      search: debouncedFilters.search,
-      tags: debouncedFilters.tags.join(','),
-      dateRange: debouncedFilters.dateRange,
-      sort: debouncedFilters.sort ?? '',
+      search: currentFilters.search,
+      tags: currentFilters.tags.join(','),
+      dateRange: currentFilters.dateRange,
+      sort: currentFilters.sort ?? '',
     })
+
     fetch(`/api/links/filtered?${params}`)
       .then(res => res.json())
       .then(data => setLinks(data.links))
       .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedFilters, allLinks])
+  }, 400)
+
+  useEffect(() => {
+    fetchFilteredLinks(filters)
+  }, [filters, allLinks, fetchFilteredLinks])
 
   return (
     <>
       <FilterPanel filters={filters} availableTags={availableTags} onFilterChange={setFilters} />
-      {loading ? <div className='text-center py-8'>Loading...</div> : <LinkList links={links} />}
+      {loading ? (
+        <LinkCardSkeletons count={6} />
+      ) : links.length > 0 ? (
+        <LinkList links={links} />
+      ) : (
+        <div className='text-center py-8 text-muted-foreground'>
+          No se encontraron enlaces con los filtros seleccionados
+        </div>
+      )}
     </>
   )
 }
