@@ -1,3 +1,6 @@
+'use client'
+
+import { usePathname } from 'next/navigation'
 import { LinkCard } from '@/components/dashboard/link-card'
 import { Link } from '@/types/link'
 
@@ -6,12 +9,19 @@ interface LinkListProps {
 }
 
 export function LinkList({ links }: LinkListProps) {
+  const pathname = usePathname()
+  const isDashboard = pathname === '/dashboard'
+
   if (!links || links.length === 0) {
     return <div className='text-center text-muted-foreground'>No links found</div>
   }
 
   return (
-    <div className='grid grid-cols-1 gap-4'>
+    <div
+      className={`grid gap-6 ${
+        isDashboard ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+      }`}
+    >
       {links.map(({ id, title, url, description, tags, createdAt }) => (
         <LinkCard
           key={id}

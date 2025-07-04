@@ -68,9 +68,9 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
     <>
       <Card className='overflow-hidden'>
         <CardHeader className='flex flex-row items-start justify-between space-y-0 pb-2'>
-          <div className='space-y-1'>
+          <header className='flex-1 min-w-0 space-y-1'>
             <div className='flex items-center'>
-              <LinkIcon className='mr-2 h-4 w-4 text-muted-foreground' />
+              <LinkIcon className='mr-2 h-4 w-4 flex-shrink-0 text-muted-foreground' />
               <h3 className='font-semibold'>{title}</h3>
             </div>
             <a
@@ -81,7 +81,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
             >
               {url}
             </a>
-          </div>
+          </header>
           <div className='flex space-x-1'>
             <Button variant='ghost' size='icon' onClick={() => copyToClipboard(url)} className='h-8 w-8'>
               <CopyIcon className='h-4 w-4' />
