@@ -145,6 +145,10 @@ export async function getUserLinks({ tag }: { tag?: string } = {}) {
   try {
     const { userId } = await getSecureSession()
 
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
     if (tag) {
       const tagRow = await db
         .select({ id: tags.id })
@@ -350,14 +354,14 @@ export type Tag = typeof tags.$inferSelect
 export async function getUserLinksFiltered({
   userId,
   search = '',
-  tags: tagNames = [], // Renombramos para claridad, estos son los nombres de los tags
+  tags: tagNames = [],
   dateRange = 'all',
   sort = 'newest',
   limit = 30,
   offset = 0, //  Añadimos offset para paginación
 }: GetUserLinksFilteredParams): Promise<(Omit<Link, 'userId' | 'updatedAt'> & { tags: string[] })[]> {
   if (!userId) {
-    throw new Error('User ID is required')
+    throw new Error('User not authenticated')
   }
 
   const allWhereConditions: SQLWrapper[] = []
