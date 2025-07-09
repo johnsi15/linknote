@@ -1,22 +1,25 @@
-interface XIconProps {
-  size?: number
-  className?: string
+import { SVGProps } from 'react'
+
+interface XIconProps extends SVGProps<SVGSVGElement> {
+  size?: number | string
+  title?: string
 }
 
-export const XIcon = ({ size = 32, className }: XIconProps) => (
+export const XIcon = ({ size = 24, className = '', title = 'X', ...props }: XIconProps) => (
   <svg
-    className={className}
-    aria-label='X Icon'
-    role='img'
     xmlns='http://www.w3.org/2000/svg'
+    x='0px'
+    y='0px'
     width={size}
     height={size}
-    fill='none'
-    viewBox='0 0 1200 1227'
+    viewBox='0 0 50 50'
+    className={`inline-block align-middle ${className}`}
+    fill='currentColor'
+    role='img'
+    aria-label={title}
+    {...props}
   >
-    <path
-      fill='currentColor'
-      d='M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894-377.686-540.24h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z'
-    />
+    {title && <title>{title}</title>}
+    <path d='M 11 4 C 7.134 4 4 7.134 4 11 L 4 39 C 4 42.866 7.134 46 11 46 L 39 46 C 42.866 46 46 42.866 46 39 L 46 11 C 46 7.134 42.866 4 39 4 L 11 4 z M 13.085938 13 L 21.023438 13 L 26.660156 21.009766 L 33.5 13 L 36 13 L 27.789062 22.613281 L 37.914062 37 L 29.978516 37 L 23.4375 27.707031 L 15.5 37 L 13 37 L 22.308594 26.103516 L 13.085938 13 z M 16.914062 15 L 31.021484 35 L 34.085938 35 L 19.978516 15 L 16.914062 15 z' />
   </svg>
 )
