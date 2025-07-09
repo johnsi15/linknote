@@ -1,6 +1,7 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { Link } from '@/types/link'
+import { getUserLinks, getLinkById } from '@/actions/links'
 
 interface LinksResponse {
   links: Link[]
@@ -23,13 +24,29 @@ export function useLinks(filters?: { tag?: string; search?: string }) {
   return useQuery({
     queryKey: linkKeys.list(filters || {}),
     queryFn: async (): Promise<LinksResponse> => {
-      const params = new URLSearchParams()
-      if (filters?.tag) params.append('tag', filters.tag)
-      if (filters?.search) params.append('search', filters.search)
+      if (filters?.search) {
+        const params = new URLSearchParams()
+        params.append('search', filters.search)
+        if (filters.tag) params.append('tags', filters.tag)
 
-      const response = await fetch(`/api/links?${params}`)
-      if (!response.ok) throw new Error('Error fetching links')
-      return response.json()
+        const response = await fetch(`/api/links/filtered?${params}`)
+        if (!response.ok) throw new Error('Error fetching filtered links')
+
+        const links = await response.json()
+
+        return { links, total: links.length, hasMore: false }
+      } else {
+        // Si no hay búsqueda, usar getUserLinks
+        const result = await getUserLinks({
+          tag: filters?.tag,
+        })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Error fetching links')
+        }
+
+        return { links: result.links, total: result.links?.length }
+      }
     },
     staleTime: 1000 * 60 * 2, // 2 minutos para links
   })
@@ -40,30 +57,50 @@ export function useLink(id: string) {
   return useQuery({
     queryKey: linkKeys.detail(id),
     queryFn: async (): Promise<Link> => {
-      const response = await fetch(`/api/links/${id}`)
-      if (!response.ok) throw new Error('Error fetching link')
-      return response.json()
+      const result = await getLinkById(id)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error fetching link')
+      }
+
+      return result
     },
     enabled: !!id,
   })
 }
 
 // Hook para paginación infinita
-export function useInfiniteLinks(filters?: { tag?: string; search?: string }) {
+export function useInfiniteLinks(filters?: { tag?: string; search?: string; dateRange?: string; sort?: string }) {
   return useInfiniteQuery({
     queryKey: linkKeys.list(filters || {}),
-    queryFn: async ({ pageParam }: { pageParam: string | undefined }): Promise<LinksResponse> => {
+    queryFn: async ({ pageParam }: { pageParam: number | undefined }): Promise<LinksResponse> => {
       const params = new URLSearchParams()
-      if (filters?.tag) params.append('tag', filters.tag)
-      if (filters?.search) params.append('search', filters.search)
-      if (pageParam) params.append('cursor', pageParam as string)
 
-      const response = await fetch(`/api/links?${params}`)
+      if (filters?.tag) params.append('tags', filters.tag)
+      if (filters?.search) params.append('search', filters.search)
+      if (filters?.dateRange) params.append('dateRange', filters.dateRange)
+      if (filters?.sort) params.append('sort', filters.sort)
+
+      const limit = 20
+      const offset = pageParam || 0
+      params.append('limit', limit.toString())
+      params.append('offset', offset.toString())
+
+      const response = await fetch(`/api/links/filtered?${params}`)
       if (!response.ok) throw new Error('Error fetching links')
-      return response.json()
+
+      const data = await response.json()
+      const hasMore = data.links.length === limit
+
+      return {
+        links: data.links,
+        nextCursor: hasMore ? (offset + limit).toString() : undefined,
+        hasMore,
+        total: data.links.length,
+      }
     },
-    initialPageParam: undefined,
-    getNextPageParam: lastPage => lastPage.nextCursor,
+    initialPageParam: 0,
+    getNextPageParam: lastPage => (lastPage.nextCursor ? parseInt(lastPage.nextCursor) : undefined),
   })
 }
 
@@ -72,13 +109,25 @@ export function prefetchLinks(filters?: { tag?: string; search?: string }) {
   return queryClient.prefetchQuery({
     queryKey: linkKeys.list(filters || {}),
     queryFn: async (): Promise<LinksResponse> => {
-      const params = new URLSearchParams()
-      if (filters?.tag) params.append('tag', filters.tag)
-      if (filters?.search) params.append('search', filters.search)
+      if (filters?.search) {
+        const params = new URLSearchParams()
+        params.append('search', filters.search)
+        if (filters.tag) params.append('tags', filters.tag)
 
-      const response = await fetch(`/api/links?${params}`)
-      if (!response.ok) throw new Error('Error fetching links')
-      return response.json()
+        const response = await fetch(`/api/links/filtered?${params}`)
+        if (!response.ok) throw new Error('Error fetching filtered links')
+
+        const links = await response.json()
+        return { links, total: links.length, hasMore: false }
+      } else {
+        const result = await getUserLinks({ tag: filters?.tag })
+
+        if (!result.success) {
+          throw new Error(result.error || 'Error fetching links')
+        }
+
+        return { links: result.links, total: result.links?.length || 0, hasMore: false }
+      }
     },
     staleTime: 1000 * 60 * 5,
   })

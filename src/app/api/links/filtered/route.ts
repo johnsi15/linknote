@@ -4,6 +4,7 @@ import { getSecureSession } from '@/lib/auth/server'
 
 export async function GET(req: NextRequest) {
   const { userId } = await getSecureSession()
+
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
