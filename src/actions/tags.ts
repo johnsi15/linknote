@@ -27,6 +27,7 @@ export async function getUserTags() {
           id: tag.id,
           name: tag.name,
           count: countValue,
+          createdAt: tag.createdAt,
         }
       })
     )

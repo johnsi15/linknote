@@ -341,7 +341,7 @@ export async function deleteLink(id: string) {
 
     revalidatePath('/dashboard')
     revalidatePath(`/links/${id}`)
-    return { success: true }
+    return { success: true, id }
   } catch (error) {
     console.error('Error al eliminar enlace:', error)
     return { success: false, error: 'No se pudo eliminar el enlace' }
