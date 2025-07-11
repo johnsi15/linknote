@@ -1,71 +1,111 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { linkKeys } from '../queries/use-links'
+import { tagKeys } from '../queries/use-tags'
+import { createLink, updateLink, deleteLink, saveLink, type LinkFormData } from '@/actions/links'
 
-interface CreateLinkData {
-  title: string
-  url: string
-  description?: string
-  tags: string[]
-}
-
-interface UpdateLinkData extends Partial<CreateLinkData> {
+interface UpdateLinkData extends Partial<LinkFormData> {
   id: string
 }
 
+// Hook para crear un nuevo link
 export function useCreateLink() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: CreateLinkData) => {
-      const response = await fetch('/api/links', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) throw new Error('Error creating link')
-      return response.json()
+    mutationFn: async (data: LinkFormData) => {
+      const result = await createLink(data)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error creating link')
+      }
+
+      return result
     },
     onSuccess: () => {
-      // Invalidar todas las queries de links
+      // Invalidar todas las queries de links y tags
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagKeys.all })
     },
   })
 }
 
+// Hook para actualizar un link existente
 export function useUpdateLink() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (data: UpdateLinkData) => {
-      const response = await fetch(`/api/links/${data.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
-      if (!response.ok) throw new Error('Error updating link')
-      return response.json()
+      const { id, ...linkData } = data
+      const result = await updateLink(id, linkData as LinkFormData)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error updating link')
+      }
+
+      return result
     },
     onSuccess: (_, variables) => {
       // Invalidar queries específicas
       queryClient.invalidateQueries({ queryKey: linkKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: linkKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: tagKeys.all })
     },
   })
 }
 
+// Hook para eliminar un link
 export function useDeleteLink() {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/links/${id}`, {
-        method: 'DELETE',
-      })
-      if (!response.ok) throw new Error('Error deleting link')
-      return response.json()
+      const result = await deleteLink(id)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error deleting link')
+      }
+
+      return result
     },
-    onSuccess: () => {
+    onSuccess: data => {
+      if (data && data.id) {
+        queryClient.invalidateQueries({ queryKey: linkKeys.detail(data.id) })
+      }
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagKeys.all })
+    },
+  })
+}
+
+// Hook para guardar un link (crear o actualizar)
+export function useSaveLink() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      data,
+      isUpdate = false,
+      linkId,
+    }: {
+      data: LinkFormData
+      isUpdate?: boolean
+      linkId?: string
+    }) => {
+      const result = await saveLink(data, isUpdate, linkId)
+
+      if (!result.success) {
+        throw new Error(result.error || 'Error saving link')
+      }
+
+      return result
+    },
+    onSuccess: (_, variables) => {
+      // Invalidar queries apropiadas
+      if (variables.isUpdate && variables.linkId) {
+        queryClient.invalidateQueries({ queryKey: linkKeys.detail(variables.linkId) })
+      }
+      queryClient.invalidateQueries({ queryKey: linkKeys.lists() })
+      queryClient.invalidateQueries({ queryKey: tagKeys.all })
     },
   })
 }
