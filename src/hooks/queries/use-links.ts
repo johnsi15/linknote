@@ -45,7 +45,7 @@ export function useLinks(filters?: { tag?: string; search?: string }) {
           throw new Error(result.error || 'Error fetching links')
         }
 
-        return { links: result.links, total: result.links?.length }
+        return { links: result.links ?? [], total: result.links?.length ?? 0, hasMore: false }
       }
     },
     staleTime: 1000 * 60 * 2, // 2 minutos para links
@@ -59,11 +59,11 @@ export function useLink(id: string) {
     queryFn: async (): Promise<Link> => {
       const result = await getLinkById(id)
 
-      if (!result.success) {
+      if (!result.success || !result.link) {
         throw new Error(result.error || 'Error fetching link')
       }
 
-      return result
+      return result.link
     },
     enabled: !!id,
   })
@@ -126,7 +126,7 @@ export function prefetchLinks(filters?: { tag?: string; search?: string }) {
           throw new Error(result.error || 'Error fetching links')
         }
 
-        return { links: result.links, total: result.links?.length || 0, hasMore: false }
+        return { links: result.links ?? [], total: result.links?.length ?? 0, hasMore: false }
       }
     },
     staleTime: 1000 * 60 * 5,
