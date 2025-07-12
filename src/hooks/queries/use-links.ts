@@ -20,26 +20,31 @@ export const linkKeys = {
 }
 
 // Hook para obtener todos los links
-export function useLinks(filters?: { tag?: string; search?: string }) {
+export function useLinks(filters?: { search?: string; tags?: string[]; dateRange?: string; sort?: string }) {
   return useQuery({
     queryKey: linkKeys.list(filters || {}),
     queryFn: async (): Promise<LinksResponse> => {
-      if (filters?.search) {
-        const params = new URLSearchParams()
-        params.append('search', filters.search)
-        if (filters.tag) params.append('tags', filters.tag)
+      const params = new URLSearchParams()
 
+      if (filters?.search) params.append('search', filters.search)
+      if (filters?.tags && filters.tags.length > 0) params.append('tags', filters.tags.join(','))
+      if (filters?.dateRange && filters.dateRange !== 'all') params.append('dateRange', filters.dateRange)
+      if (filters?.sort && filters.sort !== 'newest') params.append('sort', filters.sort)
+
+      if (
+        filters?.search ||
+        (filters?.tags && filters.tags.length > 0) ||
+        (filters?.dateRange && filters.dateRange !== 'all') ||
+        (filters?.sort && filters.sort !== 'newest')
+      ) {
         const response = await fetch(`/api/links/filtered?${params}`)
         if (!response.ok) throw new Error('Error fetching filtered links')
 
-        const links = await response.json()
-
-        return { links, total: links.length, hasMore: false }
+        const data = await response.json()
+        return { links: data.links, total: data.links.length, hasMore: false }
       } else {
         // Si no hay búsqueda, usar getUserLinks
-        const result = await getUserLinks({
-          tag: filters?.tag,
-        })
+        const result = await getUserLinks({})
 
         if (!result.success) {
           throw new Error(result.error || 'Error fetching links')
