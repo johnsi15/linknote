@@ -405,7 +405,7 @@ export async function getUserLinksFiltered({
       startDateFilter = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0)
       endDateFilter = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999)
       break
-    case 'last7days':
+    case 'week':
       const sevenDaysAgo = new Date(now)
       sevenDaysAgo.setDate(now.getDate() - 7)
       startDateFilter = new Date(
@@ -419,7 +419,7 @@ export async function getUserLinksFiltered({
       )
       endDateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
       break
-    case 'last30days':
+    case 'month':
       const thirtyDaysAgo = new Date(now)
       thirtyDaysAgo.setDate(now.getDate() - 30) // Setea al inicio del día hace 30 días
       startDateFilter = new Date(
