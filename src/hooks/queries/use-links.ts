@@ -110,27 +110,29 @@ export function useInfiniteLinks(filters?: { tag?: string; search?: string; date
 }
 
 // Función de prefetch para links
-export function prefetchLinks(filters?: { tag?: string; search?: string }) {
+export function prefetchLinks(filters?: { tags?: string[]; search?: string; dateRange?: string; sort?: string }) {
   return queryClient.prefetchQuery({
     queryKey: linkKeys.list(filters || {}),
     queryFn: async (): Promise<LinksResponse> => {
-      if (filters?.search) {
-        const params = new URLSearchParams()
-        params.append('search', filters.search)
-        if (filters.tag) params.append('tags', filters.tag)
+      const params = new URLSearchParams()
+      if (filters?.search) params.append('search', filters.search)
+      if (filters?.tags && filters.tags.length > 0) params.append('tags', filters.tags.join(','))
+      if (filters?.dateRange && filters.dateRange !== 'all') params.append('dateRange', filters.dateRange)
+      if (filters?.sort && filters.sort !== 'newest') params.append('sort', filters.sort)
 
+      if (
+        filters?.search ||
+        (filters?.tags && filters.tags.length > 0) ||
+        (filters?.dateRange && filters.dateRange !== 'all') ||
+        (filters?.sort && filters.sort !== 'newest')
+      ) {
         const response = await fetch(`/api/links/filtered?${params}`)
         if (!response.ok) throw new Error('Error fetching filtered links')
-
-        const links = await response.json()
-        return { links, total: links.length, hasMore: false }
+        const data = await response.json()
+        return { links: data.links, total: data.links.length, hasMore: false }
       } else {
-        const result = await getUserLinks({ tag: filters?.tag })
-
-        if (!result.success) {
-          throw new Error(result.error || 'Error fetching links')
-        }
-
+        const result = await getUserLinks({})
+        if (!result.success) throw new Error(result.error || 'Error fetching links')
         return { links: result.links ?? [], total: result.links?.length ?? 0, hasMore: false }
       }
     },
