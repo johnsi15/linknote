@@ -1,15 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { getUserLinksFiltered } from '@/actions/links' // Debes crear esta función
 import { getSecureSession } from '@/lib/auth/server'
 
-export async function GET(req: NextRequest) {
+export async function GET(request: NextRequest) {
   const { userId } = await getSecureSession()
 
   if (!userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const searchParams = req.nextUrl.searchParams
+  const searchParams = request.nextUrl.searchParams
 
   const search = searchParams.get('search') || ''
   const tags = searchParams.get('tags')?.split(',').filter(Boolean) || []

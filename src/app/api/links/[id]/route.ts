@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { linkSchema } from '@/lib/validations/link'
 import { getSecureSession } from '@/lib/auth/server'
 import { deleteLink, updateLink } from '@/actions/links'
