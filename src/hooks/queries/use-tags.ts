@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
-import { getUserTags } from '@/actions/tags'
 import { Tag } from '@/types/tag'
 
 interface TagsResponse {
@@ -21,9 +20,11 @@ export function useTags(filters?: { search?: string }) {
   return useQuery({
     queryKey: tagKeys.list(filters || {}),
     queryFn: async (): Promise<TagsResponse> => {
-      const tags = await getUserTags()
-
-      return { tags, total: tags.length }
+      const response = await fetch('/api/tags')
+      if (!response.ok) throw new Error('Error fetching tags')
+      
+      const data = await response.json()
+      return { tags: data.tags, total: data.total }
     },
     staleTime: 1000 * 60 * 10, // 10 minutos para tags (cambian menos)
   })
@@ -34,9 +35,14 @@ export function usePopularTags(limit = 10) {
   return useQuery({
     queryKey: [...tagKeys.popular(), { limit }],
     queryFn: async (): Promise<Tag[]> => {
-      const tags = await getUserTags()
-
-      return tags.sort((a, b) => b.count - a.count).slice(0, limit)
+      const response = await fetch('/api/tags')
+      if (!response.ok) throw new Error('Error fetching tags')
+      
+      const data = await response.json()
+      // Ordenar por count y tomar los primeros `limit`
+      return data.tags
+        .sort((a: Tag, b: Tag) => (b.count || 0) - (a.count || 0))
+        .slice(0, limit)
     },
     staleTime: 1000 * 60 * 15, // 15 minutos para tags populares
   })
@@ -47,13 +53,15 @@ export function useTagsSearch(search?: string) {
   return useQuery({
     queryKey: tagKeys.list({ search }),
     queryFn: async (): Promise<Tag[]> => {
-      const tags = await getUserTags()
-
       if (!search || search.trim() === '') {
-        return tags
+        return []
       }
 
-      return tags.filter(tag => tag.name.toLowerCase().includes(search.toLowerCase()))
+      const response = await fetch('/api/tags')
+      if (!response.ok) throw new Error('Error fetching tags')
+      
+      const data = await response.json()
+      return data.tags.filter((tag: Tag) => tag.name.toLowerCase().includes(search.toLowerCase()))
     },
     staleTime: 1000 * 60 * 5, // 5 minutos para búsquedas
     enabled: search !== undefined,
@@ -65,9 +73,11 @@ export function prefetchTags(filters?: { search?: string }) {
   return queryClient.prefetchQuery({
     queryKey: tagKeys.list(filters || {}),
     queryFn: async (): Promise<TagsResponse> => {
-      const tags = await getUserTags()
-
-      return { tags, total: tags.length }
+      const response = await fetch('/api/tags')
+      if (!response.ok) throw new Error('Error fetching tags')
+      
+      const data = await response.json()
+      return { tags: data.tags, total: data.total }
     },
     staleTime: 1000 * 60 * 10,
   })
@@ -78,7 +88,9 @@ export function prefetchPopularTags(limit = 10) {
   return queryClient.prefetchQuery({
     queryKey: [...tagKeys.popular(), { limit }],
     queryFn: async (): Promise<Tag[]> => {
-      const tags = await getUserTags()
+      // const tags = await getUserTags()
+
+      const tags: Tag[] = []
 
       return tags.sort((a, b) => b.count - a.count).slice(0, limit)
     },

@@ -1,7 +1,6 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { Link } from '@/types/link'
-import { getUserLinks, getLinkById } from '@/actions/links'
 
 interface LinksResponse {
   links: Link[]
@@ -43,14 +42,11 @@ export function useLinks(filters?: { search?: string; tags?: string[]; dateRange
         const data = await response.json()
         return { links: data.links, total: data.links.length, hasMore: false }
       } else {
-        // Si no hay búsqueda, usar getUserLinks
-        const result = await getUserLinks({})
-
-        if (!result.success) {
-          throw new Error(result.error || 'Error fetching links')
-        }
-
-        return { links: result.links ?? [], total: result.links?.length ?? 0, hasMore: false }
+        const response = await fetch('/api/links')
+        if (!response.ok) throw new Error('Error fetching links')
+        
+        const data = await response.json()
+        return { links: data.links, total: data.total, hasMore: data.hasMore }
       }
     },
     staleTime: 1000 * 60 * 2, // 2 minutos para links
@@ -62,13 +58,11 @@ export function useLink(id: string) {
   return useQuery({
     queryKey: linkKeys.detail(id),
     queryFn: async (): Promise<Link> => {
-      const result = await getLinkById(id)
-
-      if (!result.success || !result.link) {
-        throw new Error(result.error || 'Error fetching link')
-      }
-
-      return result.link
+      const response = await fetch(`/api/links/${id}`)
+      if (!response.ok) throw new Error('Error fetching link')
+      
+      const data = await response.json()
+      return data.link
     },
     enabled: !!id,
   })
@@ -131,9 +125,11 @@ export function prefetchLinks(filters?: { tags?: string[]; search?: string; date
         const data = await response.json()
         return { links: data.links, total: data.links.length, hasMore: false }
       } else {
-        const result = await getUserLinks({})
-        if (!result.success) throw new Error(result.error || 'Error fetching links')
-        return { links: result.links ?? [], total: result.links?.length ?? 0, hasMore: false }
+        const response = await fetch('/api/links')
+        if (!response.ok) throw new Error('Error fetching links')
+        
+        const data = await response.json()
+        return { links: data.links, total: data.total, hasMore: data.hasMore }
       }
     },
     staleTime: 1000 * 60 * 5,
