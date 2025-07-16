@@ -44,7 +44,7 @@ export function useLinks(filters?: { search?: string; tags?: string[]; dateRange
       } else {
         const response = await fetch('/api/links')
         if (!response.ok) throw new Error('Error fetching links')
-        
+
         const data = await response.json()
         return { links: data.links, total: data.total, hasMore: data.hasMore }
       }
@@ -60,7 +60,7 @@ export function useLink(id: string) {
     queryFn: async (): Promise<Link> => {
       const response = await fetch(`/api/links/${id}`)
       if (!response.ok) throw new Error('Error fetching link')
-      
+
       const data = await response.json()
       return data.link
     },
@@ -69,13 +69,13 @@ export function useLink(id: string) {
 }
 
 // Hook para paginación infinita
-export function useInfiniteLinks(filters?: { tag?: string; search?: string; dateRange?: string; sort?: string }) {
+export function useInfiniteLinks(filters?: { tags?: string; search?: string; dateRange?: string; sort?: string }) {
   return useInfiniteQuery({
     queryKey: linkKeys.list(filters || {}),
     queryFn: async ({ pageParam }: { pageParam: number | undefined }): Promise<LinksResponse> => {
       const params = new URLSearchParams()
 
-      if (filters?.tag) params.append('tags', filters.tag)
+      if (filters?.tags) params.append('tags', filters.tags)
       if (filters?.search) params.append('search', filters.search)
       if (filters?.dateRange) params.append('dateRange', filters.dateRange)
       if (filters?.sort) params.append('sort', filters.sort)
@@ -127,7 +127,7 @@ export function prefetchLinks(filters?: { tags?: string[]; search?: string; date
       } else {
         const response = await fetch('/api/links')
         if (!response.ok) throw new Error('Error fetching links')
-        
+
         const data = await response.json()
         return { links: data.links, total: data.total, hasMore: data.hasMore }
       }
