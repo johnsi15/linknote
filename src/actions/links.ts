@@ -145,6 +145,10 @@ export async function getUserLinks({ tag }: { tag?: string } = {}) {
   try {
     const { userId } = await getSecureSession()
 
+    if (!userId) {
+      return { success: false, error: 'User not authenticated' }
+    }
+
     if (tag) {
       const tagRow = await db
         .select({ id: tags.id })
@@ -337,7 +341,7 @@ export async function deleteLink(id: string) {
 
     revalidatePath('/dashboard')
     revalidatePath(`/links/${id}`)
-    return { success: true }
+    return { success: true, id }
   } catch (error) {
     console.error('Error al eliminar enlace:', error)
     return { success: false, error: 'No se pudo eliminar el enlace' }
@@ -350,14 +354,14 @@ export type Tag = typeof tags.$inferSelect
 export async function getUserLinksFiltered({
   userId,
   search = '',
-  tags: tagNames = [], // Renombramos para claridad, estos son los nombres de los tags
+  tags: tagNames = [],
   dateRange = 'all',
   sort = 'newest',
   limit = 30,
   offset = 0, //  Añadimos offset para paginación
 }: GetUserLinksFilteredParams): Promise<(Omit<Link, 'userId' | 'updatedAt'> & { tags: string[] })[]> {
   if (!userId) {
-    throw new Error('User ID is required')
+    throw new Error('User not authenticated')
   }
 
   const allWhereConditions: SQLWrapper[] = []
@@ -401,7 +405,7 @@ export async function getUserLinksFiltered({
       startDateFilter = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 0, 0, 0, 0)
       endDateFilter = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 23, 59, 59, 999)
       break
-    case 'last7days':
+    case 'week':
       const sevenDaysAgo = new Date(now)
       sevenDaysAgo.setDate(now.getDate() - 7)
       startDateFilter = new Date(
@@ -415,7 +419,7 @@ export async function getUserLinksFiltered({
       )
       endDateFilter = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
       break
-    case 'last30days':
+    case 'month':
       const thirtyDaysAgo = new Date(now)
       thirtyDaysAgo.setDate(now.getDate() - 30) // Setea al inicio del día hace 30 días
       startDateFilter = new Date(

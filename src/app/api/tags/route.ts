@@ -1,5 +1,19 @@
 import { NextResponse } from 'next/server'
-import { addTag, updateTag, deleteTag } from '@/actions/tags'
+import { addTag, updateTag, deleteTag, getUserTags } from '@/actions/tags'
+
+export async function GET() {
+  try {
+    const tags = await getUserTags()
+
+    return NextResponse.json({
+      tags,
+      total: tags.length,
+    })
+  } catch (error) {
+    console.error('Error fetching tags:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
 
 export async function POST(request: Request) {
   const { name } = await request.json()

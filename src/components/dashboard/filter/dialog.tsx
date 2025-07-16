@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useDebounce } from 'use-debounce'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,20 +23,11 @@ export interface FilterOptions {
   sort?: 'newest' | 'oldest' | 'az' | 'za'
 }
 
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(handler)
-  }, [value, delay])
-  return debouncedValue
-}
-
 export function FilterDialog({ onFilterChange, availableTags, currentFilters }: FilterDialogProps) {
   const [filters, setFilters] = useState<FilterOptions>(currentFilters)
-  const [search, setSearch] = useState(filters.search)
-  const debouncedSearch = useDebouncedValue(search, 400)
+  const [debouncedSearch] = useDebounce(filters.search, 400)
 
+  // Sincroniza el search debounced con el resto de filtros
   useEffect(() => {
     if (debouncedSearch !== filters.search) {
       const newFilters = { ...filters, search: debouncedSearch }
@@ -46,12 +38,11 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
   }, [debouncedSearch])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value)
+    setFilters({ ...filters, search: e.target.value })
   }
 
   const toggleTag = (tag: string) => {
     const newTags = filters.tags.includes(tag) ? filters.tags.filter(t => t !== tag) : [...filters.tags, tag]
-
     const newFilters = { ...filters, tags: newTags }
     setFilters(newFilters)
     onFilterChange(newFilters)
@@ -95,7 +86,11 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
             <Label>Search</Label>
-            <Input placeholder='Search in title and description...' value={search} onChange={handleSearchChange} />
+            <Input
+              placeholder='Search in title and description...'
+              value={filters.search}
+              onChange={handleSearchChange}
+            />
           </div>
 
           <div className='space-y-2'>

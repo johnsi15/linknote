@@ -44,7 +44,17 @@ export default async function LinksPage({ searchParams }: { searchParams: Search
 
         <TabsContent value='all' className='space-y-4'>
           <Card className='p-4'>
-            {success && links && <LinksFilterClient allLinks={links} availableTags={availableTags} />}
+            {success && links && (
+              <LinksFilterClient
+                initialFilters={{
+                  search: '',
+                  tags: [],
+                  dateRange: 'all',
+                  sort: 'newest',
+                }}
+                availableTags={availableTags}
+              />
+            )}
             {error && (
               <div className='text-center py-12'>
                 <p className='text-muted-foreground'>{error}</p>

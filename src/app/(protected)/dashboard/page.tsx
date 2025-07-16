@@ -32,7 +32,17 @@ export default async function DashboardPage() {
             </div>
             <div className='grid grid-cols-1 gap-4'>
               <Card className='p-4'>
-                {success && links && <LinksFilterClient allLinks={links} availableTags={availableTags} />}
+                {success && links && (
+                  <LinksFilterClient
+                    initialFilters={{
+                      search: '',
+                      tags: [],
+                      dateRange: 'all',
+                      sort: 'newest',
+                    }}
+                    availableTags={availableTags}
+                  />
+                )}
                 {error && (
                   <div className='text-center py-12'>
                     <p className='text-muted-foreground'>{error}</p>
