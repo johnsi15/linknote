@@ -17,11 +17,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const validatedData = linkSchema.parse(formData)
     const result = await updateLink(id, validatedData)
 
-    if (result.success) {
-      return NextResponse.json({ success: true, linkId: id })
-    } else {
+    if (!result.success) {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 })
     }
+
+    return NextResponse.json({ success: true, linkId: id })
   } catch (error) {
     console.error('Error al actualizar enlace:', error)
     return NextResponse.json({ success: false, error: 'No se pudo actualizar el enlace' }, { status: 500 })
@@ -40,7 +40,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const result = await deleteLink(id)
 
     if (result.success) {
-      return NextResponse.json({ success: true })
+      return NextResponse.json({ success: true, linkId: id }, { status: 200 })
     } else {
       return NextResponse.json({ success: false, error: result.error }, { status: 400 })
     }
