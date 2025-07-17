@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getUserLinks } from '@/actions/links'
+import { getUserLinks, createLink, type LinkFormData } from '@/actions/links'
+import { linkSchema } from '@/lib/validations/link'
 
 export async function GET() {
   try {
@@ -16,6 +17,25 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching links:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    const data: LinkFormData = await request.json()
+
+    const validatedData = linkSchema.parse(data)
+
+    const result = await createLink(validatedData)
+
+    if (!result.success) {
+      return NextResponse.json({ success: false, error: result.error || 'Error creating link' }, { status: 400 })
+    }
+
+    return NextResponse.json({ success: false, linkId: result.linkId }, { status: 201 })
+  } catch (error) {
+    console.error('Error creating link:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
