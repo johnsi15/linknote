@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LinkForm } from '@/components/dashboard/link-form'
 import { LinkFormData } from '@/types/link'
 import { useSaveLink } from '@/hooks/mutations/use-link-mutations'
@@ -17,19 +17,17 @@ export default function LinkDetailPage() {
   const saveLinkMutation = useSaveLink()
 
   const { id } = params as { id: string }
-  const isNew = id === 'new'
+  const initialIsNew = id === 'new'
 
-  const [linkId, setLinkId] = useState<string | undefined>(isNew ? undefined : id)
-  const [hasBeenSaved, setHasBeenSaved] = useState(false)
+  const [linkId, setLinkId] = useState<string | undefined>(initialIsNew ? undefined : id)
+  const [hasBeenSaved, setHasBeenSaved] = useState(!initialIsNew)
+
+  const isNew = !linkId
 
   // Usar el hook para obtener el link
-  const { data: linkData, isLoading, error } = useLink(id)
+  const { data: linkData, isLoading, error } = useLink(linkId || '')
 
   const handleSubmit = async (formData: LinkFormData, isAutoSaveEvent = false) => {
-    if (!isAutoSaveEvent && linkId) {
-      return { success: true, linkId }
-    }
-
     const safeFormData = {
       ...formData,
       description: formData.description ?? '',
@@ -46,23 +44,24 @@ export default function LinkDetailPage() {
         },
         {
           onSuccess: result => {
+            console.log('Saved link result:', result)
             if (result.success) {
               if (result.linkId) {
                 setLinkId(result.linkId)
                 setHasBeenSaved(true)
-                if (isNew) {
+
+                if (!linkId) {
                   toast.success('Link created', {
                     description: 'The link has been saved successfully',
                   })
+                  window.history.replaceState(null, '', `/links/${result.linkId}`)
                   resolve(result)
-                  router.replace(`/links/${result.linkId}`)
                   return
                 }
               }
 
               if (isAutoSaveEvent) {
                 toast.success('Link saved', { duration: 2000 })
-                router.refresh()
               } else {
                 toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
                   description: 'The link has been saved successfully',
@@ -88,7 +87,14 @@ export default function LinkDetailPage() {
     })
   }
 
-  if (isLoading) {
+  useEffect(() => {
+    if (error) {
+      toast.error('Error', { description: 'Error loading link' })
+      router.push('/dashboard')
+    }
+  }, [error, router])
+
+  if (isLoading && !linkData) {
     return (
       <div className='flex items-center justify-center h-screen'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -97,9 +103,15 @@ export default function LinkDetailPage() {
   }
 
   if (error) {
-    toast.error('Error', { description: 'Error loading link' })
-    router.push('/dashboard')
-    return null
+    return (
+      <div className='flex flex-col items-center justify-center h-screen gap-4'>
+        <p className='text-red-500'>Error loading link</p>
+        <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
+        <p className='text-sm text-gray-500'>Please try again later or contact support if the issue persists.</p>
+        <p className='text-sm text-gray-500'>Error details: {error.message}</p>
+        <p className='text-sm text-gray-500'>Link ID: {linkId}</p>
+      </div>
+    )
   }
 
   return (

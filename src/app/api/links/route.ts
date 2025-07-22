@@ -29,11 +29,13 @@ export async function POST(request: Request) {
 
     const result = await createLink(validatedData)
 
+    console.log('Link created result:', result)
+
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error || 'Error creating link' }, { status: 400 })
     }
 
-    return NextResponse.json({ success: false, linkId: result.linkId }, { status: 201 })
+    return NextResponse.json({ success: true, linkId: result.linkId }, { status: 201 })
   } catch (error) {
     console.error('Error creating link:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

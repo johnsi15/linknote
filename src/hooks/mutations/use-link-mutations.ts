@@ -29,6 +29,8 @@ async function apiCreateLink(data: LinkFormData): Promise<ApiResponse> {
 
   const result: ApiResponse = await res.json()
 
+  console.log({ res, result })
+
   if (!res.ok || !result.success) {
     const errorMsg = 'error' in result ? result.error : 'Error creating link'
     throw new Error(errorMsg)
