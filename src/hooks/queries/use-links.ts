@@ -64,7 +64,7 @@ export function useLink(id: string) {
       const data = await response.json()
       return data.link
     },
-    enabled: !!id,
+    enabled: !!id && id !== 'new',
   })
 }
 

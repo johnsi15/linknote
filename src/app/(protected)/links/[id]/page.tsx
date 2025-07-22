@@ -4,46 +4,32 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { getLinkById, saveLink } from '@/actions/links'
 import { toast } from 'sonner'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { LinkForm } from '@/components/dashboard/link-form'
-import { Link as LinkData, LinkFormData } from '@/types/link'
+import { LinkFormData } from '@/types/link'
+import { useSaveLink } from '@/hooks/mutations/use-link-mutations'
+import { useLink } from '@/hooks/queries/use-links'
 
 export default function LinkDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const saveLinkMutation = useSaveLink()
 
   const { id } = params as { id: string }
   const isNew = id === 'new'
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [linkData, setLinkData] = useState<LinkData | null | undefined>(null)
   const [linkId, setLinkId] = useState<string | undefined>(isNew ? undefined : id)
   const [hasBeenSaved, setHasBeenSaved] = useState(false)
 
-  useEffect(() => {
-    async function fetchLinkData() {
-      if (!isNew) {
-        setIsLoading(true)
-        const result = await getLinkById(id)
-
-        if (result.success) {
-          setLinkData(result.link)
-          setHasBeenSaved(true)
-        } else {
-          toast.error('Error', { description: result.error })
-          router.push('/dashboard')
-        }
-      }
-
-      setIsLoading(false)
-    }
-
-    fetchLinkData()
-  }, [id, router, isNew])
+  // Usar el hook para obtener el link
+  const { data: linkData, isLoading, error } = useLink(id)
 
   const handleSubmit = async (formData: LinkFormData, isAutoSaveEvent = false) => {
+    if (!isAutoSaveEvent && linkId) {
+      return { success: true, linkId }
+    }
+
     const safeFormData = {
       ...formData,
       description: formData.description ?? '',
@@ -51,38 +37,55 @@ export default function LinkDetailPage() {
 
     const isActualUpdateForBackend = Boolean(linkId) && hasBeenSaved
 
-    try {
-      const result = await saveLink(safeFormData, isActualUpdateForBackend, linkId)
+    return new Promise<{ success: boolean; linkId?: string; error?: string }>(resolve => {
+      saveLinkMutation.mutate(
+        {
+          data: safeFormData,
+          isUpdate: isActualUpdateForBackend,
+          linkId,
+        },
+        {
+          onSuccess: result => {
+            if (result.success) {
+              if (result.linkId) {
+                setLinkId(result.linkId)
+                setHasBeenSaved(true)
+                if (isNew) {
+                  toast.success('Link created', {
+                    description: 'The link has been saved successfully',
+                  })
+                  resolve(result)
+                  router.replace(`/links/${result.linkId}`)
+                  return
+                }
+              }
 
-      if (result.success) {
-        if (result.linkId) {
-          setLinkId(result.linkId)
-          setHasBeenSaved(true)
+              if (isAutoSaveEvent) {
+                toast.success('Link saved', { duration: 2000 })
+                router.refresh()
+              } else {
+                toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
+                  description: 'The link has been saved successfully',
+                })
+
+                if (!isAutoSaveEvent) {
+                  router.push('/dashboard')
+                }
+              }
+              resolve(result)
+            } else {
+              toast.error('Error', { description: result.error || 'Error saving link' })
+              resolve({ success: false, error: result.error || 'Error saving link' })
+            }
+          },
+          onError: error => {
+            console.log('Error saving link:', error)
+            toast.error('Error', { description: 'An error occurred while saving the link' })
+            resolve({ success: false, error: 'An error occurred while saving the link' })
+          },
         }
-
-        if (isAutoSaveEvent) {
-          toast.success('Link saved', { duration: 2000 })
-          router.refresh()
-        } else {
-          toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
-            description: 'The link has been saved successfully',
-          })
-
-          if (!isAutoSaveEvent) {
-            router.push('/dashboard')
-          }
-        }
-
-        return result
-      } else {
-        toast.error('Error', { description: result.error || 'Error saving link' })
-        return { success: false, error: result.error || 'Error saving link' }
-      }
-    } catch (error) {
-      console.error('Error saving link:', error)
-      toast.error('Error', { description: 'An error occurred while saving the link' })
-      return { success: false, error: 'An error occurred while saving the link' }
-    }
+      )
+    })
   }
 
   if (isLoading) {
@@ -91,6 +94,12 @@ export default function LinkDetailPage() {
         <Loader2 className='h-8 w-8 animate-spin' />
       </div>
     )
+  }
+
+  if (error) {
+    toast.error('Error', { description: 'Error loading link' })
+    router.push('/dashboard')
+    return null
   }
 
   return (

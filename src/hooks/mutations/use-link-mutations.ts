@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, type UseMutationResult, useQueryClient } from '@tanstack/react-query'
 import { linkKeys } from '../queries/use-links'
 import { tagKeys } from '../queries/use-tags'
 import { type LinkFormData } from '@/actions/links'
@@ -8,12 +8,12 @@ interface UpdateLinkData extends Partial<LinkFormData> {
 }
 
 interface ApiResponseSuccess {
-  success: boolean
+  success: true
   linkId: string
 }
 
 interface ApiResponseError {
-  success: boolean
+  success: false
   error: string
 }
 
@@ -127,7 +127,11 @@ export function useDeleteLink() {
 }
 
 // Hook para guardar un link (crear o actualizar)
-export function useSaveLink() {
+export function useSaveLink(): UseMutationResult<
+  ApiResponse,
+  Error,
+  { data: LinkFormData; isUpdate?: boolean; linkId?: string }
+> {
   const queryClient = useQueryClient()
 
   return useMutation({
