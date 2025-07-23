@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XIcon } from 'lucide-react'
+import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,39 +9,42 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tag } from '@/types/tag'
 import { useTags } from '@/hooks/queries/use-tags'
+import { useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/mutations/use-tag-mutations'
 
 export function TagsManager() {
-  const { data, isLoading, refetch } = useTags()
+  const { data, isLoading } = useTags()
+  const createTag = useCreateTag()
+  const updateTag = useUpdateTag()
+  const deleteTag = useDeleteTag()
   const [newTag, setNewTag] = useState('')
   const [editingTag, setEditingTag] = useState<{ id: string; name: string } | null>(null)
+  const [inputError, setInputError] = useState<string | null>(null)
 
   const handleNewTagChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)
 
   const handleAddTag = async () => {
-    try {
-      const tag = newTag.trim()
-
-      const response = await fetch('/api/tags', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: tag }),
-      })
-
-      const dataRes = await response.json()
-
-      if (!response.ok) {
-        toast.error('Error creating tag', { description: dataRes.error || 'An error occurred while creating the tag.' })
-        return
-      }
-
-      setNewTag('')
-      toast('Tag created', { description: `The tag "${newTag}" has been created.` })
-      refetch()
-    } catch (error) {
-      console.error('Error creating tag:', error)
+    const tag = newTag.trim()
+    if (!tag) {
+      setInputError('Tag name is required')
+      return
     }
+
+    setInputError(null)
+    createTag.mutate(tag, {
+      onSuccess: () => {
+        setNewTag('')
+        toast('Tag created', { description: `The tag "${tag}" has been created.` })
+      },
+      onError: (error: unknown) => {
+        if (error instanceof Error) {
+          toast.error('Error creating tag', {
+            description: error.message || 'An error occurred while creating the tag.',
+          })
+        } else {
+          toast.error('Error creating tag', { description: 'An unknown error occurred while creating the tag.' })
+        }
+      },
+    })
   }
 
   const handleStartEditing = (tag: Tag) => setEditingTag({ id: tag.id, name: tag.name })
@@ -53,84 +56,57 @@ export function TagsManager() {
 
   const handleSaveTag = async () => {
     if (!editingTag) return
-
     const tagName = editingTag.name.trim()
     const exists = data?.tags.some(
       tag => tag.id !== editingTag.id && tag.name.trim().toLowerCase() === tagName.toLowerCase()
     )
-
     if (exists) {
       toast.error('Tag name already exists', { description: 'Choose a different name.' })
       return
     }
-
     if (!tagName) {
       toast.error('Tag name cannot be empty', { description: 'The tag name cannot be empty.' })
       return
     }
-
-    try {
-      const response = await fetch('/api/tags', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
+    updateTag.mutate(
+      { id: editingTag.id, name: tagName },
+      {
+        onSuccess: () => {
+          setEditingTag(null)
+          toast('Tag updated', { description: `The tag has been updated to "${tagName}".` })
         },
-        body: JSON.stringify({ id: editingTag?.id, name: tagName }),
-      })
-
-      const { error } = await response.json()
-
-      if (!response.ok) {
-        toast.error('Error saving tag', { description: error || 'An error occurred while saving the tag.' })
-        return
+        onError: (error: unknown) => {
+          if (error instanceof Error) {
+            toast.error('Error saving tag', { description: error.message || 'An error occurred while saving the tag.' })
+          } else {
+            toast.error('Error saving tag', { description: 'An unknown error occurred while saving the tag.' })
+          }
+        },
       }
-
-      setEditingTag(null)
-      toast('Tag updated', { description: `The tag has been updated to "${editingTag.name}".` })
-      refetch()
-    } catch (error) {
-      console.error('Error saving tag:', error)
-      toast.error('Error saving tag', { description: 'An error occurred while saving the tag.' })
-      return
-    }
+    )
   }
 
   const handleDeleteTag = async (tagId: string) => {
     const tag = data?.tags.find(t => t.id === tagId)
     const tagName = tag ? tag.name : ''
-
     const confirmed = window.confirm(
       `Are you sure you want to delete the tag "${tagName}"? This action cannot be undone.`
     )
-
     if (!confirmed) return
-
-    try {
-      const response = await fetch('/api/tags', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ id: tagId }),
-      })
-
-      const dataRes = await response.json()
-      if (!response.ok) {
-        toast.error('Error deleting tag', { description: dataRes.error || 'An error occurred while deleting the tag.' })
-        return
-      }
-      if (dataRes.error) {
-        toast.error('Cannot delete tag', { description: dataRes.error })
-        return
-      }
-
-      toast('Tag deleted', { description: 'The tag has been deleted.' })
-      refetch()
-    } catch (error) {
-      console.error('Error deleting tag:', error)
-      toast.error('Error deleting tag', { description: 'An error occurred while deleting the tag.' })
-      return
-    }
+    deleteTag.mutate(tagId, {
+      onSuccess: () => {
+        toast('Tag deleted', { description: 'The tag has been deleted.' })
+      },
+      onError: (error: unknown) => {
+        if (error instanceof Error) {
+          toast.error('Error deleting tag', {
+            description: error.message || 'An error occurred while deleting the tag.',
+          })
+        } else {
+          toast.error('Error deleting tag', { description: 'An unknown error occurred while deleting the tag.' })
+        }
+      },
+    })
   }
 
   return (
@@ -145,14 +121,27 @@ export function TagsManager() {
             <Input
               placeholder='Enter tag name'
               value={newTag}
-              onChange={handleNewTagChange}
+              onChange={e => {
+                handleNewTagChange(e)
+                if (inputError) setInputError(null)
+              }}
               onKeyDown={e => e.key === 'Enter' && handleAddTag()}
+              disabled={createTag.isPending}
             />
-            <Button onClick={handleAddTag} className='gap-2'>
-              <PlusIcon className='h-4 w-4' />
-              Add Tag
+            <Button onClick={handleAddTag} className='gap-2' disabled={createTag.isPending}>
+              {createTag.isPending ? (
+                <>
+                  <Loader2 className='animate-spin mr-2 h-4 w-4' /> Creating...
+                </>
+              ) : (
+                <>
+                  <PlusIcon className='h-4 w-4' />
+                  Add Tag
+                </>
+              )}
             </Button>
           </div>
+          {inputError && <p className='text-xs text-red-500 mt-2'>{inputError}</p>}
         </CardContent>
       </Card>
       <Card>
@@ -221,6 +210,7 @@ export function TagsManager() {
                             variant='ghost'
                             onClick={() => handleDeleteTag(tag.id)}
                             className='h-8 w-8 text-destructive'
+                            disabled={deleteTag.isPending && deleteTag.variables === tag.id}
                           >
                             <TrashIcon className='h-4 w-4' />
                           </Button>

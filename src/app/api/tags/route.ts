@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { addTag, updateTag, deleteTag, getUserTags } from '@/actions/tags'
+import { addTag, getUserTags } from '@/actions/tags'
 
 export async function GET() {
   try {
@@ -16,22 +16,22 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const { name } = await request.json()
-  const result = await addTag(name)
+  try {
+    const { name } = await request.json()
 
-  return NextResponse.json(result)
-}
+    if (!name) {
+      return NextResponse.json({ error: 'Name is required' }, { status: 400 })
+    }
 
-export async function PUT(request: Request) {
-  const { id, name } = await request.json()
-  const result = await updateTag(id, name)
+    const result = await addTag(name)
 
-  return NextResponse.json(result)
-}
+    if (!result.success) {
+      return NextResponse.json({ error: result.error || 'Error creating tag' }, { status: 400 })
+    }
 
-export async function DELETE(request: Request) {
-  const { id } = await request.json()
-  const result = await deleteTag(id)
-
-  return NextResponse.json(result)
+    return NextResponse.json(result, { status: 201 })
+  } catch (error) {
+    console.error('Error creating tag:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
 }
