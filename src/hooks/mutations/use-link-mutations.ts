@@ -1,10 +1,83 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, type UseMutationResult, useQueryClient } from '@tanstack/react-query'
 import { linkKeys } from '../queries/use-links'
 import { tagKeys } from '../queries/use-tags'
-import { createLink, updateLink, deleteLink, saveLink, type LinkFormData } from '@/actions/links'
+import { type LinkFormData } from '@/actions/links'
 
 interface UpdateLinkData extends Partial<LinkFormData> {
   id: string
+}
+
+interface ApiResponseSuccess {
+  success: true
+  linkId: string
+}
+
+interface ApiResponseError {
+  success: false
+  error: string
+}
+
+type ApiResponse = ApiResponseSuccess | ApiResponseError
+
+// Helpers para consumir la API route de links
+async function apiCreateLink(data: LinkFormData): Promise<ApiResponse> {
+  const res = await fetch('/api/links', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+
+  const result: ApiResponse = await res.json()
+
+  if (!res.ok || !result.success) {
+    const errorMsg = 'error' in result ? result.error : 'Error creating link'
+    throw new Error(errorMsg)
+  }
+
+  return result
+}
+
+// PUT devuelve { data: string } donde data es el linkId actualizado
+async function apiUpdateLink(id: string, data: Partial<LinkFormData>): Promise<ApiResponse> {
+  const res = await fetch(`/api/links/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  })
+
+  const result: ApiResponse = await res.json()
+
+  if (!res.ok || !result.success) {
+    const errorMsg = 'error' in result ? result.error : 'Error updating link'
+    throw new Error(errorMsg)
+  }
+
+  return result
+}
+
+// DELETE devuelve { data: string } donde data es el id borrado
+async function apiDeleteLink(id: string): Promise<ApiResponse> {
+  const res = await fetch(`/api/links/${id}`, {
+    method: 'DELETE',
+  })
+
+  const result: ApiResponse = await res.json()
+
+  if (!res.ok || !result.success) {
+    const errorMsg = 'error' in result ? result.error : 'Error deleting link'
+    throw new Error(errorMsg)
+  }
+
+  return result
+}
+
+// Save link usa los tipos correctos según la operación
+async function apiSaveLink(data: LinkFormData, isUpdate = false, linkId?: string): Promise<ApiResponse> {
+  if (isUpdate && linkId) {
+    return apiUpdateLink(linkId, data)
+  } else {
+    return apiCreateLink(data)
+  }
 }
 
 // Hook para crear un nuevo link
@@ -12,17 +85,8 @@ export function useCreateLink() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (data: LinkFormData) => {
-      const result = await createLink(data)
-
-      if (!result.success) {
-        throw new Error(result.error || 'Error creating link')
-      }
-
-      return result
-    },
+    mutationFn: apiCreateLink,
     onSuccess: () => {
-      // Invalidar todas las queries de links y tags
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
     },
@@ -36,16 +100,9 @@ export function useUpdateLink() {
   return useMutation({
     mutationFn: async (data: UpdateLinkData) => {
       const { id, ...linkData } = data
-      const result = await updateLink(id, linkData as LinkFormData)
-
-      if (!result.success) {
-        throw new Error(result.error || 'Error updating link')
-      }
-
-      return result
+      return apiUpdateLink(id, linkData)
     },
     onSuccess: (_, variables) => {
-      // Invalidar queries específicas
       queryClient.invalidateQueries({ queryKey: linkKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: linkKeys.lists() })
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
@@ -58,18 +115,10 @@ export function useDeleteLink() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await deleteLink(id)
-
-      if (!result.success) {
-        throw new Error(result.error || 'Error deleting link')
-      }
-
-      return result
-    },
+    mutationFn: apiDeleteLink,
     onSuccess: data => {
-      if (data && data.id) {
-        queryClient.invalidateQueries({ queryKey: linkKeys.detail(data.id) })
+      if (data && 'linkId' in data) {
+        queryClient.invalidateQueries({ queryKey: linkKeys.detail(data.linkId) })
       }
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
@@ -78,7 +127,11 @@ export function useDeleteLink() {
 }
 
 // Hook para guardar un link (crear o actualizar)
-export function useSaveLink() {
+export function useSaveLink(): UseMutationResult<
+  ApiResponse,
+  Error,
+  { data: LinkFormData; isUpdate?: boolean; linkId?: string }
+> {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -91,16 +144,9 @@ export function useSaveLink() {
       isUpdate?: boolean
       linkId?: string
     }) => {
-      const result = await saveLink(data, isUpdate, linkId)
-
-      if (!result.success) {
-        throw new Error(result.error || 'Error saving link')
-      }
-
-      return result
+      return apiSaveLink(data, isUpdate, linkId)
     },
     onSuccess: (_, variables) => {
-      // Invalidar queries apropiadas
       if (variables.isUpdate && variables.linkId) {
         queryClient.invalidateQueries({ queryKey: linkKeys.detail(variables.linkId) })
       }

@@ -6,10 +6,10 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDistanceToNow } from 'date-fns'
-// import ClientHtml from '@/components/dashboard/client-html'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { extractSummary } from '@/lib/utils'
+import { useDeleteLink } from '@/hooks/mutations/use-link-mutations'
 
 interface LinkCardProps {
   id?: string
@@ -23,8 +23,8 @@ interface LinkCardProps {
 export function LinkCard({ id = 'mock-id', title, url, description, tags, createdAt }: LinkCardProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCopied, setIsCopied] = useState(false)
-  const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
+  const deleteLink = useDeleteLink()
 
   const [summary, setSummary] = useState('')
 
@@ -45,22 +45,14 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
 
   const handleDelete = async (id: string) => {
     if (confirm('¿Are you sure you want to remove this link?')) {
-      setIsDeleting(true)
-
-      const result = await fetch(`/api/links/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
+      deleteLink.mutate(id, {
+        onSuccess: () => {
+          toast.success('Link removed', { description: 'The link has been removed successfully' })
         },
-      }).then(res => res.json())
-
-      if (result.success) {
-        toast.success('Link removed', { description: 'The link has been removed successfully' })
-        router.refresh()
-      } else {
-        toast.error('Error', { description: result.error })
-        setIsDeleting(false)
-      }
+        onError: error => {
+          toast.error('Error', { description: error.message || 'Error deleting link' })
+        },
+      })
     }
   }
 
@@ -122,7 +114,7 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
                   size='icon'
                   className='h-7 w-7 text-destructive'
                   onClick={() => handleDelete(id)}
-                  disabled={isDeleting}
+                  disabled={deleteLink.isPending}
                 >
                   <TrashIcon className='h-3.5 w-3.5' />
                 </Button>

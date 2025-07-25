@@ -1,7 +1,73 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { tagKeys } from '../queries/use-tags'
 import { linkKeys } from '../queries/use-links'
-import { addTag, updateTag, deleteTag } from '@/actions/tags'
+
+interface Tag {
+  id: string
+  name: string
+}
+
+interface TagApiResponseSuccess {
+  success: true
+  tag: Tag
+}
+
+interface TagApiResponseError {
+  success: false
+  error: string
+}
+
+type TagApiResponse = TagApiResponseSuccess | TagApiResponseError
+
+// Helpers para consumir la API route de tags
+async function apiAddTag(name: string): Promise<TagApiResponse> {
+  const res = await fetch('/api/tags', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+
+  const result: TagApiResponse = await res.json()
+
+  if (!res.ok || !result.success) {
+    const errorMsg = 'error' in result ? result.error : 'Error creating tag'
+    throw new Error(errorMsg)
+  }
+
+  return result
+}
+
+async function apiUpdateTag(id: string, name: string): Promise<TagApiResponse> {
+  const res = await fetch(`/api/tags/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+
+  const result: TagApiResponse = await res.json()
+
+  if (!res.ok || !result.success) {
+    const errorMsg = 'error' in result ? result.error : 'Error updating tag'
+    throw new Error(errorMsg)
+  }
+
+  return result
+}
+
+async function apiDeleteTag(id: string): Promise<TagApiResponse> {
+  const res = await fetch(`/api/tags/${id}`, {
+    method: 'DELETE',
+  })
+
+  const result: TagApiResponse = await res.json()
+
+  if (!res.ok || !result.success) {
+    const errorMsg = 'error' in result ? result.error : 'Error deleting tag'
+    throw new Error(errorMsg)
+  }
+
+  return result
+}
 
 // Hook para crear un nuevo tag
 export function useCreateTag() {
@@ -9,10 +75,10 @@ export function useCreateTag() {
 
   return useMutation({
     mutationFn: async (name: string) => {
-      const result = await addTag(name)
-
+      const result = await apiAddTag(name)
       if (!result.success) {
-        throw new Error(result.error || 'Error creating tag')
+        const errorMsg = 'error' in result ? result.error : 'Error creating tag'
+        throw new Error(errorMsg)
       }
 
       return result.tag
@@ -30,10 +96,10 @@ export function useUpdateTag() {
 
   return useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
-      const result = await updateTag(id, name)
-
+      const result = await apiUpdateTag(id, name)
       if (!result.success) {
-        throw new Error(result.error || 'Error updating tag')
+        const errorMsg = 'error' in result ? result.error : 'Error updating tag'
+        throw new Error(errorMsg)
       }
 
       return result.tag
@@ -51,15 +117,7 @@ export function useDeleteTag() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const result = await deleteTag(id)
-
-      if (!result.success) {
-        throw new Error(result.error || 'Error deleting tag')
-      }
-
-      return result
-    },
+    mutationFn: apiDeleteTag,
     onSuccess: () => {
       // Invalidar queries de tags y links
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
