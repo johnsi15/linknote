@@ -10,10 +10,13 @@ import { LinkForm } from '@/components/dashboard/link-form'
 import { LinkFormData } from '@/types/link'
 import { useSaveLink } from '@/hooks/mutations/use-link-mutations'
 import { useLink } from '@/hooks/queries/use-links'
+import { useQueryClient } from '@tanstack/react-query'
+import { linkKeys } from '@/hooks/queries/use-links'
 
 export default function LinkDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
   const saveLinkMutation = useSaveLink()
 
   const { id } = params as { id: string }
@@ -51,10 +54,22 @@ export default function LinkDetailPage() {
                 setHasBeenSaved(true)
 
                 if (!linkId) {
+                  // Actualizar cache con optimistic update antes de navegar
+                  queryClient.setQueryData(linkKeys.detail(result.linkId), {
+                    id: result.linkId,
+                    title: safeFormData.title,
+                    url: safeFormData.url,
+                    description: safeFormData.description,
+                    tags: safeFormData.tags,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  })
+
                   toast.success('Link created', {
                     description: 'The link has been saved successfully',
                   })
-                  window.history.replaceState(null, '', `/links/${result.linkId}`)
+
+                  router.replace(`/links/${result.linkId}`)
                   resolve(result)
                   return
                 }
@@ -94,7 +109,7 @@ export default function LinkDetailPage() {
     }
   }, [error, router])
 
-  if (isLoading && !linkData) {
+  if (isLoading && !linkData && !isNew) {
     return (
       <div className='flex items-center justify-center h-screen'>
         <Loader2 className='h-8 w-8 animate-spin' />
