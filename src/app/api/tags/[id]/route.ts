@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
 import { updateTag, deleteTag } from '@/actions/tags'
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { name } = await request.json()
-    const { id } = params
+    const { id } = await params
 
     if (!name || !id) {
       return NextResponse.json({ error: 'Name and ID are required' }, { status: 400 })
@@ -23,9 +23,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = params
+    const { id } = await params
 
     if (!id) {
       return NextResponse.json({ error: 'ID is required' }, { status: 400 })
