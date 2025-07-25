@@ -44,7 +44,6 @@ export function TagInput({ tags, setTags }: TagInputProps) {
   }
 
   const removeTag = (tagToRemove: string) => {
-    console.log({ tagToRemove })
     setTags(tags.filter(tag => tag.trim().toLowerCase() !== tagToRemove.trim().toLowerCase()))
   }
 

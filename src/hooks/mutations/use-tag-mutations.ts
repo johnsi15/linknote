@@ -76,7 +76,10 @@ export function useCreateTag() {
   return useMutation({
     mutationFn: async (name: string) => {
       const result = await apiAddTag(name)
-      if (!result.success) return null
+      if (!result.success) {
+        const errorMsg = 'error' in result ? result.error : 'Error creating tag'
+        throw new Error(errorMsg)
+      }
 
       return result.tag
     },
@@ -94,7 +97,10 @@ export function useUpdateTag() {
   return useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
       const result = await apiUpdateTag(id, name)
-      if (!result.success) return null
+      if (!result.success) {
+        const errorMsg = 'error' in result ? result.error : 'Error updating tag'
+        throw new Error(errorMsg)
+      }
 
       return result.tag
     },

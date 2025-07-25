@@ -29,8 +29,6 @@ export async function POST(request: Request) {
 
     const result = await createLink(validatedData)
 
-    console.log('Link created result:', result)
-
     if (!result.success) {
       return NextResponse.json({ success: false, error: result.error || 'Error creating link' }, { status: 400 })
     }

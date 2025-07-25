@@ -47,7 +47,6 @@ export default function LinkDetailPage() {
         },
         {
           onSuccess: result => {
-            console.log('Saved link result:', result)
             if (result.success) {
               if (result.linkId) {
                 setLinkId(result.linkId)
