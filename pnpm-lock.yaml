@@ -98,6 +98,12 @@ importers:
       date-fns:
         specifier: 4.1.0
         version: 4.1.0
+      dexie:
+        specifier: 4.0.11
+        version: 4.0.11
+      dexie-react-hooks:
+        specifier: 1.1.7
+        version: 1.1.7(@types/react@19.1.4)(dexie@4.0.11)(react@19.0.0)
       dompurify:
         specifier: 3.2.6
         version: 3.2.6
@@ -2389,6 +2395,16 @@ packages:
 
   detect-node-es@1.1.0:
     resolution: {integrity: sha512-ypdmJU/TbBby2Dxibuv7ZLW3Bs1QEmM7nHjEANfohJLvE0XVujisn1qPJcZxg+qDucsr+bP6fLD1rPS3AhJ7EQ==}
+
+  dexie-react-hooks@1.1.7:
+    resolution: {integrity: sha512-Lwv5W0Hk+uOW3kGnsU9GZoR1er1B7WQ5DSdonoNG+focTNeJbHW6vi6nBoX534VKI3/uwHebYzSw1fwY6a7mTw==}
+    peerDependencies:
+      '@types/react': '>=16'
+      dexie: ^3.2 || ^4.0.1-alpha
+      react: '>=16'
+
+  dexie@4.0.11:
+    resolution: {integrity: sha512-SOKO002EqlvBYYKQSew3iymBoN2EQ4BDw/3yprjh7kAfFzjBYkaMNa/pZvcA7HSWlcKSQb9XhPe3wKyQ0x4A8A==}
 
   diff-match-patch@1.0.5:
     resolution: {integrity: sha512-IayShXAgj/QMXgB0IWmKx+rOPuGMhqm5w6jvFxmVenXKIzRqTAAsbBPT3kWQeGANj3jGgvcvv4yK6SxqYmikgw==}
@@ -6357,6 +6373,14 @@ snapshots:
   detect-libc@2.0.4: {}
 
   detect-node-es@1.1.0: {}
+
+  dexie-react-hooks@1.1.7(@types/react@19.1.4)(dexie@4.0.11)(react@19.0.0):
+    dependencies:
+      '@types/react': 19.1.4
+      dexie: 4.0.11
+      react: 19.0.0
+
+  dexie@4.0.11: {}
 
   diff-match-patch@1.0.5: {}
 
