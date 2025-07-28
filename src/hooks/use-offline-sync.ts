@@ -14,12 +14,29 @@ interface SyncStatus {
 // Hook principal para sincronización
 export function useOfflineSync() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
-    isOnline: navigator.onLine,
+    isOnline: typeof window !== 'undefined' ? navigator.onLine : true,
     isSyncing: false,
     pendingItems: 0,
     errors: [],
   })
   const { user } = useUser()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const updateOnlineStatus = () => {
+      setSyncStatus(prev => ({ ...prev, isOnline: navigator.onLine }))
+    }
+
+    window.addEventListener('online', updateOnlineStatus)
+    window.addEventListener('offline', updateOnlineStatus)
+
+    // Limpieza
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus)
+      window.removeEventListener('offline', updateOnlineStatus)
+    }
+  }, [])
 
   // Obtener items pendientes de sincronización
   const getPendingItemsCount = useCallback(async () => {
@@ -317,9 +334,13 @@ export function useOfflineSync() {
 
 // Hook para estado de conectividad
 export function useOnlineStatus() {
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
+  const [isOnline, setIsOnline] = useState<boolean>(
+    typeof window !== 'undefined' ? navigator.onLine : true // Evita error en SSR
+  )
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+    console.log({ isOnline })
     const handleOnline = () => setIsOnline(true)
     const handleOffline = () => setIsOnline(false)
 
