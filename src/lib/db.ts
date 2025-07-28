@@ -153,6 +153,7 @@ export class LinknoteDB extends Dexie {
         const titleMatch = link.title.toLowerCase().includes(searchTerm)
         const urlMatch = link.url.toLowerCase().includes(searchTerm)
         const descriptionMatch = link.description ? link.description.toLowerCase().includes(searchTerm) : false
+
         return titleMatch || urlMatch || descriptionMatch
       })
       .reverse()

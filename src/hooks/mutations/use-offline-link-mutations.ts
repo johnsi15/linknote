@@ -74,11 +74,12 @@ export function useUpdateOfflineLink() {
     setIsLoading(true)
     try {
       const { id, ...updateData } = data
+      const now = new Date()
 
       await db.links.update(id, {
         ...updateData,
-        updatedAt: new Date(),
-        lastModified: new Date(),
+        updatedAt: now,
+        lastModified: now,
         synced: false,
       })
 

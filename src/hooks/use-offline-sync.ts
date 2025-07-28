@@ -26,6 +26,7 @@ export function useOfflineSync() {
     try {
       const items = await db.getPendingSyncItems()
       setSyncStatus(prev => ({ ...prev, pendingItems: items.length }))
+
       return items.length
     } catch (error) {
       console.error('Error getting pending items:', error)
@@ -55,14 +56,17 @@ export function useOfflineSync() {
 
       if (success) {
         await db.markSyncItemAsProcessed(item.id)
+
         return true
       } else {
         await db.incrementSyncAttempts(item.id, 'Sync failed')
+
         return false
       }
     } catch (error) {
       console.error('Error syncing item:', error)
       await db.incrementSyncAttempts(item.id, error instanceof Error ? error.message : 'Unknown error')
+
       return false
     }
   }, [])
@@ -84,6 +88,7 @@ export function useOfflineSync() {
               if (result.success) {
                 // Actualizar el link local como sincronizado
                 await db.links.update(item.entityId, { synced: true })
+
                 return true
               }
             }
@@ -120,6 +125,7 @@ export function useOfflineSync() {
           }
           break
       }
+
       return false
     } catch (error) {
       console.error('Error syncing link item:', error)
@@ -143,6 +149,7 @@ export function useOfflineSync() {
               const result = await response.json()
               if (result.success) {
                 await db.tags.update(item.entityId, { synced: true })
+
                 return true
               }
             }
@@ -161,6 +168,7 @@ export function useOfflineSync() {
               const result = await response.json()
               if (result.success) {
                 await db.tags.update(item.entityId, { synced: true })
+
                 return true
               }
             }
@@ -285,6 +293,7 @@ export function useOfflineSync() {
     try {
       await db.syncQueue.clear()
       await getPendingItemsCount()
+
       toast.success('Cola de sincronización limpiada')
     } catch (error) {
       console.error('Error clearing sync queue:', error)
@@ -335,6 +344,7 @@ export function useConnectivityNotifications() {
       if (!previousOnlineStatus) {
         toast.success('Conexión restaurada')
       }
+
       setPreviousOnlineStatus(true)
     }
 
@@ -342,6 +352,7 @@ export function useConnectivityNotifications() {
       if (previousOnlineStatus) {
         toast.warning('Sin conexión - trabajando offline')
       }
+
       setPreviousOnlineStatus(false)
     }
 

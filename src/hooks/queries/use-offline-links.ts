@@ -33,6 +33,7 @@ export function useOfflineLinks(userId: string, filters?: { search?: string; tag
 export function useOfflineLink(linkId?: string) {
   return useLiveQuery(async () => {
     if (!linkId) return undefined
+
     return await db.getLinkWithTags(linkId)
   }, [linkId])
 }
@@ -41,6 +42,7 @@ export function useOfflineLink(linkId?: string) {
 export function useOfflineLinksByTag(userId: string, tagName: string) {
   return useLiveQuery(async () => {
     if (!userId || !tagName) return []
+
     return await db.getLinksByTag(userId, tagName)
   }, [userId, tagName])
 }
@@ -49,6 +51,7 @@ export function useOfflineLinksByTag(userId: string, tagName: string) {
 export function useOfflineSearchLinks(userId: string, query: string) {
   return useLiveQuery(async () => {
     if (!userId || !query.trim()) return []
+
     return await db.searchLinks(userId, query)
   }, [userId, query])
 }
