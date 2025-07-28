@@ -14,6 +14,7 @@ export const offlineTagKeys = {
 export function useOfflineTags(userId: string) {
   return useLiveQuery(async () => {
     if (!userId) return []
+
     return await db.getTagsWithCount(userId)
   }, [userId])
 }
@@ -22,6 +23,7 @@ export function useOfflineTags(userId: string) {
 export function useOfflineTag(tagId?: string) {
   return useLiveQuery(async () => {
     if (!tagId) return undefined
+
     return await db.tags.get(tagId)
   }, [tagId])
 }
