@@ -49,7 +49,7 @@ export function useCreateOfflineLink() {
       // Agregar a la cola de sincronización
       await db.addToSyncQueue('link', 'create', linkId, data)
 
-      toast.success('Link guardado offline')
+      toast.success('Save link offline')
       return linkId
     } catch (error) {
       console.error('Error creating offline link:', error)
