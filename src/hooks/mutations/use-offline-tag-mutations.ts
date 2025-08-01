@@ -55,7 +55,7 @@ export function useCreateOfflineTag() {
       // Agregar a la cola de sincronización
       await db.addToSyncQueue('tag', 'create', tagId, data)
 
-      toast.success('Tag creado offline')
+      // toast.success('Tag creado offline')
       return tagId
     } catch (error) {
       console.error('Error creating offline tag:', error)
@@ -79,7 +79,7 @@ export function useUpdateOfflineTag() {
 
   const updateTag = async (data: UpdateOfflineTagData) => {
     if (!user?.id) {
-      toast.error('Usuario no autenticado')
+      toast.error('User not authenticated')
       return false
     }
 
@@ -93,13 +93,13 @@ export function useUpdateOfflineTag() {
         .first()
 
       if (existingTag) {
-        toast.error('Ya existe un tag con ese nombre')
+        toast.error('Tag already exists with this name')
         return false
       }
 
       const oldTag = await db.tags.get(data.id)
       if (!oldTag) {
-        toast.error('Tag no encontrado')
+        toast.error('Tag not found')
         return false
       }
 
@@ -132,11 +132,11 @@ export function useUpdateOfflineTag() {
       // Agregar actualización de tag a la cola
       await db.addToSyncQueue('tag', 'update', data.id, { name: data.name })
 
-      toast.success('Tag actualizado offline')
+      toast.success('Tag updated offline')
       return true
     } catch (error) {
       console.error('Error updating offline tag:', error)
-      toast.error('Error al actualizar el tag offline')
+      toast.error('Error the updating tag offline')
       return false
     } finally {
       setIsLoading(false)
@@ -156,7 +156,7 @@ export function useDeleteOfflineTag() {
 
   const deleteTag = async (tagId: string) => {
     if (!user?.id) {
-      toast.error('Usuario no autenticado')
+      toast.error('User not authenticated')
       return false
     }
 
@@ -164,7 +164,7 @@ export function useDeleteOfflineTag() {
     try {
       const tag = await db.tags.get(tagId)
       if (!tag) {
-        toast.error('Tag no encontrado')
+        toast.error('Tag not found')
         return false
       }
 
@@ -195,11 +195,11 @@ export function useDeleteOfflineTag() {
         await db.addToSyncQueue('tag', 'delete', tagId)
       }
 
-      toast.success('Tag eliminado')
+      toast.success('Tag deleted offline')
       return true
     } catch (error) {
       console.error('Error deleting offline tag:', error)
-      toast.error('Error al eliminar el tag')
+      toast.error('Error the deleting tag offline')
       return false
     } finally {
       setIsLoading(false)
@@ -219,7 +219,7 @@ export function useMergeOfflineTags() {
 
   const mergeTags = async (sourceTagId: string, targetTagId: string) => {
     if (!user?.id) {
-      toast.error('Usuario no autenticado')
+      toast.error('User not authenticated')
       return false
     }
 
@@ -229,7 +229,7 @@ export function useMergeOfflineTags() {
       const targetTag = await db.tags.get(targetTagId)
 
       if (!sourceTag || !targetTag) {
-        toast.error('Tags no encontrados')
+        toast.error('Tags not found')
         return false
       }
 
@@ -266,7 +266,7 @@ export function useMergeOfflineTags() {
       return true
     } catch (error) {
       console.error('Error merging offline tags:', error)
-      toast.error('Error al fusionar los tags')
+      toast.error('Error the merging tags offline')
       return false
     } finally {
       setIsLoading(false)
@@ -286,7 +286,7 @@ export function useCleanupOfflineUnusedTags() {
 
   const cleanupUnusedTags = async () => {
     if (!user?.id) {
-      toast.error('Usuario no autenticado')
+      toast.error('User not authenticated')
       return 0
     }
 
@@ -306,15 +306,15 @@ export function useCleanupOfflineUnusedTags() {
       }
 
       if (deletedCount > 0) {
-        toast.success(`${deletedCount} tags no usados eliminados`)
+        toast.success(`${deletedCount} tags not used deleted`)
       } else {
-        toast.info('No hay tags no usados para eliminar')
+        toast.info('No unused tags to delete')
       }
 
       return deletedCount
     } catch (error) {
       console.error('Error cleaning up unused tags:', error)
-      toast.error('Error al limpiar tags no usados')
+      toast.error('Error the cleaning up unused tags offline')
       return 0
     } finally {
       setIsLoading(false)
