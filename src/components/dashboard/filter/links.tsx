@@ -38,8 +38,6 @@ export function LinksFilterClient({ initialFilters, availableTags }: LinksFilter
   const displayLinks = offline.isOnline && onlineLinks?.length > 0 ? onlineLinks : filteredOfflineLinks
   const isLoading = offline.isOnline ? onlineLoading : offline.isLoading
 
-  console.log('Mostrando links:', offline.isOnline && onlineLinks?.length > 0 ? 'online' : 'offline')
-
   useEffect(() => {
     if (offline.isOnline && offline.syncStatus.pendingItems > 0) {
       offline.sync.syncAll()
