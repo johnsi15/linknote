@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -10,12 +10,14 @@ import { Badge } from '@/components/ui/badge'
 import { Tag } from '@/types/tag'
 import { useTags } from '@/hooks/queries/use-tags'
 import { useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/mutations/use-tag-mutations'
+import { useOfflineLinknote } from '@/hooks/use-offline-linknote'
 
 export function TagsManager() {
   const { data, isLoading } = useTags()
   const createTag = useCreateTag()
   const updateTag = useUpdateTag()
   const deleteTag = useDeleteTag()
+  const offline = useOfflineLinknote()
   const [newTag, setNewTag] = useState('')
   const [editingTag, setEditingTag] = useState<{ id: string; name: string } | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
@@ -30,6 +32,20 @@ export function TagsManager() {
     }
 
     setInputError(null)
+
+    if (!offline.isOnline) {
+      try {
+        await offline.tag.create({ name: tag })
+        setNewTag('')
+        toast('Tag created (offline)', { description: `The tag "${tag}" has been created offline.` })
+      } catch (error) {
+        console.log(error)
+        toast.error('Error creating tag', { description: 'Could not create tag offline.' })
+      }
+
+      return
+    }
+
     createTag.mutate(tag, {
       onSuccess: () => {
         setNewTag('')
@@ -60,14 +76,30 @@ export function TagsManager() {
     const exists = data?.tags.some(
       tag => tag.id !== editingTag.id && tag.name.trim().toLowerCase() === tagName.toLowerCase()
     )
+
     if (exists) {
       toast.error('Tag name already exists', { description: 'Choose a different name.' })
       return
     }
+
     if (!tagName) {
       toast.error('Tag name cannot be empty', { description: 'The tag name cannot be empty.' })
       return
     }
+
+    if (!offline.isOnline) {
+      try {
+        await offline.tag.update({ id: editingTag.id, name: tagName })
+        setEditingTag(null)
+        toast('Tag updated (offline)', { description: `The tag has been updated to "${tagName}" (offline).` })
+      } catch (error) {
+        console.log(error)
+        toast.error('Error saving tag', { description: 'Could not update tag offline.' })
+      }
+
+      return
+    }
+
     updateTag.mutate(
       { id: editingTag.id, name: tagName },
       {
@@ -92,7 +124,21 @@ export function TagsManager() {
     const confirmed = window.confirm(
       `Are you sure you want to delete the tag "${tagName}"? This action cannot be undone.`
     )
+
     if (!confirmed) return
+
+    if (!offline.isOnline) {
+      try {
+        await offline.tag.delete(tagId)
+        toast('Tag deleted (offline)', { description: 'The tag has been deleted offline.' })
+      } catch (error) {
+        console.log(error)
+        toast.error('Error deleting tag', { description: 'Could not delete tag offline.' })
+      }
+
+      return
+    }
+
     deleteTag.mutate(tagId, {
       onSuccess: () => {
         toast('Tag deleted', { description: 'The tag has been deleted.' })
@@ -108,6 +154,22 @@ export function TagsManager() {
       },
     })
   }
+
+  const onlineTags = (data?.tags ?? []).filter(tag => tag.id && tag.name)
+  const offlineTags = (offline.tags ?? []).filter(tag => tag.id && tag.name)
+  const tagsMap = new Map<string, Tag>()
+
+  offlineTags.forEach(tag => tagsMap.set(tag.id, tag))
+  onlineTags.forEach(tag => tagsMap.set(tag.id, tag))
+
+  const displayTags = Array.from(tagsMap.values())
+
+  // Sincronización automática de tags offline
+  useEffect(() => {
+    if (offline.isOnline && offline.syncStatus.pendingItems > 0) {
+      offline.sync.syncAll()
+    }
+  }, [offline.isOnline, offline.syncStatus.pendingItems, offline.sync])
 
   return (
     <div className='space-y-8'>
@@ -159,7 +221,7 @@ export function TagsManager() {
               </p>
             ) : (
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                {data.tags.map(tag => (
+                {displayTags.map(tag => (
                   <div key={tag.id} className='flex items-center justify-between p-3 border rounded-md'>
                     {editingTag && editingTag.id === tag.id ? (
                       <div className='flex-1 flex space-x-2'>
