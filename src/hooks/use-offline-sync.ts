@@ -11,6 +11,21 @@ interface SyncStatus {
   errors: string[]
 }
 
+interface TagSyncData {
+  name: string
+  userId: string
+  // otros campos necesarios
+}
+
+interface LinkSyncData {
+  title: string
+  url: string
+  description?: string
+  tags: string[]
+  userId: string
+  // otros campos necesarios
+}
+
 // Hook principal para sincronización
 export function useOfflineSync() {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
@@ -94,10 +109,12 @@ export function useOfflineSync() {
       switch (item.operationType) {
         case 'create':
           {
+            const linkData = item.data as LinkSyncData
+            
             const response = await fetch('/api/links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(item.data),
+              body: JSON.stringify(linkData),
             })
 
             if (response.ok) {
@@ -114,10 +131,12 @@ export function useOfflineSync() {
 
         case 'update':
           {
+            const linkData = item.data as LinkSyncData
+            
             const response = await fetch(`/api/links/${item.entityId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(item.data),
+              body: JSON.stringify(linkData),
             })
 
             if (response.ok) {
@@ -150,12 +169,40 @@ export function useOfflineSync() {
     }
   }
 
-  // Sincronizar item de tag
+  // Sincronizar item de tag con deduplicación robusta
   const syncTagItem = async (item: SyncQueueItem): Promise<boolean> => {
     try {
       switch (item.operationType) {
         case 'create':
           {
+            const tagData = item.data as TagSyncData
+
+            // Verificar si ya existe un tag con el mismo nombre en el servidor
+            const tagsResponse = await fetch('/api/tags')
+            const tagsData = await tagsResponse.json()
+            const serverTags = tagsData.success ? tagsData.tags : []
+
+            const existingServerTag = serverTags.find(
+              (serverTag: { id: string; name: string }) => serverTag.name.toLowerCase() === tagData.name.toLowerCase()
+            )
+
+            if (existingServerTag) {
+              // Si existe, actualizar el tag local con el ID del servidor
+              await db.tags.update(item.entityId, {
+                synced: true,
+                lastModified: new Date(),
+              })
+
+              // Limpiar duplicados locales
+              const localTag = await db.tags.get(item.entityId)
+              if (localTag && localTag.id !== existingServerTag.id) {
+                await db.tags.delete(item.entityId)
+              }
+
+              return true
+            }
+
+            // Si no existe, crear en servidor
             const response = await fetch('/api/tags', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -166,7 +213,6 @@ export function useOfflineSync() {
               const result = await response.json()
               if (result.success) {
                 await db.tags.update(item.entityId, { synced: true })
-
                 return true
               }
             }
@@ -185,7 +231,6 @@ export function useOfflineSync() {
               const result = await response.json()
               if (result.success) {
                 await db.tags.update(item.entityId, { synced: true })
-
                 return true
               }
             }
