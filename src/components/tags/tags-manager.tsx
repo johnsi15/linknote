@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -8,19 +8,59 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tag } from '@/types/tag'
-import { useTags } from '@/hooks/queries/use-tags'
+import { useHybridTags } from '@/hooks/queries/use-hybrid-tags'
+import { useOfflineSync, useConnectivityNotifications, useOnlineStatus } from '@/hooks/use-offline-sync'
 import { useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/mutations/use-tag-mutations'
-import { useOfflineLinknote } from '@/hooks/use-offline-linknote'
+import {
+  useCreateOfflineTag,
+  useUpdateOfflineTag,
+  useDeleteOfflineTag,
+} from '@/hooks/mutations/use-offline-tag-mutations'
 
 export function TagsManager() {
-  const { data, isLoading } = useTags()
-  const createTag = useCreateTag()
-  const updateTag = useUpdateTag()
-  const deleteTag = useDeleteTag()
-  const offline = useOfflineLinknote()
+  const { tags, isLoading, source } = useHybridTags()
+  const isOnline = useOnlineStatus()
+  const { forceSync, getPendingItemsCount } = useOfflineSync()
+
+  // ✅ Ref para evitar múltiples sincronizaciones
+  const hasInitialSync = useRef(false)
+
+  // Hooks para modo online
+  const onlineCreateTag = useCreateTag()
+  const onlineUpdateTag = useUpdateTag()
+  const onlineDeleteTag = useDeleteTag()
+
+  // Hooks para modo offline
+  const offlineCreateTag = useCreateOfflineTag()
+  const offlineUpdateTag = useUpdateOfflineTag()
+  const offlineDeleteTag = useDeleteOfflineTag()
+
+  // Hook para notificaciones de conectividad automáticas
+  useConnectivityNotifications()
+
   const [newTag, setNewTag] = useState('')
   const [editingTag, setEditingTag] = useState<{ id: string; name: string } | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
+
+  // Verificar y sincronizar al cargar el componente - SOLO UNA VEZ
+  useEffect(() => {
+    const checkAndSync = async () => {
+      if (hasInitialSync.current) return // ✅ Evitar múltiples ejecuciones
+
+      try {
+        const pendingCount = await getPendingItemsCount()
+        if (pendingCount > 0 && navigator.onLine) {
+          console.log(`TagsManager: Found ${pendingCount} pending items, starting sync...`)
+          hasInitialSync.current = true // ✅ Marcar como ejecutado
+          await forceSync()
+        }
+      } catch (error) {
+        console.error('Error checking/syncing pending items:', error)
+      }
+    }
+
+    checkAndSync()
+  }, [forceSync, getPendingItemsCount]) // ✅ Incluir dependencias pero usar ref para evitar loops
 
   const handleNewTagChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)
 
@@ -33,34 +73,37 @@ export function TagsManager() {
 
     setInputError(null)
 
-    if (!offline.isOnline) {
-      try {
-        await offline.tag.create({ name: tag })
-        setNewTag('')
-        toast('Tag created (offline)', { description: `The tag "${tag}" has been created offline.` })
-      } catch (error) {
-        console.log(error)
-        toast.error('Error creating tag', { description: 'Could not create tag offline.' })
-      }
+    console.log('TagsManager: Creating tag:', tag)
+    console.log('TagsManager: Online status:', isOnline)
 
-      return
-    }
-
-    createTag.mutate(tag, {
-      onSuccess: () => {
-        setNewTag('')
-        toast('Tag created', { description: `The tag "${tag}" has been created.` })
-      },
-      onError: (error: unknown) => {
-        if (error instanceof Error) {
+    if (isOnline) {
+      // Usar hook online
+      onlineCreateTag.mutate(tag, {
+        onSuccess: () => {
+          setNewTag('')
+          toast.success('Tag created')
+        },
+        onError: (error: Error) => {
           toast.error('Error creating tag', {
-            description: error.message || 'An error occurred while creating the tag.',
+            description: error instanceof Error ? error.message : 'An error occurred',
           })
+        },
+      })
+    } else {
+      // Usar hook offline directamente
+      try {
+        const tagId = await offlineCreateTag.createTag({ name: tag })
+        if (tagId) {
+          setNewTag('')
+          toast.success('Tag created offline')
         } else {
-          toast.error('Error creating tag', { description: 'An unknown error occurred while creating the tag.' })
+          toast.error('Failed to create tag offline')
         }
-      },
-    })
+      } catch (error) {
+        console.error('Error creating tag offline:', error)
+        toast.error('Error creating tag offline')
+      }
+    }
   }
 
   const handleStartEditing = (tag: Tag) => setEditingTag({ id: tag.id, name: tag.name })
@@ -73,9 +116,8 @@ export function TagsManager() {
   const handleSaveTag = async () => {
     if (!editingTag) return
     const tagName = editingTag.name.trim()
-    const exists = data?.tags.some(
-      tag => tag.id !== editingTag.id && tag.name.trim().toLowerCase() === tagName.toLowerCase()
-    )
+
+    const exists = tags.some(tag => tag.id !== editingTag.id && tag.name.trim().toLowerCase() === tagName.toLowerCase())
 
     if (exists) {
       toast.error('Tag name already exists', { description: 'Choose a different name.' })
@@ -87,89 +129,63 @@ export function TagsManager() {
       return
     }
 
-    if (!offline.isOnline) {
+    if (isOnline) {
+      onlineUpdateTag.mutate(
+        { id: editingTag.id, name: tagName },
+        {
+          onSuccess: () => setEditingTag(null),
+        }
+      )
+    } else {
       try {
-        await offline.tag.update({ id: editingTag.id, name: tagName })
-        setEditingTag(null)
-        toast('Tag updated (offline)', { description: `The tag has been updated to "${tagName}" (offline).` })
-      } catch (error) {
-        console.log(error)
-        toast.error('Error saving tag', { description: 'Could not update tag offline.' })
-      }
-
-      return
-    }
-
-    updateTag.mutate(
-      { id: editingTag.id, name: tagName },
-      {
-        onSuccess: () => {
+        const success = await offlineUpdateTag.updateTag({ id: editingTag.id, name: tagName })
+        if (success) {
           setEditingTag(null)
-          toast('Tag updated', { description: `The tag has been updated to "${tagName}".` })
-        },
-        onError: (error: unknown) => {
-          if (error instanceof Error) {
-            toast.error('Error saving tag', { description: error.message || 'An error occurred while saving the tag.' })
-          } else {
-            toast.error('Error saving tag', { description: 'An unknown error occurred while saving the tag.' })
-          }
-        },
+          toast.success('Tag updated offline')
+        } else {
+          toast.error('Failed to update tag offline')
+        }
+      } catch (error) {
+        console.error('Error updating tag offline:', error)
+        toast.error('Error updating tag offline')
       }
-    )
+    }
   }
 
   const handleDeleteTag = async (tagId: string) => {
-    const tag = data?.tags.find(t => t.id === tagId)
-    const tagName = tag ? tag.name : ''
+    const tag = tags.find(t => t.id === tagId)
+    const tagName = tag ? tag.name : 'Unnamed tag'
+
     const confirmed = window.confirm(
       `Are you sure you want to delete the tag "${tagName}"? This action cannot be undone.`
     )
 
     if (!confirmed) return
 
-    if (!offline.isOnline) {
+    if (isOnline) {
+      onlineDeleteTag.mutate(tagId)
+    } else {
       try {
-        await offline.tag.delete(tagId)
-        toast('Tag deleted (offline)', { description: 'The tag has been deleted offline.' })
-      } catch (error) {
-        console.log(error)
-        toast.error('Error deleting tag', { description: 'Could not delete tag offline.' })
-      }
-
-      return
-    }
-
-    deleteTag.mutate(tagId, {
-      onSuccess: () => {
-        toast('Tag deleted', { description: 'The tag has been deleted.' })
-      },
-      onError: (error: unknown) => {
-        if (error instanceof Error) {
-          toast.error('Error deleting tag', {
-            description: error.message || 'An error occurred while deleting the tag.',
-          })
+        const success = await offlineDeleteTag.deleteTag(tagId)
+        if (success) {
+          toast.success('Tag deleted offline')
         } else {
-          toast.error('Error deleting tag', { description: 'An unknown error occurred while deleting the tag.' })
+          toast.error('Failed to delete tag offline')
         }
-      },
-    })
+      } catch (error) {
+        console.error('Error deleting tag offline:', error)
+        toast.error('Error deleting tag offline')
+      }
+    }
   }
 
-  const onlineTags = (data?.tags ?? []).filter(tag => tag.id && tag.name)
-  const offlineTags = (offline.tags ?? []).filter(tag => tag.id && tag.name)
-  const tagsMap = new Map<string, Tag>()
+  // Determinar estados de carga según el modo
+  const isCreating = isOnline ? onlineCreateTag.isPending : offlineCreateTag.isLoading
 
-  offlineTags.forEach(tag => tagsMap.set(tag.id, tag))
-  onlineTags.forEach(tag => tagsMap.set(tag.id, tag))
-
-  const displayTags = Array.from(tagsMap.values())
-
-  // Sincronización automática de tags offline
   useEffect(() => {
-    if (offline.isOnline && offline.syncStatus.pendingItems > 0) {
-      offline.sync.syncAll()
-    }
-  }, [offline.isOnline, offline.syncStatus.pendingItems, offline.sync])
+    // Solo para mostrar información de conectividad si es necesario
+    console.log(`Tags loaded from: ${source} (${tags.length} tags)`)
+  }, [source, tags.length])
 
   return (
     <div className='space-y-8'>
@@ -188,10 +204,10 @@ export function TagsManager() {
                 if (inputError) setInputError(null)
               }}
               onKeyDown={e => e.key === 'Enter' && handleAddTag()}
-              disabled={createTag.isPending}
+              disabled={isCreating}
             />
-            <Button onClick={handleAddTag} className='gap-2' disabled={createTag.isPending}>
-              {createTag.isPending ? (
+            <Button onClick={handleAddTag} className='gap-2' disabled={isCreating}>
+              {isCreating ? (
                 <>
                   <Loader2 className='animate-spin mr-2 h-4 w-4' /> Creating...
                 </>
@@ -215,13 +231,13 @@ export function TagsManager() {
           <div className='space-y-4'>
             {isLoading ? (
               <p className='text-center text-muted-foreground py-4'>Loading tags...</p>
-            ) : !data?.tags || data.tags.length === 0 ? (
+            ) : !tags || tags.length === 0 ? (
               <p className='text-center text-muted-foreground py-4'>
                 You don`t have any tags yet. Create your first tag above.
               </p>
             ) : (
               <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                {displayTags.map(tag => (
+                {tags.map((tag: Tag) => (
                   <div key={tag.id} className='flex items-center justify-between p-3 border rounded-md'>
                     {editingTag && editingTag.id === tag.id ? (
                       <div className='flex-1 flex space-x-2'>
@@ -272,7 +288,7 @@ export function TagsManager() {
                             variant='ghost'
                             onClick={() => handleDeleteTag(tag.id)}
                             className='h-8 w-8 text-destructive'
-                            disabled={deleteTag.isPending && deleteTag.variables === tag.id}
+                            disabled={isOnline && onlineDeleteTag.isPending && onlineDeleteTag.variables === tag.id}
                           >
                             <TrashIcon className='h-4 w-4' />
                           </Button>
@@ -286,7 +302,8 @@ export function TagsManager() {
           </div>
         </CardContent>
         <CardFooter className='flex justify-between text-sm text-muted-foreground'>
-          <p>Total tags: {data?.tags?.length ?? 0}</p>
+          <p>Total tags: {tags.length}</p>
+          <p className='text-xs opacity-70'>Source: {source}</p>
         </CardFooter>
       </Card>
     </div>

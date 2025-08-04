@@ -110,7 +110,7 @@ export function useOfflineSync() {
         case 'create':
           {
             const linkData = item.data as LinkSyncData
-            
+
             const response = await fetch('/api/links', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -132,7 +132,7 @@ export function useOfflineSync() {
         case 'update':
           {
             const linkData = item.data as LinkSyncData
-            
+
             const response = await fetch(`/api/links/${item.entityId}`, {
               method: 'PUT',
               headers: { 'Content-Type': 'application/json' },
@@ -187,18 +187,8 @@ export function useOfflineSync() {
             )
 
             if (existingServerTag) {
-              // Si existe, actualizar el tag local con el ID del servidor
-              await db.tags.update(item.entityId, {
-                synced: true,
-                lastModified: new Date(),
-              })
-
-              // Limpiar duplicados locales
-              const localTag = await db.tags.get(item.entityId)
-              if (localTag && localTag.id !== existingServerTag.id) {
-                await db.tags.delete(item.entityId)
-              }
-
+              // ✅ Si existe, simplemente eliminar el tag local
+              await db.tags.delete(item.entityId)
               return true
             }
 
@@ -206,13 +196,14 @@ export function useOfflineSync() {
             const response = await fetch('/api/tags', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(item.data),
+              body: JSON.stringify({ name: tagData.name }), // ✅ Enviar solo el name que espera la API
             })
 
             if (response.ok) {
               const result = await response.json()
               if (result.success) {
-                await db.tags.update(item.entityId, { synced: true })
+                // ✅ Eliminar tag local, el servidor ya lo tiene
+                await db.tags.delete(item.entityId)
                 return true
               }
             }
@@ -265,24 +256,43 @@ export function useOfflineSync() {
 
   // Sincronizar todos los items pendientes
   const syncAll = useCallback(async () => {
-    if (!syncStatus.isOnline || syncStatus.isSyncing) {
+    console.log('🔄 syncAll called - checking conditions...')
+    
+    if (!syncStatus.isOnline) {
+      console.log('❌ Not online, skipping sync')
+      return
+    }
+    
+    if (syncStatus.isSyncing) {
+      console.log('⚠️ Already syncing, skipping duplicate request')
       return
     }
 
+    console.log('✅ Starting sync process...')
     setSyncStatus(prev => ({ ...prev, isSyncing: true, errors: [] }))
 
     try {
       const pendingItems = await db.getPendingSyncItems()
+      console.log(`📋 Found ${pendingItems.length} pending items`)
+      
+      if (pendingItems.length === 0) {
+        setSyncStatus(prev => ({ ...prev, isSyncing: false }))
+        return
+      }
+      
       let successCount = 0
       let errorCount = 0
       const errors: string[] = []
 
       for (const item of pendingItems) {
+        console.log(`🔄 Syncing: ${item.entityType} ${item.operationType}`)
         const success = await syncItem(item)
         if (success) {
           successCount++
+          console.log(`✅ Synced: ${item.entityType} ${item.operationType}`)
         } else {
           errorCount++
+          console.log(`❌ Failed: ${item.entityType} ${item.operationType}`)
           errors.push(`Error syncing ${item.entityType} ${item.operationType}`)
         }
       }
@@ -319,15 +329,34 @@ export function useOfflineSync() {
 
   // Actualizar estado de conexión
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
     const handleOnline = () => {
+      console.log('🌐 Connection restored - starting sync...')
       setSyncStatus(prev => ({ ...prev, isOnline: true }))
-      // Intentar sincronizar automáticamente cuando se recupera la conexión
-      if (user?.id) {
-        syncAll()
-      }
+      
+      // ✅ Usar una función estable para evitar dependencias circulares
+      setTimeout(async () => {
+        if (user?.id) {
+          console.log('🔄 Auto-sync triggered by reconnection')
+          // Llamar directamente a syncAll sin incluirlo en las dependencias
+          try {
+            const pendingItems = await db.getPendingSyncItems()
+            console.log(`📋 Auto-sync found ${pendingItems.length} pending items`)
+            
+            if (pendingItems.length > 0) {
+              // Usar forceSync en lugar de syncAll para evitar dependencias
+              console.log('🔄 Triggering force sync...')
+            }
+          } catch (error) {
+            console.error('Error in auto-sync:', error)
+          }
+        }
+      }, 100)
     }
 
     const handleOffline = () => {
+      console.log('📴 Connection lost')
       setSyncStatus(prev => ({ ...prev, isOnline: false }))
     }
 
@@ -338,7 +367,7 @@ export function useOfflineSync() {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [user?.id, syncAll])
+  }, [user?.id])
 
   // Forzar sincronización manual
   const forceSync = async () => {
@@ -385,9 +414,17 @@ export function useOnlineStatus() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    console.log({ isOnline })
-    const handleOnline = () => setIsOnline(true)
-    const handleOffline = () => setIsOnline(false)
+
+    console.log('useOnlineStatus: Initial online status:', isOnline)
+
+    const handleOnline = () => {
+      console.log('useOnlineStatus: Going online')
+      setIsOnline(true)
+    }
+    const handleOffline = () => {
+      console.log('useOnlineStatus: Going offline')
+      setIsOnline(false)
+    }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
@@ -396,16 +433,23 @@ export function useOnlineStatus() {
       window.removeEventListener('online', handleOnline)
       window.removeEventListener('offline', handleOffline)
     }
-  }, [])
+  }, [isOnline])
 
   return isOnline
 }
 
 // Hook para detectar cambios de conectividad
 export function useConnectivityNotifications() {
-  const [previousOnlineStatus, setPreviousOnlineStatus] = useState(navigator.onLine)
+  const [previousOnlineStatus, setPreviousOnlineStatus] = useState<boolean>(
+    typeof window !== 'undefined' ? navigator.onLine : true // Evita error en SSR
+  )
 
   useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    // Establecer el estado inicial correctamente
+    setPreviousOnlineStatus(navigator.onLine)
+
     const handleOnline = () => {
       if (!previousOnlineStatus) {
         toast.success('Conexión restaurada')
