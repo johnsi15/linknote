@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -20,10 +20,9 @@ import {
 export function TagsManager() {
   const { tags, isLoading, source } = useHybridTags()
   const isOnline = useOnlineStatus()
-  const { forceSync, getPendingItemsCount } = useOfflineSync()
 
-  // ✅ Ref para evitar múltiples sincronizaciones
-  const hasInitialSync = useRef(false)
+  // ✅ Hook de sincronización para que funcione automáticamente
+  useOfflineSync()
 
   // Hooks para modo online
   const onlineCreateTag = useCreateTag()
@@ -41,26 +40,6 @@ export function TagsManager() {
   const [newTag, setNewTag] = useState('')
   const [editingTag, setEditingTag] = useState<{ id: string; name: string } | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
-
-  // Verificar y sincronizar al cargar el componente - SOLO UNA VEZ
-  useEffect(() => {
-    const checkAndSync = async () => {
-      if (hasInitialSync.current) return // ✅ Evitar múltiples ejecuciones
-
-      try {
-        const pendingCount = await getPendingItemsCount()
-        if (pendingCount > 0 && navigator.onLine) {
-          console.log(`TagsManager: Found ${pendingCount} pending items, starting sync...`)
-          hasInitialSync.current = true // ✅ Marcar como ejecutado
-          await forceSync()
-        }
-      } catch (error) {
-        console.error('Error checking/syncing pending items:', error)
-      }
-    }
-
-    checkAndSync()
-  }, [forceSync, getPendingItemsCount]) // ✅ Incluir dependencias pero usar ref para evitar loops
 
   const handleNewTagChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)
 
@@ -183,7 +162,7 @@ export function TagsManager() {
   const isCreating = isOnline ? onlineCreateTag.isPending : offlineCreateTag.isLoading
 
   useEffect(() => {
-    // Solo para mostrar información de conectividad si es necesario
+    // Solo para debug - no ejecutar ninguna sincronización aquí
     console.log(`Tags loaded from: ${source} (${tags.length} tags)`)
   }, [source, tags.length])
 
