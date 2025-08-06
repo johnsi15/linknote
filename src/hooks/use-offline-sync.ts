@@ -163,8 +163,6 @@ export function useOfflineSync() {
   // Sincronizar item de tag con deduplicación robusta
   const syncTagItem = async (item: SyncQueueItem): Promise<boolean> => {
     try {
-      console.log('🔄 Syncing tag item:', item)
-
       switch (item.operationType) {
         case 'create':
           {
@@ -172,7 +170,6 @@ export function useOfflineSync() {
 
             // ✅ Asegurar formato correcto para la API
             const requestBody = { name: tagData.name }
-            console.log('📤 Sending to API:', requestBody)
 
             // Verificar si ya existe un tag con el mismo nombre en el servidor
             const tagsResponse = await fetch('/api/tags')
@@ -261,8 +258,6 @@ export function useOfflineSync() {
 
   // Sincronizar todos los items pendientes
   const syncAll = useCallback(async () => {
-    console.log('🔄 syncAll called - checking conditions...')
-
     if (!isOnline) {
       console.log('❌ Not online, skipping sync')
       return
@@ -273,12 +268,10 @@ export function useOfflineSync() {
       return
     }
 
-    console.log('✅ Starting sync process...')
     setSyncStatus(prev => ({ ...prev, isSyncing: true, errors: [] }))
 
     try {
       const pendingItems = await db.getPendingSyncItems()
-      console.log(`📋 Found ${pendingItems.length} pending items`)
 
       if (pendingItems.length === 0) {
         setSyncStatus(prev => ({ ...prev, isSyncing: false }))
@@ -290,7 +283,6 @@ export function useOfflineSync() {
       const errors: string[] = []
 
       for (const item of pendingItems) {
-        console.log(`🔄 Syncing: ${item.entityType} ${item.operationType}`)
         const success = await syncItem(item)
         if (success) {
           successCount++
@@ -303,8 +295,6 @@ export function useOfflineSync() {
       }
 
       if (successCount > 0) {
-        console.log('🔄 Invalidating queries after successful sync...')
-
         // ✅ Invalidar queries en paralelo para mejor performance
         await Promise.all([
           queryClient.invalidateQueries({
@@ -316,8 +306,6 @@ export function useOfflineSync() {
             exact: false,
           }),
         ])
-
-        console.log('✅ Queries invalidated successfully')
       }
 
       // Limpiar items que han fallado demasiadas veces
@@ -359,10 +347,8 @@ export function useOfflineSync() {
     // Ejecutar auto-sync cuando vuelve online
     const autoSync = async () => {
       if (user?.id) {
-        console.log('🔄 Auto-sync triggered by reconnection')
         try {
           const pendingItems = await db.getPendingSyncItems()
-          console.log(`📋 Auto-sync found ${pendingItems.length} pending items`)
 
           if (pendingItems.length > 0) {
             await syncAll()
@@ -425,14 +411,10 @@ export function useOnlineStatus() {
   useEffect(() => {
     if (typeof window === 'undefined') return
 
-    console.log('useOnlineStatus: Initial online status:', isOnline)
-
     const handleOnline = () => {
-      console.log('useOnlineStatus: Going online')
       setIsOnline(true)
     }
     const handleOffline = () => {
-      console.log('useOnlineStatus: Going offline')
       setIsOnline(false)
     }
 

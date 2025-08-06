@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tag } from '@/types/tag'
-import { useHybridTags } from '@/hooks/queries/use-hybrid-tags'
+import { useInfiniteTags } from '@/hooks/queries/use-tags'
 import { useOfflineSync, useConnectivityNotifications, useOnlineStatus } from '@/hooks/use-offline-sync'
 import { useCreateTag, useUpdateTag, useDeleteTag } from '@/hooks/mutations/use-tag-mutations'
 import {
@@ -14,9 +14,9 @@ import {
 } from '@/hooks/mutations/use-offline-tag-mutations'
 import { TagInput } from './tag-input'
 import { TagList } from './tag-list'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export function TagsManager() {
-  const { tags, isLoading } = useHybridTags()
   const isOnline = useOnlineStatus()
 
   // ✅ Hook de sincronización para que funcione automáticamente
@@ -38,6 +38,34 @@ export function TagsManager() {
   const [newTag, setNewTag] = useState('')
   const [editingTag, setEditingTag] = useState<{ id: string; name: string } | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
+
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useInfiniteTags(20)
+
+  const tags = data?.pages.flatMap(page => page.tags) || []
+  const total = data?.pages[0]?.total ?? 0
+
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
+
+  // Scroll infinito con IntersectionObserver
+  useEffect(() => {
+    if (!hasNextPage || isFetchingNextPage) return
+
+    const observer = new window.IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        fetchNextPage()
+      }
+    })
+
+    const node = loadMoreRef.current
+
+    if (node) {
+      observer.observe(node)
+    }
+
+    return () => {
+      if (node) observer.unobserve(node)
+    }
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const handleNewTagChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value), [])
   const handleAddTag = useCallback(async () => {
@@ -180,28 +208,68 @@ export function TagsManager() {
         <CardContent>
           <div className='space-y-4'>
             {isLoading ? (
-              <p className='text-center text-muted-foreground py-4'>Loading tags...</p>
+              <div className='space-y-2'>
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className='flex items-center justify-between p-3 border rounded-md'>
+                    <div className='flex items-center space-x-2'>
+                      <Skeleton className='h-6 w-20 rounded-full' />
+                      <Skeleton className='h-4 w-10 rounded' />
+                    </div>
+                    <div className='flex space-x-1'>
+                      <Skeleton className='h-8 w-8 rounded' />
+                      <Skeleton className='h-8 w-8 rounded' />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : !tags || tags.length === 0 ? (
               <p className='text-center text-muted-foreground py-4'>
                 You don`t have any tags yet. Create your first tag above.
               </p>
             ) : (
-              <TagList
-                tags={tags}
-                editingTag={editingTag}
-                onStartEditing={handleStartEditing}
-                onEditChange={handleEditTagChange}
-                onSave={handleSaveTag}
-                onCancel={handleCancelEditing}
-                onDelete={handleDeleteTag}
-                onlineDeleteTag={onlineDeleteTag}
-                isOnline={isOnline}
-              />
+              <>
+                <TagList
+                  tags={tags}
+                  editingTag={editingTag}
+                  onStartEditing={handleStartEditing}
+                  onEditChange={handleEditTagChange}
+                  onSave={handleSaveTag}
+                  onCancel={handleCancelEditing}
+                  onDelete={handleDeleteTag}
+                  onlineDeleteTag={onlineDeleteTag}
+                  isOnline={isOnline}
+                />
+                <div ref={loadMoreRef} />
+                {isFetchingNextPage && (
+                  <div className='space-y-2 mt-2'>
+                    {[...Array(2)].map((_, i) => (
+                      <div key={i} className='flex items-center justify-between p-3 border rounded-md'>
+                        <div className='flex items-center space-x-2'>
+                          <Skeleton className='h-6 w-20 rounded-full' />
+                          <Skeleton className='h-4 w-10 rounded' />
+                        </div>
+                        <div className='flex space-x-1'>
+                          <Skeleton className='h-8 w-8 rounded' />
+                          <Skeleton className='h-8 w-8 rounded' />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!isFetchingNextPage && hasNextPage && (
+                  <button
+                    className='w-full py-2 text-sm text-primary hover:underline mt-2'
+                    onClick={() => fetchNextPage()}
+                  >
+                    Load more tags
+                  </button>
+                )}
+              </>
             )}
           </div>
         </CardContent>
         <CardFooter className='flex justify-between text-sm text-muted-foreground'>
-          <p>Total tags: {tags.length}</p>
+          <p>Total tags: {total}</p>
         </CardFooter>
       </Card>
     </div>

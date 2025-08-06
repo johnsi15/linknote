@@ -104,3 +104,51 @@ export async function deleteTag(id: string) {
     return { success: false, error: `The tag could not be removed` }
   }
 }
+
+export async function getUserTagsPaginated({
+  limit,
+  offset,
+  search,
+}: {
+  limit: number
+  offset: number
+  search?: string
+}) {
+  try {
+    const { userId } = await getSecureSession()
+
+    if (!userId) {
+      console.error('No user ID found in session')
+      return { tags: [], total: 0 }
+    }
+
+    let userTags = await db.query.tags.findMany({
+      where: eq(tags.userId, userId),
+    })
+
+    if (search && search.trim() !== '') {
+      userTags = userTags.filter(tag => tag.name.toLowerCase().includes(search.toLowerCase()))
+    }
+
+    const total = userTags.length
+    const paginated = userTags.slice(offset, offset + limit)
+
+    const tagsWithCount = await Promise.all(
+      paginated.map(async tag => {
+        const countResult = await db.select({ count: count() }).from(linkTags).where(eq(linkTags.tagId, tag.id))
+        const countValue = Number(countResult[0]?.count ?? 0)
+        return {
+          id: tag.id,
+          name: tag.name,
+          count: countValue,
+          createdAt: tag.createdAt,
+        }
+      })
+    )
+
+    return { tags: tagsWithCount, total }
+  } catch (error) {
+    console.error('Error al obtener tags paginados:', error)
+    return { tags: [], total: 0 }
+  }
+}

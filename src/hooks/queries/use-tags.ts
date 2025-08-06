@@ -1,9 +1,17 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { Tag } from '@/types/tag'
+import { useQueryState, parseAsInteger } from 'nuqs'
 
 interface TagsResponse {
   tags: Tag[]
+  total: number
+}
+
+interface InfiniteTagsResponse {
+  tags: Tag[]
+  nextCursor?: number
+  hasMore: boolean
   total: number
 }
 
@@ -22,7 +30,7 @@ export function useTags(filters?: { search?: string }) {
     queryFn: async (): Promise<TagsResponse> => {
       const response = await fetch('/api/tags')
       if (!response.ok) throw new Error('Error fetching tags')
-      
+
       const data = await response.json()
       return { tags: data.tags, total: data.total }
     },
@@ -37,12 +45,10 @@ export function usePopularTags(limit = 10) {
     queryFn: async (): Promise<Tag[]> => {
       const response = await fetch('/api/tags')
       if (!response.ok) throw new Error('Error fetching tags')
-      
+
       const data = await response.json()
       // Ordenar por count y tomar los primeros `limit`
-      return data.tags
-        .sort((a: Tag, b: Tag) => (b.count || 0) - (a.count || 0))
-        .slice(0, limit)
+      return data.tags.sort((a: Tag, b: Tag) => (b.count || 0) - (a.count || 0)).slice(0, limit)
     },
     staleTime: 1000 * 60 * 15, // 15 minutos para tags populares
   })
@@ -59,7 +65,7 @@ export function useTagsSearch(search?: string) {
 
       const response = await fetch('/api/tags')
       if (!response.ok) throw new Error('Error fetching tags')
-      
+
       const data = await response.json()
       return data.tags.filter((tag: Tag) => tag.name.toLowerCase().includes(search.toLowerCase()))
     },
@@ -75,7 +81,7 @@ export function prefetchTags(filters?: { search?: string }) {
     queryFn: async (): Promise<TagsResponse> => {
       const response = await fetch('/api/tags')
       if (!response.ok) throw new Error('Error fetching tags')
-      
+
       const data = await response.json()
       return { tags: data.tags, total: data.total }
     },
@@ -96,4 +102,41 @@ export function prefetchPopularTags(limit = 10) {
     },
     staleTime: 1000 * 60 * 15,
   })
+}
+
+// Hook para tags con paginación infinita
+export function useInfiniteTags(defaultLimit = 20) {
+  const [search] = useQueryState('search', { defaultValue: '' })
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(defaultLimit))
+
+  const query = useInfiniteQuery<InfiniteTagsResponse, Error>({
+    queryKey: tagKeys.list({ search, limit }),
+    queryFn: async ({ pageParam = 0 }) => {
+      const currentPage = typeof pageParam === 'number' ? pageParam : Number(pageParam) || 0
+      const params = new URLSearchParams()
+
+      if (search) params.append('search', search)
+
+      params.append('limit', String(limit))
+      params.append('offset', String(currentPage * limit))
+
+      const response = await fetch(`/api/tags?${params}`)
+      if (!response.ok) throw new Error('Error fetching tags')
+
+      const data = await response.json()
+      const hasMore = data.tags.length === Number(limit)
+
+      return {
+        tags: data.tags,
+        nextCursor: hasMore ? currentPage + 1 : undefined, // siguiente página
+        hasMore,
+        total: data.total,
+      }
+    },
+    initialPageParam: 0,
+    getNextPageParam: lastPage => lastPage.nextCursor,
+    staleTime: 1000 * 60 * 10,
+  })
+
+  return { ...query }
 }
