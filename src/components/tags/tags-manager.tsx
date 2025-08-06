@@ -14,6 +14,7 @@ import {
 } from '@/hooks/mutations/use-offline-tag-mutations'
 import { TagInput } from './tag-input'
 import { TagList } from './tag-list'
+import { TagSearch } from './tag-search'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export function TagsManager() {
@@ -204,6 +205,7 @@ export function TagsManager() {
         <CardHeader>
           <CardTitle>Your Tags</CardTitle>
           <CardDescription>Manage your existing tags.</CardDescription>
+          <TagSearch />
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
