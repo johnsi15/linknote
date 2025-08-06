@@ -306,7 +306,7 @@ export function useCleanupOfflineUnusedTags() {
       }
 
       if (deletedCount > 0) {
-        toast.success(`${deletedCount} tags not used deleted`)
+        toast.success(`${deletedCount} unused tags deleted`)
       } else {
         toast.info('No unused tags to delete')
       }

@@ -314,7 +314,7 @@ export function useOfflineSync() {
           queryClient.invalidateQueries({
             queryKey: ['links'],
             exact: false,
-          })
+          }),
         ])
 
         console.log('✅ Queries invalidated successfully')
@@ -333,8 +333,6 @@ export function useOfflineSync() {
         pendingItems: remainingCount, // ✅ Usar count real, no calculado
         errors,
       }))
-
-      // await getPendingItemsCount()
 
       if (successCount > 0) {
         toast.success(`${successCount} elementos sincronizados`)
