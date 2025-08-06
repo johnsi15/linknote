@@ -12,12 +12,14 @@ import { useSaveLink } from '@/hooks/mutations/use-link-mutations'
 import { useLink } from '@/hooks/queries/use-links'
 import { useQueryClient } from '@tanstack/react-query'
 import { linkKeys } from '@/hooks/queries/use-links'
+import { useOfflineLinknote } from '@/hooks/use-offline-linknote'
 
 export default function LinkDetailPage() {
   const params = useParams()
   const router = useRouter()
   const queryClient = useQueryClient()
   const saveLinkMutation = useSaveLink()
+  const offline = useOfflineLinknote()
 
   const { id } = params as { id: string }
   const initialIsNew = id === 'new'
@@ -35,8 +37,31 @@ export default function LinkDetailPage() {
       ...formData,
       description: formData.description ?? '',
     }
-
     const isActualUpdateForBackend = Boolean(linkId) && hasBeenSaved
+
+    // Híbrido: usar offline si no hay conexión
+    if (!offline.isOnline) {
+      try {
+        let result: { success: boolean; linkId?: string; error?: string }
+        if (isNew) {
+          const id = await offline.link.create(safeFormData)
+          setLinkId(id ?? undefined)
+          setHasBeenSaved(true)
+
+          result = { success: true, linkId: id ?? undefined }
+        } else {
+          const ok = await offline.link.update({ id: linkId!, ...safeFormData })
+          result = { success: ok, linkId }
+        }
+
+        // toast.success('Guardado offline. Se sincronizará cuando vuelvas a estar online.')
+        return result
+      } catch (error) {
+        console.log(error)
+        toast.error('Offline error', { description: 'Could not save the link offline.' })
+        return { success: false, error: 'Could not save the link offline.' }
+      }
+    }
 
     return new Promise<{ success: boolean; linkId?: string; error?: string }>(resolve => {
       saveLinkMutation.mutate(

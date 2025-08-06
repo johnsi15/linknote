@@ -15,6 +15,7 @@ import { useAutoSave } from '@/hooks/use-auto-save'
 import { useUrlSummary } from '@/hooks/use-url-summary'
 import { cleanHtmlContent, isDescriptionEmpty } from '@/lib/utils'
 import { useDebounce } from 'use-debounce'
+import { useOfflineLinknote } from '@/hooks/use-offline-linknote'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -47,6 +48,7 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const cleanOriginalDescRef = useRef<string | null>(null)
   const [isSummaryStreaming, setIsSummaryStreaming] = useState(false)
   const { summary, summarize, error: summaryError, isLoading: isLoadingSummary } = useUrlSummary()
+  const offline = useOfflineLinknote()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -84,7 +86,7 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
     },
     delay: 1000,
     linkId: linkId,
-    disabled: isSummaryStreaming,
+    disabled: isSummaryStreaming || !offline.isOnline,
   })
 
   const urlValue = form.watch('url')
@@ -211,11 +213,14 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
                 <div className='space-y-2'>
                   <Input
                     placeholder='https://johnserrano.co'
-                    className='h-12' // Input más alto
+                    className='h-12'
                     {...field}
                     onBlur={async () => {
                       field.onBlur?.()
-                      if (field.value) await summarize(field.value)
+
+                      if (field.value && offline.isOnline) {
+                        await summarize(field.value)
+                      }
                     }}
                   />
                   {isLoadingSummary && (
@@ -318,7 +323,7 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
           )}
         />
 
-        {!isEditing && (
+        {(!isEditing || !offline.isOnline) && (
           <Button type='submit' disabled={isSubmitting || saveStatus === 'saving'}>
             {(isSubmitting || saveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {isSubmitting || saveStatus === 'saving' ? 'Saving...' : 'Save'}
