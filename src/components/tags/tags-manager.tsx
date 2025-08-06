@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { PlusIcon, PencilIcon, TrashIcon, CheckIcon, XIcon, Loader2 } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { PencilIcon, TrashIcon, CheckIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -16,6 +16,7 @@ import {
   useUpdateOfflineTag,
   useDeleteOfflineTag,
 } from '@/hooks/mutations/use-offline-tag-mutations'
+import { TagInput } from './tag-input'
 
 export function TagsManager() {
   const { tags, isLoading, source } = useHybridTags()
@@ -41,9 +42,8 @@ export function TagsManager() {
   const [editingTag, setEditingTag] = useState<{ id: string; name: string } | null>(null)
   const [inputError, setInputError] = useState<string | null>(null)
 
-  const handleNewTagChange = (e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value)
-
-  const handleAddTag = async () => {
+  const handleNewTagChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setNewTag(e.target.value), [])
+  const handleAddTag = useCallback(async () => {
     const tag = newTag.trim()
     if (!tag) {
       setInputError('Tag name is required')
@@ -51,9 +51,6 @@ export function TagsManager() {
     }
 
     setInputError(null)
-
-    console.log('TagsManager: Creating tag:', tag)
-    console.log('TagsManager: Online status:', isOnline)
 
     if (isOnline) {
       // Usar hook online
@@ -83,7 +80,7 @@ export function TagsManager() {
         toast.error('Error creating tag offline')
       }
     }
-  }
+  }, [newTag, isOnline, onlineCreateTag, offlineCreateTag])
 
   const handleStartEditing = (tag: Tag) => setEditingTag({ id: tag.id, name: tag.name })
   const handleCancelEditing = () => setEditingTag(null)
@@ -174,31 +171,13 @@ export function TagsManager() {
           <CardDescription>Create a new tag to help organize your links.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className='flex space-x-2'>
-            <Input
-              placeholder='Enter tag name'
-              value={newTag}
-              onChange={e => {
-                handleNewTagChange(e)
-                if (inputError) setInputError(null)
-              }}
-              onKeyDown={e => e.key === 'Enter' && handleAddTag()}
-              disabled={isCreating}
-            />
-            <Button onClick={handleAddTag} className='gap-2' disabled={isCreating}>
-              {isCreating ? (
-                <>
-                  <Loader2 className='animate-spin mr-2 h-4 w-4' /> Creating...
-                </>
-              ) : (
-                <>
-                  <PlusIcon className='h-4 w-4' />
-                  Add Tag
-                </>
-              )}
-            </Button>
-          </div>
-          {inputError && <p className='text-xs text-red-500 mt-2'>{inputError}</p>}
+          <TagInput
+            value={newTag}
+            onChange={handleNewTagChange}
+            onAdd={handleAddTag}
+            isLoading={isCreating}
+            error={inputError}
+          />
         </CardContent>
       </Card>
       <Card>
@@ -282,7 +261,6 @@ export function TagsManager() {
         </CardContent>
         <CardFooter className='flex justify-between text-sm text-muted-foreground'>
           <p>Total tags: {tags.length}</p>
-          <p className='text-xs opacity-70'>Source: {source}</p>
         </CardFooter>
       </Card>
     </div>
