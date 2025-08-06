@@ -1,12 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { PencilIcon, TrashIcon, CheckIcon, XIcon } from 'lucide-react'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Tag } from '@/types/tag'
 import { useHybridTags } from '@/hooks/queries/use-hybrid-tags'
 import { useOfflineSync, useConnectivityNotifications, useOnlineStatus } from '@/hooks/use-offline-sync'
@@ -17,6 +13,7 @@ import {
   useDeleteOfflineTag,
 } from '@/hooks/mutations/use-offline-tag-mutations'
 import { TagInput } from './tag-input'
+import { TagList } from './tag-list'
 
 export function TagsManager() {
   const { tags, isLoading, source } = useHybridTags()
@@ -194,68 +191,17 @@ export function TagsManager() {
                 You don`t have any tags yet. Create your first tag above.
               </p>
             ) : (
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-                {tags.map((tag: Tag) => (
-                  <div key={tag.id} className='flex items-center justify-between p-3 border rounded-md'>
-                    {editingTag && editingTag.id === tag.id ? (
-                      <div className='flex-1 flex space-x-2'>
-                        <Input
-                          value={editingTag.name}
-                          onChange={handleEditTagChange}
-                          autoFocus
-                          onKeyDown={e => e.key === 'Enter' && handleSaveTag()}
-                        />
-                        <div className='flex space-x-1'>
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            onClick={handleSaveTag}
-                            className='h-8 w-8 text-green-500'
-                          >
-                            <CheckIcon className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            onClick={handleCancelEditing}
-                            className='h-8 w-8 text-red-500'
-                          >
-                            <XIcon className='h-4 w-4' />
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div className='flex items-center space-x-2'>
-                          <Badge variant='secondary'>{tag.name}</Badge>
-                          <span className='text-xs text-muted-foreground'>
-                            {tag.count} {tag.count === 1 ? 'link' : 'links'}
-                          </span>
-                        </div>
-                        <div className='flex space-x-1'>
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            onClick={() => handleStartEditing(tag)}
-                            className='h-8 w-8'
-                          >
-                            <PencilIcon className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            size='icon'
-                            variant='ghost'
-                            onClick={() => handleDeleteTag(tag.id)}
-                            className='h-8 w-8 text-destructive'
-                            disabled={isOnline && onlineDeleteTag.isPending && onlineDeleteTag.variables === tag.id}
-                          >
-                            <TrashIcon className='h-4 w-4' />
-                          </Button>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
+              <TagList
+                tags={tags}
+                editingTag={editingTag}
+                onStartEditing={handleStartEditing}
+                onEditChange={handleEditTagChange}
+                onSave={handleSaveTag}
+                onCancel={handleCancelEditing}
+                onDelete={handleDeleteTag}
+                onlineDeleteTag={onlineDeleteTag}
+                isOnline={isOnline}
+              />
             )}
           </div>
         </CardContent>
