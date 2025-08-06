@@ -86,9 +86,30 @@ export function useCreateLink() {
 
   return useMutation({
     mutationFn: apiCreateLink,
+    onMutate: async (newLink: LinkFormData) => {
+      await queryClient.cancelQueries({ queryKey: linkKeys.all })
+
+      const previousLinks = queryClient.getQueryData<(LinkFormData & { id?: string })[]>(linkKeys.all) || []
+
+      const optimisticLink = {
+        ...newLink,
+        id: `temp-${crypto.randomUUID()}`,
+        createdAt: new Date().toISOString(),
+      }
+
+      queryClient.setQueryData<(LinkFormData & { id?: string })[]>(linkKeys.all, [optimisticLink, ...previousLinks])
+
+      return { previousLinks }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
+    },
+    onError: (_err, _newLink, context) => {
+      // Rollback en caso de error
+      if (context?.previousLinks) {
+        queryClient.setQueryData(linkKeys.all, context.previousLinks)
+      }
     },
   })
 }
@@ -102,10 +123,45 @@ export function useUpdateLink() {
       const { id, ...linkData } = data
       return apiUpdateLink(id, linkData)
     },
+    onMutate: async (updatedLink: UpdateLinkData) => {
+      // Cancelar queries pendientes para evitar conflictos
+      await queryClient.cancelQueries({ queryKey: linkKeys.detail(updatedLink.id) })
+      await queryClient.cancelQueries({ queryKey: linkKeys.all })
+
+      // Backup del estado anterior
+      const previousLink = queryClient.getQueryData<LinkFormData>(linkKeys.detail(updatedLink.id))
+      const previousLinks = queryClient.getQueryData<(LinkFormData & { id?: string })[]>(linkKeys.all) || []
+
+      // Update optimista del detalle
+      if (previousLink) {
+        queryClient.setQueryData<LinkFormData>(linkKeys.detail(updatedLink.id), {
+          ...previousLink,
+          ...updatedLink,
+        })
+      }
+
+      // Update optimista de la lista
+      queryClient.setQueryData<(LinkFormData & { id?: string })[]>(
+        linkKeys.all,
+        previousLinks.map(link => (link.id === updatedLink.id ? { ...link, ...updatedLink } : link))
+      )
+
+      return { previousLink, previousLinks }
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: linkKeys.detail(variables.id) })
       queryClient.invalidateQueries({ queryKey: linkKeys.lists() })
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
+    },
+    onError: (_err, updatedLink, context) => {
+      // Rollback en caso de error
+      if (context?.previousLink) {
+        queryClient.setQueryData(linkKeys.detail(updatedLink.id), context.previousLink)
+      }
+
+      if (context?.previousLinks) {
+        queryClient.setQueryData(linkKeys.all, context.previousLinks)
+      }
     },
   })
 }

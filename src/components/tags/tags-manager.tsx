@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tag } from '@/types/tag'
@@ -16,7 +16,7 @@ import { TagInput } from './tag-input'
 import { TagList } from './tag-list'
 
 export function TagsManager() {
-  const { tags, isLoading, source } = useHybridTags()
+  const { tags, isLoading } = useHybridTags()
   const isOnline = useOnlineStatus()
 
   // ✅ Hook de sincronización para que funcione automáticamente
@@ -154,11 +154,6 @@ export function TagsManager() {
 
   // Determinar estados de carga según el modo
   const isCreating = isOnline ? onlineCreateTag.isPending : offlineCreateTag.isLoading
-
-  useEffect(() => {
-    // Solo para debug - no ejecutar ninguna sincronización aquí
-    console.log(`Tags loaded from: ${source} (${tags.length} tags)`)
-  }, [source, tags.length])
 
   return (
     <div className='space-y-8'>
