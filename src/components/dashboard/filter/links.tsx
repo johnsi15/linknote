@@ -68,7 +68,7 @@ export function LinksFilterClient({ initialFilters, availableTags }: LinksFilter
         <div className='mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700'>
           {offline.isOnline
             ? `Sincronizando ${offline.syncStatus.pendingItems} cambios...`
-            : `${offline.syncStatus.pendingItems} cambios pendientes de sincronización`}
+            : `${offline.syncStatus.pendingItems} chaneges pending to sync`}
         </div>
       )}
 
@@ -87,8 +87,8 @@ export function LinksFilterClient({ initialFilters, availableTags }: LinksFilter
         ) : (
           <div className='text-center py-8 text-muted-foreground'>
             {filters.search || filters.tags.length > 0
-              ? 'No se encontraron enlaces con los filtros seleccionados'
-              : 'No tienes enlaces guardados aún'}
+              ? 'No links found with the selected filters'
+              : 'You don´t have any saved links yet'}
           </div>
         )
       ) : filteredOfflineLinks.length > 0 ? (
@@ -96,8 +96,8 @@ export function LinksFilterClient({ initialFilters, availableTags }: LinksFilter
       ) : (
         <div className='text-center py-8 text-muted-foreground'>
           {filters.search || filters.tags.length > 0
-            ? 'No se encontraron enlaces con los filtros seleccionados'
-            : 'No tienes enlaces guardados aún'}
+            ? 'No links found with the selected filters'
+            : 'You don´t have any saved links yet'}
         </div>
       )}
     </>
