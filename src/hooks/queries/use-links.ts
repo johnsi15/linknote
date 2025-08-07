@@ -1,10 +1,11 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { queryClient } from '@/lib/queryClient'
 import { Link } from '@/types/link'
+import { useQueryState, parseAsString, parseAsInteger } from 'nuqs'
 
 interface LinksResponse {
   links: Link[]
-  nextCursor?: string
+  nextCursor?: number
   hasMore: boolean
   total: number
 }
@@ -69,37 +70,45 @@ export function useLink(id: string) {
 }
 
 // Hook para paginación infinita
-export function useInfiniteLinks(filters?: { tags?: string; search?: string; dateRange?: string; sort?: string }) {
-  return useInfiniteQuery({
-    queryKey: linkKeys.list(filters || {}),
-    queryFn: async ({ pageParam }: { pageParam: number | undefined }): Promise<LinksResponse> => {
+export function useInfiniteLinks(defaultLimit = 10) {
+  const [search] = useQueryState('search', { defaultValue: '' })
+  const [tags] = useQueryState('tags', { defaultValue: '' })
+  const [dateRange] = useQueryState('dateRange', parseAsString.withDefault('all'))
+  const [sort] = useQueryState('sort', parseAsString.withDefault('newest'))
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(defaultLimit))
+
+  return useInfiniteQuery<LinksResponse, Error>({
+    queryKey: linkKeys.list({ search, tags, dateRange, sort, limit }),
+    queryFn: async ({ pageParam = 0 }) => {
       const params = new URLSearchParams()
 
-      if (filters?.tags) params.append('tags', filters.tags)
-      if (filters?.search) params.append('search', filters.search)
-      if (filters?.dateRange) params.append('dateRange', filters.dateRange)
-      if (filters?.sort) params.append('sort', filters.sort)
+      if (search) params.append('search', search)
+      if (tags) params.append('tags', tags)
+      if (dateRange && dateRange !== 'all') params.append('dateRange', dateRange)
+      if (sort && sort !== 'newest') params.append('sort', sort)
 
-      const limit = 20
-      const offset = pageParam || 0
-      params.append('limit', limit.toString())
-      params.append('offset', offset.toString())
+      params.append('limit', String(limit))
+      params.append('offset', String(pageParam))
 
       const response = await fetch(`/api/links/filtered?${params}`)
+
       if (!response.ok) throw new Error('Error fetching links')
 
       const data = await response.json()
+
       const hasMore = data.links.length === limit
+
+      const currentPage = Number(pageParam) || 0
 
       return {
         links: data.links,
-        nextCursor: hasMore ? (offset + limit).toString() : undefined,
+        nextCursor: hasMore ? currentPage + Number(limit) : undefined,
         hasMore,
-        total: data.links.length,
+        total: data.total,
       }
     },
     initialPageParam: 0,
-    getNextPageParam: lastPage => (lastPage.nextCursor ? parseInt(lastPage.nextCursor) : undefined),
+    getNextPageParam: lastPage => lastPage.nextCursor,
   })
 }
 

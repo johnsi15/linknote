@@ -1,14 +1,17 @@
-import { NextResponse } from 'next/server'
-import { addTag, getUserTags } from '@/actions/tags'
+import { NextResponse, type NextRequest } from 'next/server'
+import { addTag, getUserTagsPaginated } from '@/actions/tags'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const tags = await getUserTags()
+    const searchParams = request.nextUrl.searchParams
+    const limit = parseInt(searchParams.get('limit') || '20', 10)
+    const offset = parseInt(searchParams.get('offset') || '0', 10)
 
-    return NextResponse.json({
-      tags,
-      total: tags.length,
-    })
+    const search = searchParams.get('search') || ''
+
+    const { tags, total } = await getUserTagsPaginated({ limit, offset, search })
+
+    return NextResponse.json({ tags, total })
   } catch (error) {
     console.error('Error fetching tags:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

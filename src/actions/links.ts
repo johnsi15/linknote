@@ -359,7 +359,10 @@ export async function getUserLinksFiltered({
   sort = 'newest',
   limit = 30,
   offset = 0, //  Añadimos offset para paginación
-}: GetUserLinksFilteredParams): Promise<(Omit<Link, 'userId' | 'updatedAt'> & { tags: string[] })[]> {
+}: GetUserLinksFilteredParams): Promise<{
+  links: (Omit<Link, 'userId' | 'updatedAt'> & { tags: string[] })[]
+  total: number
+}> {
   if (!userId) {
     throw new Error('User not authenticated')
   }
@@ -376,8 +379,10 @@ export async function getUserLinksFiltered({
     const searchOrCondition = or(
       like(sql`lower(${links.title})`, searchPattern),
       links.description ? like(sql`lower(${links.description})`, searchPattern) : undefined,
-      like(sql`lower(${links.url})`, searchPattern)
+      like(sql`lower(${links.url})`, searchPattern),
+      like(sql`lower(${tags.name})`, searchPattern)
     )
+
     if (searchOrCondition) {
       allWhereConditions.push(searchOrCondition)
     }
@@ -444,6 +449,23 @@ export async function getUserLinksFiltered({
 
   const finalWhereClause = allWhereConditions.length > 0 ? and(...allWhereConditions) : undefined
 
+  // --- Consulta para el total (sin paginación) ---
+  let countQuery = db
+    .select({ count: sql<number>`COUNT(DISTINCT ${links.id})` })
+    .from(links)
+    .leftJoin(linkTags, eq(links.id, linkTags.linkId))
+    .leftJoin(tags, eq(linkTags.tagId, tags.id))
+    .$dynamic()
+
+  if (finalWhereClause) {
+    countQuery = countQuery.where(finalWhereClause)
+  }
+
+  if (tagNames.length > 0) {
+    countQuery = countQuery.groupBy(links.id, links.title, links.url, links.description, links.createdAt)
+    countQuery = countQuery.having(eq(countDistinct(tags.id), tagNames.length))
+  }
+
   let query = db
     .select({
       id: links.id,
@@ -451,7 +473,6 @@ export async function getUserLinksFiltered({
       url: links.url,
       description: links.description,
       createdAt: links.createdAt,
-      // Usar GROUP_CONCAT para obtener los tags. SQLite por defecto usa ',' como separador.
       tagsString: sql<string | null>`GROUP_CONCAT(DISTINCT ${tags.name})`.as('tagsString'),
     })
     .from(links)
@@ -497,6 +518,9 @@ export async function getUserLinksFiltered({
   }
 
   try {
+    const countResult = await countQuery.execute()
+    const total = countResult?.[0]?.count ?? 0
+
     const rows = await query.execute()
 
     const resultWithTagsArray = rows.map(row => {
@@ -510,7 +534,7 @@ export async function getUserLinksFiltered({
       }
     })
 
-    return resultWithTagsArray
+    return { links: resultWithTagsArray, total }
   } catch (error) {
     console.error('Error fetching filtered links:', error)
     throw new Error('Could not retrieve links.')
