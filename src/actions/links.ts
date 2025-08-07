@@ -379,8 +379,10 @@ export async function getUserLinksFiltered({
     const searchOrCondition = or(
       like(sql`lower(${links.title})`, searchPattern),
       links.description ? like(sql`lower(${links.description})`, searchPattern) : undefined,
-      like(sql`lower(${links.url})`, searchPattern)
+      like(sql`lower(${links.url})`, searchPattern),
+      like(sql`lower(${tags.name})`, searchPattern)
     )
+
     if (searchOrCondition) {
       allWhereConditions.push(searchOrCondition)
     }
