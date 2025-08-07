@@ -70,7 +70,7 @@ export function useLink(id: string) {
 }
 
 // Hook para paginación infinita
-export function useInfiniteLinks(defaultLimit = 20) {
+export function useInfiniteLinks(defaultLimit = 10) {
   const [search] = useQueryState('search', { defaultValue: '' })
   const [tags] = useQueryState('tags', { defaultValue: '' })
   const [dateRange] = useQueryState('dateRange', parseAsString.withDefault('all'))

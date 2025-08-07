@@ -16,17 +16,26 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.get('tags')?.split(',').filter(Boolean) || []
     const dateRange = searchParams.get('dateRange') || 'all'
     const sort = searchParams.get('sort') || 'newest'
+    const limit = Number(searchParams.get('limit')) || 20
+    const offset = Number(searchParams.get('offset')) || 0
 
-    const links = await getUserLinksFiltered({
+    const { links, total } = await getUserLinksFiltered({
       userId,
       search,
       tags,
       dateRange,
       sort,
-      limit: 30, // You can implement pagination if needed
+      limit,
+      offset,
     })
 
-    return NextResponse.json({ links })
+    const hasMore = links.length === limit
+
+    return NextResponse.json({
+      links,
+      total,
+      hasMore,
+    })
   } catch (error) {
     console.error('Error fetching filtered links:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
