@@ -4,11 +4,14 @@ import { usePathname } from 'next/navigation'
 import { LinkCard } from '@/components/dashboard/link-card'
 import { Link } from '@/types/link'
 
+import { ReactNode } from 'react'
+
 interface LinkListProps {
   links: Link[]
+  children?: ReactNode
 }
 
-export function LinkList({ links }: LinkListProps) {
+export function LinkList({ links, children }: LinkListProps) {
   const pathname = usePathname()
   const isDashboard = pathname === '/dashboard'
 
@@ -33,6 +36,7 @@ export function LinkList({ links }: LinkListProps) {
           createdAt={createdAt ? (typeof createdAt === 'string' ? createdAt : createdAt.toISOString()) : ''}
         />
       ))}
+      {children}
     </div>
   )
 }

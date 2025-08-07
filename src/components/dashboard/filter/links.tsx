@@ -6,7 +6,7 @@ import { useInfiniteFilterCache } from '@/hooks/use-infinite-filter-cache'
 import { FilterPanel } from '@/components/dashboard/filter/panel'
 import { type FilterOptions } from '@/components/dashboard/filter/dialog'
 import { LinkList } from '@/components/dashboard/link-list'
-import { LinkCardSkeletons } from '@/components/ui/skeleton/link-card-skeleton'
+import { LinkCardSkeleton, LinkCardSkeletons } from '@/components/ui/skeleton/link-card-skeleton'
 
 interface LinksFilterClientProps {
   initialFilters: FilterOptions
@@ -79,9 +79,10 @@ export function LinksFilterClient({ initialFilters, availableTags }: LinksFilter
           <div className='text-center py-8 text-red-500'>Error al cargar los enlaces</div>
         ) : links.length > 0 ? (
           <>
-            <LinkList links={links} />
+            <LinkList links={links}>
+              {isFetchingNextPage && Array.from({ length: 3 }).map((_, i) => <LinkCardSkeleton key={i} />)}
+            </LinkList>
             <div ref={loadMoreRef} />
-            {isFetchingNextPage && <LinkCardSkeletons count={2} />}
           </>
         ) : (
           <div className='text-center py-8 text-muted-foreground'>
