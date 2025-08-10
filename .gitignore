@@ -42,3 +42,6 @@ next-env.d.ts
 
 # test
 test-results
+
+# ignore Playwright auth sessions
+e2e/.auth/

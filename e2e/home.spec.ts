@@ -1,11 +1,15 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Página Home', () => {
-  test('debe cargar y mostrar textos principales', async ({ page }) => {
+  test('debe cargar y mostrar elementos principales', async ({ page }) => {
     await page.goto('/')
-    await expect(page).toHaveTitle(/linknote/i)
-    await expect(page.getByText(/guarda tus enlaces/i)).toBeVisible()
-    await expect(page.getByText(/organiza y busca tus links/i)).toBeVisible()
-    await expect(page.getByRole('link', { name: /empezar/i })).toBeVisible()
+    // Título principal
+    await expect(page.getByRole('heading', { name: /save & organize your coding resources/i })).toBeVisible()
+    // Subtítulo
+    await expect(page.getByText(/helps programmers organize and access/i)).toBeVisible()
+    // Botón Get Started (solo visible si no hay sesión)
+    await expect(page.getByRole('button', { name: /get started/i })).toBeVisible()
+    // Link a Dashboard (si está visible)
+    // await expect(page.getByRole('link', { name: /dashboard/i })).toBeVisible()
   })
 })
