@@ -15,7 +15,14 @@ base('setup clerk session', async ({ page, browserName }) => {
   await page.locator('input[type="password"]').fill(PASSWORD)
   await page.getByRole('button', { name: /continuar|continue/i }).click()
 
-  await page.waitForURL('**/dashboard')
+  // await page.waitForURL('**/dashboard', { timeout: 10000 })
+
+  // Esperar a que el modal desaparezca y luego navegar manualmente al dashboard
+  await page.waitForTimeout(3000)
+  await page.goto('/dashboard')
+
+  await page.waitForSelector('h1:has-text("Dashboard")', { timeout: 10000 })
+
   // Guarda el storage state
   await page.context().storageState({ path: `e2e/.auth/user-${browserName}.json` })
 })

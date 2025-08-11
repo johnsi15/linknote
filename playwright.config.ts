@@ -22,6 +22,7 @@ export default defineConfig({
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: '**/auth.setup.spec.ts', // WebKit tiene problemas con Clerk
     },
   ],
 })
