@@ -81,4 +81,12 @@ Si te gusta este proyecto o te ha resultado útil, considera [darle una estrella
 
 ## 🌐 Enlaces
 
+
 🔗 Enlace al proyecto: https://linknote.dev
+
+---
+
+## 📄 Licencia
+
+Este proyecto está licenciado bajo la **GNU General Public License v3.0 (GPLv3)**.
+Consulta el archivo `LICENSE` para más detalles.
