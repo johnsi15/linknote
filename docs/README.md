@@ -46,13 +46,13 @@ Bienvenido a la documentación técnica y de usuario de Linknote. Aquí encontra
 
 ## Índice
 
-- [Estructura de Carpetas](./estructura.md)
-- [Arquitectura General](./arquitectura.md)
-- [Autenticación y Protección de Rutas](./autenticacion.md)
-- [Guía Rápida de Uso](./guia-rapida.md)
-- [Preguntas Frecuentes (FAQ)](./faq.md)
+- [Estructura de carpetas](./estructura.md)
+- [Arquitectura general](./arquitectura.md)
+- [Autenticación y protección de Rutas](./autenticacion.md)
+- [Guía rápida de uso](./guia-rapida.md)
+- [Preguntas frecuentes (FAQ)](./faq.md)
 - [Testing](./testing.md)
-- [Guía para Contribuir](./contribuir.md)
+- [Guía para contribuir](./contribuir.md)
 - [Roadmap](./roadmap.md)
 - [Licencia](./licencia.md)
 

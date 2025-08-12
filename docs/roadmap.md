@@ -6,5 +6,6 @@
 - Mejoras en el editor Yoopta.
 - API pública para integraciones.
 - Mejoras en accesibilidad y mobile.
+- Agregar links favoritos
 
 Consulta el repositorio para el estado más actualizado.
