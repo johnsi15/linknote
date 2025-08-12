@@ -7,6 +7,7 @@ export interface OfflineLink {
   title: string
   url: string
   description: string | null
+  isFavorite: boolean
   tags: string[] // Array de nombres de tags para facilitar consultas
   createdAt: Date
   updatedAt: Date
@@ -75,6 +76,30 @@ export class LinknoteDB extends Dexie {
       // Cola de sincronización con índices para procesamiento
       syncQueue: 'id, entityType, operationType, timestamp, attempts',
     })
+
+    this.version(2)
+      .stores({
+        // Tabla de links con índices para búsquedas eficientes y nuevo campo isFavorite
+        links: 'id, userId, title, url, isFavorite, updatedAt, synced, lastModified, *tags',
+
+        // Tabla de tags con índices (sin cambios)
+        tags: 'id, name, userId, synced, lastModified',
+
+        // Tabla de relaciones link-tag (sin cambios)
+        linkTags: '[linkId+tagId], linkId, tagId, synced, lastModified',
+
+        // Cola de sincronización con índices para procesamiento (sin cambios)
+        syncQueue: 'id, entityType, operationType, timestamp, attempts',
+      })
+      .upgrade(trans => {
+        // Migración: agregar isFavorite = false a todos los links existentes
+        return trans
+          .table('links')
+          .toCollection()
+          .modify((link: Partial<OfflineLink>) => {
+            link.isFavorite = false
+          })
+      })
 
     // Hooks para mantener timestamps actualizados
     this.links.hook('creating', (primKey, obj) => {

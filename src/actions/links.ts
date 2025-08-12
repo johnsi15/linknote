@@ -175,6 +175,7 @@ export async function getUserLinks({ tag }: { tag?: string } = {}) {
           title: links.title,
           url: links.url,
           description: links.description,
+          isFavorite: links.isFavorite,
           createdAt: links.createdAt,
           updatedAt: links.updatedAt,
         })
@@ -462,7 +463,7 @@ export async function getUserLinksFiltered({
   }
 
   if (tagNames.length > 0) {
-    countQuery = countQuery.groupBy(links.id, links.title, links.url, links.description, links.createdAt)
+    countQuery = countQuery.groupBy(links.id, links.title, links.url, links.description, links.createdAt, links.isFavorite)
     countQuery = countQuery.having(eq(countDistinct(tags.id), tagNames.length))
   }
 
@@ -472,6 +473,7 @@ export async function getUserLinksFiltered({
       title: links.title,
       url: links.url,
       description: links.description,
+      isFavorite: links.isFavorite,
       createdAt: links.createdAt,
       tagsString: sql<string | null>`GROUP_CONCAT(DISTINCT ${tags.name})`.as('tagsString'),
     })
@@ -484,7 +486,7 @@ export async function getUserLinksFiltered({
     query = query.where(finalWhereClause)
   }
 
-  query = query.groupBy(links.id, links.title, links.url, links.description, links.createdAt)
+  query = query.groupBy(links.id, links.title, links.url, links.description, links.isFavorite, links.createdAt)
 
   if (tagNames.length > 0) {
     // Contamos los tags distintos que coinciden (después del WHERE) y verificamos si es igual al número de tags solicitados.
@@ -529,6 +531,7 @@ export async function getUserLinksFiltered({
         title: row.title,
         url: row.url,
         description: row.description,
+        isFavorite: row.isFavorite,
         createdAt: row.createdAt,
         tags: row.tagsString ? row.tagsString.split(',').filter(t => t) : [],
       }
