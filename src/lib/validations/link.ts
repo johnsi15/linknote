@@ -13,5 +13,6 @@ export const linkSchema = z.object({
     .string()
     .optional()
     .transform(val => val?.trim() || ''),
+  isFavorite: z.boolean().default(false),
   tags: z.array(z.string().transform(val => val.trim())).default([]),
 })

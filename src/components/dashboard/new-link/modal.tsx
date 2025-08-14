@@ -21,6 +21,7 @@ export function NewLinkModal({ isOpen, onClose }: NewLinkModalProps) {
     const safeFormData = {
       ...formData,
       description: formData.description ?? '',
+      isFavorite: formData.isFavorite ?? false,
     }
 
     const isActualUpdateForBackend = Boolean(linkId)
