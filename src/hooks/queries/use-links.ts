@@ -19,29 +19,39 @@ export const linkKeys = {
   detail: (id: string) => [...linkKeys.details(), id] as const,
 }
 
+interface UseLinksOptions {
+  search?: string
+  tags?: string[]
+  dateRange?: string
+  sort?: string
+  onlyFavorites?: boolean
+}
+
 // Hook para obtener todos los links
-export function useLinks(filters?: { search?: string; tags?: string[]; dateRange?: string; sort?: string }) {
+export function useLinks({ search, tags, dateRange, sort, onlyFavorites }: UseLinksOptions = {}) {
   return useQuery({
-    queryKey: linkKeys.list(filters || {}),
+    queryKey: linkKeys.list({ search, tags, dateRange, sort, onlyFavorites }),
     queryFn: async (): Promise<LinksResponse> => {
       const params = new URLSearchParams()
+      if (search) params.append('search', search)
+      if (tags && tags.length > 0) params.append('tags', tags.join(','))
+      if (dateRange && dateRange !== 'all') params.append('dateRange', dateRange)
+      if (sort && sort !== 'newest') params.append('sort', sort)
+      if (onlyFavorites) params.append('onlyFavorites', 'true')
 
-      if (filters?.search) params.append('search', filters.search)
-      if (filters?.tags && filters.tags.length > 0) params.append('tags', filters.tags.join(','))
-      if (filters?.dateRange && filters.dateRange !== 'all') params.append('dateRange', filters.dateRange)
-      if (filters?.sort && filters.sort !== 'newest') params.append('sort', filters.sort)
-
+      // Si hay algún filtro, usar /api/links/filtered
       if (
-        filters?.search ||
-        (filters?.tags && filters.tags.length > 0) ||
-        (filters?.dateRange && filters.dateRange !== 'all') ||
-        (filters?.sort && filters.sort !== 'newest')
+        search ||
+        (tags && tags.length > 0) ||
+        (dateRange && dateRange !== 'all') ||
+        (sort && sort !== 'newest') ||
+        onlyFavorites
       ) {
         const response = await fetch(`/api/links/filtered?${params}`)
         if (!response.ok) throw new Error('Error fetching filtered links')
 
         const data = await response.json()
-        return { links: data.links, total: data.links.length, hasMore: false }
+        return { links: data.links, total: data.total, hasMore: false }
       } else {
         const response = await fetch('/api/links')
         if (!response.ok) throw new Error('Error fetching links')

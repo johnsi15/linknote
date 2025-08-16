@@ -1,6 +1,6 @@
 import { useMutation, type UseMutationResult, useQueryClient } from '@tanstack/react-query'
-import { linkKeys } from '../queries/use-links'
-import { tagKeys } from '../queries/use-tags'
+import { linkKeys } from '@/hooks/queries/use-links'
+import { tagKeys } from '@/hooks/queries/use-tags'
 import { type LinkFormData } from '@/actions/links'
 
 interface UpdateLinkData extends Partial<LinkFormData> {
