@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { LinkIcon, ExternalLinkIcon, CopyIcon, PencilIcon, TrashIcon } from 'lucide-react'
+import { LinkIcon, ExternalLinkIcon, CopyIcon, PencilIcon, TrashIcon, StarIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,19 +18,47 @@ interface LinkCardProps {
   description: string
   tags: string[]
   createdAt: string
+  isFavorite?: boolean | null
 }
 
-export function LinkCard({ id = 'mock-id', title, url, description, tags, createdAt }: LinkCardProps) {
+import { useToggleFavoriteLink } from '@/hooks/mutations/use-toggle-favorite-link'
+
+export function LinkCard({
+  id = 'mock-id',
+  title,
+  url,
+  description,
+  tags,
+  createdAt,
+  isFavorite = false,
+}: LinkCardProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isCopied, setIsCopied] = useState(false)
   const router = useRouter()
   const deleteLink = useDeleteLink()
+
+  const [favorite, setFavorite] = useState(!!isFavorite)
+  const toggleFavorite = useToggleFavoriteLink()
 
   const [summary, setSummary] = useState('')
 
   useEffect(() => {
     setSummary(extractSummary(description))
   }, [description])
+
+  useEffect(() => {
+    setFavorite(!!isFavorite)
+  }, [isFavorite])
+
+  const handleToggleFavorite = () => {
+    if (!id) return
+
+    setFavorite(fav => !fav)
+
+    toggleFavorite.mutate(id, {
+      onError: () => setFavorite(fav => !fav),
+    })
+  }
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)
@@ -75,6 +103,16 @@ export function LinkCard({ id = 'mock-id', title, url, description, tags, create
             </a>
           </header>
           <div className='flex space-x-1'>
+            <Button
+              variant={favorite ? 'default' : 'ghost'}
+              size='icon'
+              className={`h-8 w-8 ${favorite ? 'text-yellow-400' : 'text-muted-foreground'}`}
+              onClick={handleToggleFavorite}
+              disabled={toggleFavorite.isPending}
+              aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <StarIcon className={`h-4 w-4 ${favorite ? 'fill-yellow-400' : 'fill-none'}`} />
+            </Button>
             <Button variant='ghost' size='icon' onClick={() => copyToClipboard(url)} className='h-8 w-8'>
               <CopyIcon className='h-4 w-4' />
               <span className='sr-only'>Copy URL</span>
