@@ -3,6 +3,7 @@
 import { Card } from '@/components/ui/card'
 import { LinkList } from '@/components/dashboard/link-list'
 import { useLinks } from '@/hooks/queries/use-links'
+import { LinkCardSkeletons } from '@/components/ui/skeleton/link-card-skeleton'
 
 export function FavoritesTab() {
   const { data: favoritesData, isLoading: loadingFavorites } = useLinks({ onlyFavorites: true })
@@ -11,9 +12,7 @@ export function FavoritesTab() {
   return (
     <Card className='p-4'>
       {loadingFavorites ? (
-        <div className='text-center py-12'>
-          <p className='text-muted-foreground'>Loading favorites...</p>
-        </div>
+        <LinkCardSkeletons count={3} />
       ) : favoriteLinks.length > 0 ? (
         <LinkList links={favoriteLinks} />
       ) : (
