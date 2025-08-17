@@ -25,7 +25,7 @@ export function LinkList({ links, children }: LinkListProps) {
         isDashboard ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
       }`}
     >
-      {links.map(({ id, title, url, description, tags, createdAt }) => (
+      {links.map(({ id, title, url, description, tags, createdAt, isFavorite }) => (
         <LinkCard
           key={id}
           id={id}
@@ -34,6 +34,7 @@ export function LinkList({ links, children }: LinkListProps) {
           description={description ?? ''}
           tags={tags}
           createdAt={createdAt ? (typeof createdAt === 'string' ? createdAt : createdAt.toISOString()) : ''}
+          isFavorite={isFavorite}
         />
       ))}
       {children}

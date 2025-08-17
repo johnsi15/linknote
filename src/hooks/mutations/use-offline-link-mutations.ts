@@ -37,6 +37,7 @@ export function useCreateOfflineLink() {
         title: data.title,
         url: data.url,
         description: data.description || null,
+        isFavorite: false,
         tags: data.tags || [],
         createdAt: now,
         updatedAt: now,

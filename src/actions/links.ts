@@ -17,6 +17,7 @@ interface GetUserLinksFilteredParams {
   tags?: string[]
   dateRange?: string
   sort?: string // 'newest', 'oldest', 'titleAsc', 'titleDesc'
+  onlyFavorites?: boolean
   limit?: number
   offset?: number // Para paginación
 }
@@ -53,6 +54,7 @@ export async function createLink(formData: LinkFormData) {
       title: validatedData.title,
       url: validatedData.url,
       description: validatedData.description || '',
+      isFavorite: validatedData.isFavorite || false,
     })
 
     // Procesar etiquetas
@@ -175,6 +177,7 @@ export async function getUserLinks({ tag }: { tag?: string } = {}) {
           title: links.title,
           url: links.url,
           description: links.description,
+          isFavorite: links.isFavorite,
           createdAt: links.createdAt,
           updatedAt: links.updatedAt,
         })
@@ -268,6 +271,7 @@ export async function updateLink(id: string, formData: LinkFormData) {
         title: validatedData.title,
         url: validatedData.url,
         description: validatedData.description || '',
+        isFavorite: validatedData.isFavorite !== undefined ? validatedData.isFavorite : existingLink.isFavorite,
         updatedAt: new Date(),
       })
       .where(eq(links.id, id))
@@ -357,6 +361,7 @@ export async function getUserLinksFiltered({
   tags: tagNames = [],
   dateRange = 'all',
   sort = 'newest',
+  onlyFavorites = false,
   limit = 30,
   offset = 0, //  Añadimos offset para paginación
 }: GetUserLinksFilteredParams): Promise<{
@@ -370,6 +375,10 @@ export async function getUserLinksFiltered({
   const allWhereConditions: SQLWrapper[] = []
 
   allWhereConditions.push(eq(links.userId, userId))
+
+  if (onlyFavorites) {
+    allWhereConditions.push(eq(links.isFavorite, true))
+  }
 
   // Filtro de Búsqueda (search)
   if (search && search.trim() !== '') {
@@ -462,7 +471,14 @@ export async function getUserLinksFiltered({
   }
 
   if (tagNames.length > 0) {
-    countQuery = countQuery.groupBy(links.id, links.title, links.url, links.description, links.createdAt)
+    countQuery = countQuery.groupBy(
+      links.id,
+      links.title,
+      links.url,
+      links.description,
+      links.createdAt,
+      links.isFavorite
+    )
     countQuery = countQuery.having(eq(countDistinct(tags.id), tagNames.length))
   }
 
@@ -472,6 +488,7 @@ export async function getUserLinksFiltered({
       title: links.title,
       url: links.url,
       description: links.description,
+      isFavorite: links.isFavorite,
       createdAt: links.createdAt,
       tagsString: sql<string | null>`GROUP_CONCAT(DISTINCT ${tags.name})`.as('tagsString'),
     })
@@ -484,7 +501,7 @@ export async function getUserLinksFiltered({
     query = query.where(finalWhereClause)
   }
 
-  query = query.groupBy(links.id, links.title, links.url, links.description, links.createdAt)
+  query = query.groupBy(links.id, links.title, links.url, links.description, links.isFavorite, links.createdAt)
 
   if (tagNames.length > 0) {
     // Contamos los tags distintos que coinciden (después del WHERE) y verificamos si es igual al número de tags solicitados.
@@ -529,6 +546,7 @@ export async function getUserLinksFiltered({
         title: row.title,
         url: row.url,
         description: row.description,
+        isFavorite: row.isFavorite,
         createdAt: row.createdAt,
         tags: row.tagsString ? row.tagsString.split(',').filter(t => t) : [],
       }
@@ -538,5 +556,92 @@ export async function getUserLinksFiltered({
   } catch (error) {
     console.error('Error fetching filtered links:', error)
     throw new Error('Could not retrieve links.')
+  }
+}
+
+// Toggle favorite status de un link
+export async function toggleFavoriteLink(linkId: string) {
+  try {
+    const { userId } = await getSecureSession()
+
+    if (!linkId) {
+      return { success: false, error: 'Link ID is required' }
+    }
+
+    // Obtener el link actual para verificar ownership y obtener el estado actual
+    const existingLink = await db
+      .select({ isFavorite: links.isFavorite })
+      .from(links)
+      .where(and(eq(links.id, linkId), eq(links.userId, userId)))
+      .limit(1)
+
+    if (existingLink.length === 0) {
+      return { success: false, error: 'Link not found' }
+    }
+
+    // Toggle el estado de favorito
+    const newFavoriteStatus = !existingLink[0].isFavorite
+
+    await db
+      .update(links)
+      .set({
+        isFavorite: newFavoriteStatus,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(links.id, linkId), eq(links.userId, userId)))
+
+    // Revalidar las páginas que podrían estar cacheadas
+    revalidatePath('/links')
+    revalidatePath('/dashboard')
+
+    return {
+      success: true,
+      linkId,
+      isFavorite: newFavoriteStatus,
+    }
+  } catch (error) {
+    console.error('Error toggling favorite:', error)
+    return { success: false, error: 'Could not toggle favorite status' }
+  }
+}
+
+// Obtener todos los links favoritos del usuario
+export async function getUserFavoriteLinks() {
+  try {
+    const { userId } = await getSecureSession()
+
+    const favoriteLinks = await db.query.links.findMany({
+      where: and(eq(links.userId, userId), eq(links.isFavorite, true)),
+      orderBy: (links, { desc }) => [desc(links.createdAt)],
+    })
+
+    // Obtener los tags para cada link favorito
+    const linksWithTags = await Promise.all(
+      favoriteLinks.map(async link => {
+        const linkTagsRows = await db
+          .select({ tagId: linkTags.tagId })
+          .from(linkTags)
+          .where(eq(linkTags.linkId, link.id))
+
+        const tagNames = []
+
+        if (linkTagsRows.length > 0) {
+          const tagIds = linkTagsRows.map(row => row.tagId)
+          const tagRows = await db.select({ name: tags.name }).from(tags).where(inArray(tags.id, tagIds))
+
+          tagNames.push(...tagRows.map(t => t.name))
+        }
+
+        return {
+          ...link,
+          tags: tagNames,
+        }
+      })
+    )
+
+    return { success: true, links: linksWithTags }
+  } catch (error) {
+    console.error('Error al obtener enlaces favoritos:', error)
+    return { success: false, error: 'Could not get favorite links' }
   }
 }

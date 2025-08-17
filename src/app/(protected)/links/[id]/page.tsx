@@ -36,6 +36,7 @@ export default function LinkDetailPage() {
     const safeFormData = {
       ...formData,
       description: formData.description ?? '',
+      isFavorite: formData.isFavorite ?? false,
     }
     const isActualUpdateForBackend = Boolean(linkId) && hasBeenSaved
 

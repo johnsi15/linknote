@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { tagKeys } from '../queries/use-tags'
-import { linkKeys } from '../queries/use-links'
+import { tagKeys } from '@/hooks/queries/use-tags'
+import { linkKeys } from '@/hooks/queries/use-links'
 
 interface Tag {
   id: string
