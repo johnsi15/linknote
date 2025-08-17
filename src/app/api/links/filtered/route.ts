@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const tags = searchParams.get('tags')?.split(',').filter(Boolean) || []
     const dateRange = searchParams.get('dateRange') || 'all'
     const sort = searchParams.get('sort') || 'newest'
-    const onlyFavorites = searchParams.get('favorites') === 'true'
+    const onlyFavorites = searchParams.get('onlyFavorites') === 'true'
     const limit = Number(searchParams.get('limit')) || 20
     const offset = Number(searchParams.get('offset')) || 0
 
