@@ -106,12 +106,16 @@ export function LinkCard({
             <Button
               variant={favorite ? 'default' : 'ghost'}
               size='icon'
-              className={`h-8 w-8 ${favorite ? 'text-yellow-400' : 'text-muted-foreground'}`}
+              className={`h-8 w-8 ${
+                favorite
+                  ? 'bg-amber-100 dark:bg-amber-900 border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-800'
+                  : 'bg-transparent border-transparent text-muted-foreground hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-100 hover:border-amber-300'
+              }`}
               onClick={handleToggleFavorite}
               disabled={toggleFavorite.isPending}
               aria-label={favorite ? 'Remove from favorites' : 'Add to favorites'}
             >
-              <StarIcon className={`h-4 w-4 ${favorite ? 'fill-yellow-400' : 'fill-none'}`} />
+              <StarIcon className={`h-4 w-4 ${favorite ? 'fill-amber-400 dark:fill-amber-300' : 'fill-none'}`} />
             </Button>
             <Button variant='ghost' size='icon' onClick={() => copyToClipboard(url)} className='h-8 w-8'>
               <CopyIcon className='h-4 w-4' />
