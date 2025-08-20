@@ -47,6 +47,9 @@ importers:
       '@tanstack/react-query':
         specifier: 5.82.0
         version: 5.82.0(react@19.0.0)
+      '@upstash/vector':
+        specifier: ^1.2.2
+        version: 1.2.2
       '@yoopta/action-menu-list':
         specifier: ^4.9.7
         version: 4.9.7(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
@@ -2001,6 +2004,9 @@ packages:
     resolution: {integrity: sha512-friS8NEQfHaDbkThxopGk+LuE5v3iY0StruifjQEt7SLbA46OnfgMO15sOTkbpJkol6RB+1l1TYPXh0sCddpvA==}
     cpu: [x64]
     os: [win32]
+
+  '@upstash/vector@1.2.2':
+    resolution: {integrity: sha512-ptQ9xnxtKqmpNK52PCcHCszlPOLxIBfjsv7ty8RoF95pkjctS9rSjTQ3Pl9bx5VFbpDj+0dMXw88WLt6swDkgQ==}
 
   '@yoopta/action-menu-list@4.9.7':
     resolution: {integrity: sha512-iTOLqcikN2mdggGyZc98wHiWtBVWgaEWD/njzh9MeCYEQ46VAVye8VNDmTz1Ucm/CZj5Q3PP/CJ1nqz7t+R35A==}
@@ -5914,6 +5920,8 @@ snapshots:
 
   '@unrs/resolver-binding-win32-x64-msvc@1.7.2':
     optional: true
+
+  '@upstash/vector@1.2.2': {}
 
   '@yoopta/action-menu-list@4.9.7(@yoopta/editor@4.9.7(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-react@0.114.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0))(slate@0.114.0))(react-dom@19.0.0(react@19.0.0))(react@19.0.0)':
     dependencies:
