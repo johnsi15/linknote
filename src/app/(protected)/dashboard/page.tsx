@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Link as LinkIcon } from 'lucide-react'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
+import { TagClustersWrapper } from '@/components/dashboard/tag-clusters-wrapper'
 import { Button } from '@/components/ui/button'
 import { NewLinkButton } from '@/components/dashboard/new-link/button'
 import { getUserLinks } from '@/actions/links'
@@ -61,7 +62,7 @@ export default async function DashboardPage() {
                   <LinkIcon className='h-12 w-12 text-muted-foreground mb-3' />
                   <h3 className='text-lg font-medium mb-1'>No links found</h3>
                   <p className='text-sm text-muted-foreground mb-4'>
-                    You haven't created any links yet. Start by adding your first link.
+                    You haven&apos;t created any links yet. Start by adding your first link.
                   </p>
                   <NewLinkButton />
                 </div>
@@ -115,6 +116,9 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Componente de clusters de tags relacionados */}
+          <TagClustersWrapper />
         </div>
       </section>
     </div>

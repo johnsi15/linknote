@@ -4,8 +4,6 @@ import { KeyboardEvent, useRef, useState, useEffect } from 'react'
 import { X, Tag } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useLazySimilarTags } from '@/hooks/mutations/use-tag-embeddings'
 import { useDebounce } from 'use-debounce'
 import { cn } from '@/lib/utils'
@@ -17,14 +15,16 @@ interface TagInputProps {
   className?: string
 }
 
-export function TagInput({ tags, setTags, placeholder = "Agregar tags...", className }: TagInputProps) {
+export function TagInput({ tags, setTags, placeholder = 'Add tags...', className }: TagInputProps) {
   const [inputValue, setInputValue] = useState('')
-  const [isOpen, setIsOpen] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+  const [selectedIndex, setSelectedIndex] = useState(-1)
   const inputRef = useRef<HTMLInputElement>(null)
-  
+  const suggestionRefs = useRef<(HTMLDivElement | null)[]>([])
+
   // Debounce del input para evitar muchas consultas
   const [debouncedInputValue] = useDebounce(inputValue, 300)
-  
+
   // Hook para buscar tags similares
   const { mutate: findSimilarTags, data: similarTagsData, isPending } = useLazySimilarTags()
 
@@ -33,12 +33,13 @@ export function TagInput({ tags, setTags, placeholder = "Agregar tags...", class
     if (debouncedInputValue.trim() && debouncedInputValue.length > 1) {
       findSimilarTags({
         tagName: debouncedInputValue,
-        limit: 5
+        limit: 5,
       })
-      setIsOpen(true)
+      setShowSuggestions(true)
     } else {
-      setIsOpen(false)
+      setShowSuggestions(false)
     }
+    setSelectedIndex(-1)
   }, [debouncedInputValue, findSimilarTags])
 
   const addTag = (tagName: string) => {
@@ -47,7 +48,8 @@ export function TagInput({ tags, setTags, placeholder = "Agregar tags...", class
       setTags([...tags, trimmedTag])
     }
     setInputValue('')
-    setIsOpen(false)
+    setShowSuggestions(false)
+    setSelectedIndex(-1)
     inputRef.current?.focus()
   }
 
@@ -66,9 +68,23 @@ export function TagInput({ tags, setTags, placeholder = "Agregar tags...", class
   }
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    const suggestionOptions = getSuggestionOptions()
+
+    if (e.key === 'ArrowDown') {
       e.preventDefault()
-      if (inputValue.trim()) {
+      if (showSuggestions && suggestionOptions.length > 0) {
+        setSelectedIndex(prev => (prev + 1) % suggestionOptions.length)
+      }
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (showSuggestions && suggestionOptions.length > 0) {
+        setSelectedIndex(prev => (prev <= 0 ? suggestionOptions.length - 1 : prev - 1))
+      }
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (showSuggestions && selectedIndex >= 0 && suggestionOptions[selectedIndex]) {
+        addTag(suggestionOptions[selectedIndex])
+      } else if (inputValue.trim()) {
         addTag(inputValue)
       }
     } else if (e.key === ',' && inputValue.trim()) {
@@ -77,124 +93,151 @@ export function TagInput({ tags, setTags, placeholder = "Agregar tags...", class
     } else if (e.key === 'Backspace' && !inputValue && tags.length > 0) {
       removeTag(tags[tags.length - 1])
     } else if (e.key === 'Escape') {
-      setIsOpen(false)
+      setShowSuggestions(false)
+      setSelectedIndex(-1)
     }
+  }
+
+  const getSuggestionOptions = () => {
+    const similarTags = similarTagsData?.similarTags || []
+    const filteredSimilarTags = similarTags.filter(
+      tag =>
+        !tags.map(t => t.toLowerCase()).includes(tag.tagName.toLowerCase()) &&
+        tag.tagName.toLowerCase() !== inputValue.toLowerCase()
+    )
+
+    const options = []
+    if (inputValue.trim()) {
+      options.push(inputValue.trim())
+    }
+    filteredSimilarTags.forEach(tag => options.push(tag.tagName))
+
+    return options
   }
 
   // Filtrar tags similares que no estén ya agregados
   const similarTags = similarTagsData?.similarTags || []
   const filteredSimilarTags = similarTags.filter(
-    tag => !tags.map(t => t.toLowerCase()).includes(tag.tagName.toLowerCase()) && 
-           tag.tagName.toLowerCase() !== inputValue.toLowerCase()
+    tag =>
+      !tags.map(t => t.toLowerCase()).includes(tag.tagName.toLowerCase()) &&
+      tag.tagName.toLowerCase() !== inputValue.toLowerCase()
   )
 
   return (
-    <div className={cn("space-y-2", className)}>
-      {/* Tags ya agregados */}
-      {tags.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {tags.map((tag) => (
-            <Badge key={tag} variant="secondary" className="px-2 py-1">
-              <Tag className="w-3 h-3 mr-1" />
-              {tag}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-1 h-auto p-0 text-muted-foreground hover:text-foreground"
-                onClick={() => removeTag(tag)}
-                type="button"
-              >
-                <X className="w-3 h-3" />
-              </Button>
-            </Badge>
-          ))}
+    <div className={cn('relative w-full', className)}>
+      {/* Input container con tags dentro */}
+      <div
+        className={cn(
+          'w-full flex flex-wrap gap-1 p-2 border rounded-md min-h-10 focus-within:ring-2 focus-within:ring-ring cursor-text',
+          'bg-background'
+        )}
+        onClick={() => inputRef.current?.focus()}
+      >
+        {/* Tags dentro del input */}
+        {tags.map(tag => (
+          <Badge key={tag} variant='secondary' className='px-2 py-1 text-xs'>
+            <Tag className='w-3 h-3 mr-1' />
+            {tag}
+            <Button
+              variant='ghost'
+              size='sm'
+              className='ml-1 h-auto p-0 text-muted-foreground hover:text-foreground'
+              onClick={e => {
+                e.stopPropagation()
+                removeTag(tag)
+              }}
+              type='button'
+            >
+              <X className='w-3 h-3' />
+            </Button>
+          </Badge>
+        ))}
+
+        {/* Input field */}
+        <input
+          ref={inputRef}
+          type='text'
+          value={inputValue}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => inputValue.trim().length > 1 && setShowSuggestions(true)}
+          onBlur={() => {
+            // Delay para permitir clicks en sugerencias
+            setTimeout(() => setShowSuggestions(false), 150)
+          }}
+          className='flex-1 min-w-[120px] w-full outline-none bg-transparent text-sm'
+          placeholder={tags.length > 0 ? '' : placeholder}
+        />
+
+        <Tag className='w-4 h-4 text-muted-foreground self-center flex-shrink-0' />
+      </div>
+
+      {/* Sugerencias dropdown */}
+      {showSuggestions && (inputValue.trim() || filteredSimilarTags.length > 0) && (
+        <div className='absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-auto'>
+          {isPending && (
+            <div className='p-3 text-sm text-muted-foreground text-center'>Searching for similar tags...</div>
+          )}
+
+          {!isPending && (
+            <div className='py-1'>
+              {/* Opción para crear el tag actual */}
+              {inputValue.trim() && (
+                <div
+                  ref={el => {
+                    suggestionRefs.current[0] = el
+                  }}
+                  className={cn(
+                    'px-3 py-2 cursor-pointer hover:bg-accent text-sm flex items-center justify-between',
+                    selectedIndex === 0 && 'bg-accent'
+                  )}
+                  onClick={() => addTag(inputValue)}
+                >
+                  <div className='flex items-center'>
+                    <Tag className='w-4 h-4 mr-2' />
+                    Create &quot;{inputValue}&quot;
+                  </div>
+                  <Badge variant='outline' className='text-xs'>
+                    New
+                  </Badge>
+                </div>
+              )}
+
+              {/* Tags similares sugeridos */}
+              {filteredSimilarTags.map((tag, index) => {
+                const adjustedIndex = inputValue.trim() ? index + 1 : index
+                return (
+                  <div
+                    key={tag.tagId}
+                    ref={el => {
+                      suggestionRefs.current[adjustedIndex] = el
+                    }}
+                    className={cn(
+                      'px-3 py-2 cursor-pointer hover:bg-accent text-sm flex items-center justify-between',
+                      selectedIndex === adjustedIndex && 'bg-accent'
+                    )}
+                    onClick={() => addTag(tag.tagName)}
+                  >
+                    <div className='flex items-center'>
+                      <Tag className='w-4 h-4 mr-2' />
+                      {tag.tagName}
+                    </div>
+                    <Badge variant='secondary' className='text-xs'>
+                      {Math.round(tag.similarity * 100)}%
+                    </Badge>
+                  </div>
+                )
+              })}
+
+              {!isPending && filteredSimilarTags.length === 0 && !inputValue.trim() && (
+                <div className='p-3 text-sm text-muted-foreground text-center'>Type to search for similar tags</div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Input con autocompletado */}
-      <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <div className='w-full'>
-            <div className='flex flex-wrap gap-2 p-2 border rounded-md min-h-10 focus-within:ring-2 focus-within:ring-ring'>
-              <input
-                ref={inputRef}
-                type='text'
-                value={inputValue}
-                onChange={handleInputChange}
-                onKeyDown={handleKeyDown}
-                className='flex-1 min-w-[120px] outline-none bg-transparent'
-                placeholder={tags.length > 0 ? '' : placeholder}
-              />
-              <Tag className="w-4 h-4 text-muted-foreground self-center" />
-            </div>
-          </div>
-        </PopoverTrigger>
-        
-        <PopoverContent className="w-full p-0" align="start">
-          <Command>
-            <CommandList>
-              {isPending && (
-                <CommandEmpty>Buscando tags similares...</CommandEmpty>
-              )}
-              
-              {!isPending && filteredSimilarTags.length === 0 && inputValue.trim() && (
-                <CommandEmpty>
-                  <div className="text-center py-2">
-                    <p className="text-sm text-muted-foreground mb-2">
-                      No se encontraron tags similares
-                    </p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addTag(inputValue)}
-                      type="button"
-                    >
-                      Crear &quot;{inputValue}&quot;
-                    </Button>
-                  </div>
-                </CommandEmpty>
-              )}
-
-              {filteredSimilarTags.length > 0 && (
-                <CommandGroup heading="Tags similares">
-                  {/* Opción para crear el tag actual */}
-                  {inputValue.trim() && (
-                    <CommandItem
-                      onSelect={() => addTag(inputValue)}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
-                        <Tag className="w-4 h-4 mr-2" />
-                        Crear &quot;{inputValue}&quot;
-                      </div>
-                      <Badge variant="outline" className="ml-2">Nuevo</Badge>
-                    </CommandItem>
-                  )}
-                  
-                  {/* Tags similares sugeridos */}
-                  {filteredSimilarTags.map((tag) => (
-                    <CommandItem
-                      key={tag.tagId}
-                      onSelect={() => addTag(tag.tagName)}
-                      className="flex items-center justify-between"
-                    >
-                      <div className="flex items-center">
-                        <Tag className="w-4 h-4 mr-2" />
-                        {tag.tagName}
-                      </div>
-                      <Badge variant="secondary" className="ml-2">
-                        {Math.round(tag.similarity * 100)}%
-                      </Badge>
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              )}
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      <p className='text-xs text-muted-foreground'>Press Enter o comma to add a tag</p>
+      <p className='text-xs text-muted-foreground mt-1'>Press Enter or comma to add a tag</p>
     </div>
   )
 }
