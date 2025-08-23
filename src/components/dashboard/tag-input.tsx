@@ -39,6 +39,7 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
     } else {
       setShowSuggestions(false)
     }
+
     setSelectedIndex(-1)
   }, [debouncedInputValue, findSimilarTags])
 
@@ -47,6 +48,7 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
     if (trimmedTag && !tags.map(t => t.toLowerCase()).includes(trimmedTag.toLowerCase())) {
       setTags([...tags, trimmedTag])
     }
+
     setInputValue('')
     setShowSuggestions(false)
     setSelectedIndex(-1)
@@ -113,6 +115,11 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
     filteredSimilarTags.forEach(tag => options.push(tag.tagName))
 
     return options
+  }
+
+  const isExistingTag = (tagName: string) => {
+    const similarTags = similarTagsData?.similarTags || []
+    return similarTags.some(tag => tag.tagName.toLowerCase() === tagName.toLowerCase())
   }
 
   // Filtrar tags similares que no estén ya agregados
@@ -195,10 +202,10 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
                 >
                   <div className='flex items-center'>
                     <Tag className='w-4 h-4 mr-2' />
-                    Create &quot;{inputValue}&quot;
+                    {isExistingTag(inputValue) ? `Add "${inputValue}"` : `Create "${inputValue}"`}
                   </div>
-                  <Badge variant='outline' className='text-xs'>
-                    New
+                  <Badge variant={isExistingTag(inputValue) ? 'default' : 'outline'} className='text-xs'>
+                    {isExistingTag(inputValue) ? 'Exists' : 'New'}
                   </Badge>
                 </div>
               )}
