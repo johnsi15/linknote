@@ -1,8 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useUser } from '@clerk/nextjs'
 import { tagKeys } from '@/hooks/queries/use-tags'
 import { linkKeys } from '@/hooks/queries/use-links'
-import { storeTagEmbedding, updateTagEmbedding, deleteTagEmbedding } from '@/lib/upstash-vector'
+import { tagClustersKeys } from '@/hooks/queries/use-tag-clusters'
 
 interface Tag {
   id: string
@@ -74,7 +73,6 @@ async function apiDeleteTag(id: string): Promise<TagApiResponse> {
 // Hook para crear un nuevo tag
 export function useCreateTag() {
   const queryClient = useQueryClient()
-  const { user } = useUser()
 
   return useMutation({
     mutationFn: async (name: string) => {
@@ -84,25 +82,12 @@ export function useCreateTag() {
         throw new Error(errorMsg)
       }
 
-      // Generar embedding automáticamente para el nuevo tag
-      if (user?.id) {
-        try {
-          await storeTagEmbedding({
-            tagId: result.tag.id,
-            tagName: result.tag.name,
-            userId: user.id
-          })
-        } catch (error) {
-          // Log del error pero no fallar la creación del tag
-          console.warn('Failed to generate embedding for new tag:', error)
-        }
-      }
-
       return result.tag
     },
     onSuccess: () => {
-      // Invalidar todas las queries de tags
+      // Invalidar todas las queries de tags y clusters
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
     },
   })
 }
@@ -110,7 +95,6 @@ export function useCreateTag() {
 // Hook para actualizar un tag existente
 export function useUpdateTag() {
   const queryClient = useQueryClient()
-  const { user } = useUser()
 
   return useMutation({
     mutationFn: async ({ id, name }: { id: string; name: string }) => {
@@ -120,26 +104,13 @@ export function useUpdateTag() {
         throw new Error(errorMsg)
       }
 
-      // Actualizar embedding automáticamente para el tag modificado
-      if (user?.id) {
-        try {
-          await updateTagEmbedding({
-            tagId: result.tag.id,
-            tagName: result.tag.name,
-            userId: user.id
-          })
-        } catch (error) {
-          // Log del error pero no fallar la actualización del tag
-          console.warn('Failed to update embedding for tag:', error)
-        }
-      }
-
       return result.tag
     },
     onSuccess: () => {
-      // Invalidar queries de tags y links (por si cambió el nombre del tag)
+      // Invalidar queries de tags, links y clusters (por si cambió el nombre del tag)
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
     },
   })
 }
@@ -151,21 +122,14 @@ export function useDeleteTag() {
   return useMutation({
     mutationFn: async (id: string) => {
       const result = await apiDeleteTag(id)
-      
-      // Eliminar embedding automáticamente
-      try {
-        await deleteTagEmbedding(id)
-      } catch (error) {
-        // Log del error pero no fallar la eliminación del tag
-        console.warn('Failed to delete embedding for tag:', error)
-      }
 
       return result
     },
     onSuccess: () => {
-      // Invalidar queries de tags y links
+      // Invalidar queries de tags, links y clusters
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
     },
   })
 }
