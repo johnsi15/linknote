@@ -8,6 +8,7 @@ import { nanoid } from 'nanoid'
 import { getSecureSession } from '@/lib/auth/server'
 import { z } from 'zod'
 import { linkSchema } from '@/lib/validations/link'
+import { storeTagEmbedding } from '@/lib/upstash-vector'
 
 export type LinkFormData = z.infer<typeof linkSchema>
 
@@ -73,13 +74,26 @@ export async function createLink(formData: LinkFormData) {
       const newTags = validatedData.tags.filter(tag => !existingTagNames.includes(tag))
 
       if (newTags.length > 0) {
-        await db.insert(tags).values(
-          newTags.map(tagName => ({
-            id: nanoid(),
-            name: tagName,
-            userId,
-          }))
-        )
+        const newTagsData = newTags.map(tagName => ({
+          id: nanoid(),
+          name: tagName,
+          userId,
+        }))
+
+        const createdTags = await db.insert(tags).values(newTagsData).returning()
+
+        // Generar embeddings para los nuevos tags
+        for (const tag of createdTags) {
+          try {
+            await storeTagEmbedding({
+              tagId: tag.id,
+              tagName: tag.name,
+              userId: tag.userId,
+            })
+          } catch (error) {
+            console.error(`❌ [addLink] Failed to generate embedding for tag ${tag.name}:`, error)
+          }
+        }
       }
 
       // Obtener todas las etiquetas para este enlace
@@ -300,10 +314,23 @@ export async function updateLink(id: string, formData: LinkFormData) {
           userId,
         }))
 
-        await db.insert(tags).values(newTagsData)
+        const createdTags = await db.insert(tags).values(newTagsData).returning()
+
+        // Generar embeddings para los nuevos tags
+        for (const tag of createdTags) {
+          try {
+            await storeTagEmbedding({
+              tagId: tag.id,
+              tagName: tag.name,
+              userId: tag.userId,
+            })
+          } catch (error) {
+            console.error(`❌ [updateLink] Failed to generate embedding for tag ${tag.name}:`, error)
+          }
+        }
 
         // Actualizar el mapa de etiquetas con las nuevas
-        newTagsData.forEach(tag => {
+        createdTags.forEach(tag => {
           existingTagsMap[tag.name] = tag.id
         })
       }

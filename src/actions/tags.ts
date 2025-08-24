@@ -53,19 +53,18 @@ export async function addTag(name: string) {
 
     const tagId = nanoid()
     const [newTag] = await db.insert(tags).values({ id: tagId, name, userId }).returning()
-    
-    // Generar embedding automáticamente para el nuevo tag
+
     try {
       await storeTagEmbedding({
         tagId: newTag.id,
         tagName: newTag.name,
-        userId: userId
+        userId: userId,
       })
     } catch (error) {
       // Log del error pero no fallar la creación del tag
-      console.warn('Failed to generate embedding for new tag:', error)
+      console.error('Failed to generate embedding for new tag:', error)
     }
-    
+
     return { success: true, tag: newTag }
   } catch (error) {
     console.error('Error al agregar tag:', error)
@@ -91,7 +90,7 @@ export async function updateTag(id: string, name: string) {
       await updateTagEmbedding({
         tagId: updated[0].id,
         tagName: updated[0].name,
-        userId: userId
+        userId: userId,
       })
     } catch (error) {
       // Log del error pero no fallar la actualización del tag
@@ -124,7 +123,7 @@ export async function deleteTag(id: string) {
     }
 
     await db.delete(tags).where(eq(tags.id, id))
-    
+
     // Eliminar embedding automáticamente
     try {
       await deleteTagEmbedding(id)
@@ -132,7 +131,7 @@ export async function deleteTag(id: string) {
       // Log del error pero no fallar la eliminación del tag
       console.warn('Failed to delete embedding for tag:', error)
     }
-    
+
     return { success: true }
   } catch (error) {
     console.error('Error al eliminar tag:', error)
