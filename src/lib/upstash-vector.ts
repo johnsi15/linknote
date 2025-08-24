@@ -71,16 +71,6 @@ export async function findSimilarTags(query: string, userId: string, limit = 5):
       includeMetadata: true,
     })
 
-    // results.forEach((result, index) => {
-    //   const metadata = result.metadata as unknown as TagMetadata
-    //   console.log(`  Result ${index}:`, {
-    //     id: result.id,
-    //     score: result.score,
-    //     metadata: metadata,
-    //     userIdMatch: metadata?.userId === userId ? '✅ MATCH' : '❌ NO MATCH',
-    //   })
-    // })
-
     return results.map(result => ({
       tagId: result.metadata?.tagId as string,
       tagName: result.metadata?.tagName as string,
@@ -148,36 +138,36 @@ export async function findTagClusters(
     similarityThreshold?: number
   } = {}
 ): Promise<TagCluster[]> {
-  const { minClusterSize = 2, maxClusters = 6, similarityThreshold = 0.7 } = options
+  const { minClusterSize = 2, maxClusters = 6, similarityThreshold = 0.6 } = options
 
   try {
     // Obtener todos los tags del usuario desde Upstash Vector
-    // Usar vector dummy con las dimensiones correctas (1024 para mixedbread-ai)
     const allTags = await vectorIndex.query({
-      vector: new Array(1024).fill(0), // Vector dummy para obtener todos
+      data: 'search', // Query dummy para obtener todos los tags
       topK: 1000,
       includeMetadata: true,
       filter: `userId = '${userId}' AND type = 'tag'`,
     })
 
     if (allTags.length < minClusterSize) {
+      console.log('🔍 [findTagClusters] Not enough tags for clustering')
       return []
     }
 
     const clusters: TagCluster[] = []
     const processedTags = new Set<string>()
 
-    // Para cada tag, encontrar sus tags más similares
+    // Para cada tag, buscar similares usando su nombre como query
     for (const tag of allTags) {
       const metadata = tag.metadata as unknown as TagMetadata
 
-      if (processedTags.has(metadata.tagId) || !tag.vector) {
+      if (processedTags.has(metadata.tagId)) {
         continue
       }
 
-      // Buscar tags similares a este tag
+      // Buscar tags similares usando el nombre del tag como query
       const similarTags = await vectorIndex.query({
-        vector: tag.vector,
+        data: metadata.tagName, // Usar el nombre del tag como query
         topK: 10,
         includeMetadata: true,
         filter: `userId = '${userId}' AND type = 'tag'`,
@@ -216,11 +206,13 @@ export async function findTagClusters(
 
         const avgSimilarity = clusterTags.reduce((sum, t) => sum + t.similarity, 0) / clusterTags.length
 
-        clusters.push({
+        const cluster = {
           name: generateClusterName(clusterTags.map(t => t.tagName)),
           tags: clusterTags,
           avgSimilarity,
-        })
+        }
+
+        clusters.push(cluster)
 
         // Marcar todos los tags del cluster como procesados
         clusterTags.forEach(t => processedTags.add(t.tagId))
@@ -234,10 +226,12 @@ export async function findTagClusters(
       }
     }
 
+    console.log(`🔍 [findTagClusters] Final clusters created: ${clusters.length}`)
+
     // Ordenar clusters por similitud promedio
     return clusters.sort((a, b) => b.avgSimilarity - a.avgSimilarity)
   } catch (error) {
-    console.error('Error al encontrar clusters de tags:', error)
+    console.error('❌ [findTagClusters] Error al encontrar clusters de tags:', error)
     return []
   }
 }

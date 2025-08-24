@@ -24,28 +24,21 @@ export async function GET(request: NextRequest) {
     const clusters = await findTagClusters(user.id, {
       minClusterSize: minSize,
       maxClusters: maxClusters,
-      similarityThreshold: 0.7,
+      similarityThreshold: 0.75,
     })
 
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       clusters,
-      total: clusters.length
+      total: clusters.length,
     })
-
   } catch (error) {
     console.error('Error al obtener clusters de tags:', error)
-    
+
     if (error instanceof z.ZodError) {
-      return Response.json(
-        { success: false, error: 'Parámetros inválidos', details: error.errors },
-        { status: 400 }
-      )
+      return Response.json({ success: false, error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
 
-    return Response.json(
-      { success: false, error: 'Error interno del servidor' },
-      { status: 500 }
-    )
+    return Response.json({ success: false, error: 'Error interno del servidor' }, { status: 500 })
   }
 }
