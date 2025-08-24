@@ -41,7 +41,6 @@ interface TagMetadata {
  */
 export async function storeTagEmbedding({ tagId, tagName, userId }: TagEmbedding): Promise<void> {
   try {
-    // Usar el embedding integrado de Upstash en lugar de OpenAI
     await vectorIndex.upsert({
       id: `tag-${tagId}`,
       data: tagName, // Upstash genera el embedding automáticamente
@@ -54,7 +53,7 @@ export async function storeTagEmbedding({ tagId, tagName, userId }: TagEmbedding
       },
     })
   } catch (error) {
-    console.error('Error al almacenar embedding de tag:', error)
+    console.error('Error storing tag embedding:', error)
     throw error
   }
 }
@@ -71,6 +70,16 @@ export async function findSimilarTags(query: string, userId: string, limit = 5):
       filter: `userId = '${userId}' AND type = 'tag'`,
       includeMetadata: true,
     })
+
+    // results.forEach((result, index) => {
+    //   const metadata = result.metadata as unknown as TagMetadata
+    //   console.log(`  Result ${index}:`, {
+    //     id: result.id,
+    //     score: result.score,
+    //     metadata: metadata,
+    //     userIdMatch: metadata?.userId === userId ? '✅ MATCH' : '❌ NO MATCH',
+    //   })
+    // })
 
     return results.map(result => ({
       tagId: result.metadata?.tagId as string,
