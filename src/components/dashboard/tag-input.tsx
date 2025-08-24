@@ -180,7 +180,7 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
 
       {/* Sugerencias dropdown */}
       {showSuggestions && (inputValue.trim() || filteredSimilarTags.length > 0) && (
-        <div className='absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-md max-h-60 overflow-auto'>
+        <div className='absolute z-50 w-full bottom-full mb-1 bg-popover border rounded-md shadow-md max-h-60 overflow-auto'>
           {isPending && (
             <div className='p-3 text-sm text-muted-foreground text-center'>Searching for similar tags...</div>
           )}

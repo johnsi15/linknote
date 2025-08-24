@@ -204,7 +204,7 @@ export function RichTextEditor({ className, value, onChange }: RichTextEditorPro
         onChange={handleEditorChange}
         selectionBoxRoot={selectionRef}
         placeholder="Type '/' for commands"
-        className='w-full!'
+        className='w-full! pb-5!'
         marks={MARKS}
         value={editorValue}
         autoFocus
