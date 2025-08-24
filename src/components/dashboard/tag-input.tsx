@@ -4,7 +4,7 @@ import { KeyboardEvent, useRef, useState, useEffect } from 'react'
 import { X, Tag } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useLazySimilarTags } from '@/hooks/mutations/use-tag-embeddings'
+import { useSimilarTags, type SimilarTag } from '@/hooks/mutations/use-tag-embeddings'
 import { useDebounce } from 'use-debounce'
 import { cn } from '@/lib/utils'
 
@@ -25,23 +25,22 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
   // Debounce del input para evitar muchas consultas
   const [debouncedInputValue] = useDebounce(inputValue, 300)
 
-  // Hook para buscar tags similares
-  const { mutate: findSimilarTags, data: similarTagsData, isPending } = useLazySimilarTags()
+  // Hook para buscar tags similares usando query con cache
+  const { data: similarTagsData, isLoading: isPending } = useSimilarTags(
+    debouncedInputValue,
+    5,
+    debouncedInputValue.trim().length > 1
+  )
 
-  // Buscar tags similares cuando el usuario escriba
+  // Mostrar sugerencias cuando haya datos
   useEffect(() => {
-    if (debouncedInputValue.trim() && debouncedInputValue.length > 1) {
-      findSimilarTags({
-        tagName: debouncedInputValue,
-        limit: 5,
-      })
+    if (debouncedInputValue.trim().length > 1 && similarTagsData && similarTagsData.length > 0) {
       setShowSuggestions(true)
     } else {
       setShowSuggestions(false)
     }
-
     setSelectedIndex(-1)
-  }, [debouncedInputValue, findSimilarTags])
+  }, [debouncedInputValue, similarTagsData])
 
   const addTag = (tagName: string) => {
     const trimmedTag = tagName.trim()
@@ -101,9 +100,9 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
   }
 
   const getSuggestionOptions = () => {
-    const similarTags = similarTagsData?.similarTags || []
+    const similarTags = similarTagsData || []
     const filteredSimilarTags = similarTags.filter(
-      tag =>
+      (tag: SimilarTag) =>
         !tags.map(t => t.toLowerCase()).includes(tag.tagName.toLowerCase()) &&
         tag.tagName.toLowerCase() !== inputValue.toLowerCase()
     )
@@ -112,20 +111,20 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
     if (inputValue.trim()) {
       options.push(inputValue.trim())
     }
-    filteredSimilarTags.forEach(tag => options.push(tag.tagName))
+    filteredSimilarTags.forEach((tag: SimilarTag) => options.push(tag.tagName))
 
     return options
   }
 
   const isExistingTag = (tagName: string) => {
-    const similarTags = similarTagsData?.similarTags || []
-    return similarTags.some(tag => tag.tagName.toLowerCase() === tagName.toLowerCase())
+    const similarTags = similarTagsData || []
+    return similarTags.some((tag: SimilarTag) => tag.tagName.toLowerCase() === tagName.toLowerCase())
   }
 
   // Filtrar tags similares que no estén ya agregados
-  const similarTags = similarTagsData?.similarTags || []
+  const similarTags = similarTagsData || []
   const filteredSimilarTags = similarTags.filter(
-    tag =>
+    (tag: SimilarTag) =>
       !tags.map(t => t.toLowerCase()).includes(tag.tagName.toLowerCase()) &&
       tag.tagName.toLowerCase() !== inputValue.toLowerCase()
   )
@@ -211,7 +210,7 @@ export function TagInput({ tags, setTags, placeholder = 'Add tags...', className
               )}
 
               {/* Tags similares sugeridos */}
-              {filteredSimilarTags.map((tag, index) => {
+              {filteredSimilarTags.map((tag: SimilarTag, index: number) => {
                 const adjustedIndex = inputValue.trim() ? index + 1 : index
                 return (
                   <div
