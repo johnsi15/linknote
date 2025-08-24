@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { tagKeys } from '@/hooks/queries/use-tags'
 import { linkKeys } from '@/hooks/queries/use-links'
 import { tagClustersKeys } from '@/hooks/queries/use-tag-clusters'
+import { similarTagsKeys } from '@/hooks/mutations/use-tag-embeddings'
 
 interface Tag {
   id: string
@@ -88,6 +89,7 @@ export function useCreateTag() {
       // Invalidar todas las queries de tags y clusters
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
+      queryClient.invalidateQueries({ queryKey: similarTagsKeys.all })
     },
   })
 }
@@ -111,6 +113,7 @@ export function useUpdateTag() {
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
       queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
+      queryClient.invalidateQueries({ queryKey: similarTagsKeys.all })
     },
   })
 }
@@ -130,6 +133,7 @@ export function useDeleteTag() {
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
       queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
+      queryClient.invalidateQueries({ queryKey: similarTagsKeys.all })
     },
   })
 }
