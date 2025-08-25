@@ -5,7 +5,7 @@ export function BetaBanner() {
     <div className='flex h-10 items-center justify-center bg-muted px-4 text-foreground'>
       <div className='flex items-center gap-2 text-center text-xs sm:text-sm'>
         <span>
-          🚧 This project is in <b>beta</b> — help us improve!
+          🚀 This project is <b>live</b> — help us make it even better!
         </span>
         <a
           href='https://github.com/johnsi15/linknote'

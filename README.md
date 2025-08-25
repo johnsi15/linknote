@@ -20,15 +20,19 @@
 ![GitHub issues](https://img.shields.io/github/issues/johnsi15/linknote)
 </div>
 
+> 🚀 <b>Linknote está en producción activa y en mantenimiento continuo.</b> ¡Ayúdanos a mejorarlo y comparte tu feedback!
+
 ## ✨ Características
 
-🔍 Búsqueda y Filtrado Avanzado: Explora y filtra tus enlaces por etiquetas personalizadas, rango de fechas y texto. Encuentra rápidamente el recurso exacto que necesitas para tu próximo proyecto.
-
-🏷️ Etiquetas Inteligentes: Organiza tus enlaces con etiquetas personalizadas y sugerencias automáticas potenciadas por IA.
-
-✍️ Gestión Sencilla: Añade títulos, descripciones enriquecidas y etiquetas a cada enlace para mantener tu biblioteca siempre ordenada.
-
-📊 Estadísticas Rápidas: Visualiza de un vistazo la cantidad de enlaces y etiquetas que has guardado.
+- 🔍 Búsqueda y Filtrado Avanzado: Explora y filtra tus enlaces por etiquetas personalizadas, rango de fechas y texto. Encuentra rápidamente el recurso exacto que necesitas para tu próximo proyecto.
+- 🏷️ Etiquetas Inteligentes: Organiza tus enlaces con etiquetas personalizadas y sugerencias automáticas potenciadas por IA.
+- ✍️ Gestión Sencilla: Añade títulos, descripciones enriquecidas y etiquetas a cada enlace para mantener tu biblioteca siempre ordenada.
+- 📊 Estadísticas Rápidas: Visualiza de un vistazo la cantidad de enlaces y etiquetas que has guardado.
+- 🤖 Agrupación de etiquetas por IA: Descubre relaciones entre tus etiquetas gracias a la agrupación automática.
+- ⚡ UI Optimista y Feedback Inmediato: Mutaciones optimistas, loaders y notificaciones modernas para una experiencia fluida.
+- 🔒 Seguridad y Autenticación: Rutas protegidas con Clerk y middleware seguro.
+- 🧩 Modularidad: Hooks personalizados para queries y mutaciones, estructura clara y escalable.
+- 🐞 Reporte de bugs y sugerencias desde la propia app.
 
 ## 🛠️ Tecnologías Utilizadas
 
@@ -40,6 +44,9 @@
 * Drizzle ORM – Acceso a base de datos tipado y seguro.
 * Zod – Validación de formularios y datos.
 * Sonner – Notificaciones modernas y personalizables.
+* TanStack Query – Manejo eficiente de datos y cache.
+* OpenAI – Sugerencias inteligentes.
+* Upstash Vector – Búsqueda semántica y embeddings para etiquetas.
 
 ## 🚀 Cómo iniciar el proyecto en modo desarrollo
 
@@ -69,11 +76,14 @@ El proyecto estará disponible en [http://localhost:3000](http://localhost:3000)
 
 Linknote utiliza Clerk como sistema de autenticación principal, permitiendo:
 
-Registro e inicio de sesión de usuarios mediante OAuth (por ejemplo, GitHub).
+- Registro e inicio de sesión de usuarios mediante OAuth (por ejemplo, GitHub).
+- Protección de rutas: solo los usuarios autenticados pueden crear y gestionar enlaces.
+- Middleware para asegurar la seguridad de las páginas privadas.
 
-Protección de rutas: solo los usuarios autenticados pueden crear y gestionar enlaces.
+## 🧑‍💻 Contribuye o reporta bugs
 
-Middleware para asegurar la seguridad de las páginas privadas.
+- ¿Tienes ideas o encontraste un bug? Usa la opción de "Report bug" en la app o abre un issue en GitHub.
+- ¡Las contribuciones son bienvenidas! Consulta la documentación y los issues para empezar.
 
 ## ⭐ ¡Dale una estrella al repositorio!
 
@@ -81,8 +91,8 @@ Si te gusta este proyecto o te ha resultado útil, considera [darle una estrella
 
 ## 🌐 Enlaces
 
-
-🔗 Enlace al proyecto: https://linknote.dev
+- 🔗 Enlace al proyecto: https://linknote.dev
+- 📚 Documentación: próximamente
 
 ---
 
