@@ -1,19 +1,15 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Filter, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Filter, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-
-interface FilterDialogProps {
-  onFilterChange: (filters: FilterOptions) => void
-  availableTags: string[]
-  currentFilters: FilterOptions
-}
+import { useQueryState, parseAsString } from 'nuqs'
+import { useEffect, useState } from 'react'
+import { useDebounce } from 'use-debounce'
 
 export interface FilterOptions {
   search: string
@@ -22,58 +18,49 @@ export interface FilterOptions {
   sort?: 'newest' | 'oldest' | 'az' | 'za'
 }
 
-function useDebouncedValue<T>(value: T, delay: number) {
-  const [debouncedValue, setDebouncedValue] = useState(value)
-  useEffect(() => {
-    const handler = setTimeout(() => setDebouncedValue(value), delay)
-    return () => clearTimeout(handler)
-  }, [value, delay])
-  return debouncedValue
+interface FilterDialogProps {
+  availableTags: string[]
 }
 
-export function FilterDialog({ onFilterChange, availableTags, currentFilters }: FilterDialogProps) {
-  const [filters, setFilters] = useState<FilterOptions>(currentFilters)
-  const [search, setSearch] = useState(filters.search)
-  const debouncedSearch = useDebouncedValue(search, 400)
+export function FilterDialog({ availableTags }: FilterDialogProps) {
+  const [search, setSearch] = useQueryState('search', { defaultValue: '' })
+  const [tags, setTags] = useQueryState('tags', { defaultValue: '' })
+  const [dateRange, setDateRange] = useQueryState('dateRange', parseAsString.withDefault('all'))
+
+  const [inputValue, setInputValue] = useState(search)
+  const [debouncedValue] = useDebounce(inputValue, 400)
+
+  const tagsArray = tags ? tags.split(',') : []
 
   useEffect(() => {
-    if (debouncedSearch !== filters.search) {
-      const newFilters = { ...filters, search: debouncedSearch }
-      setFilters(newFilters)
-      onFilterChange(newFilters)
-    }
+    setSearch(debouncedValue)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch])
+  }, [debouncedValue])
+
+  useEffect(() => {
+    setInputValue(search)
+  }, [search])
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value)
+    setInputValue(e.target.value)
   }
 
   const toggleTag = (tag: string) => {
-    const newTags = filters.tags.includes(tag) ? filters.tags.filter(t => t !== tag) : [...filters.tags, tag]
-
-    const newFilters = { ...filters, tags: newTags }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    const newTags = tagsArray.includes(tag) ? tagsArray.filter(t => t !== tag) : [...tagsArray, tag]
+    setTags(newTags.length > 0 ? newTags.join(',') : '')
   }
 
   const handleDateRangeChange = (range: FilterOptions['dateRange']) => {
-    const newFilters = { ...filters, dateRange: range }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    setDateRange(range)
   }
 
   const clearFilters = () => {
-    const newFilters = {
-      search: '',
-      tags: [],
-      dateRange: 'all' as const,
-    }
-    setFilters(newFilters)
-    onFilterChange(newFilters)
+    setSearch('')
+    setTags('')
+    setDateRange('all')
   }
 
-  const hasActiveFilters = filters.search || filters.tags.length > 0 || filters.dateRange !== 'all'
+  const hasActiveFilters = search || tagsArray.length > 0 || dateRange !== 'all'
 
   return (
     <Dialog>
@@ -83,7 +70,7 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
           Filter
           {hasActiveFilters && (
             <Badge variant='secondary' className='ml-1'>
-              {filters.tags.length + (filters.search ? 1 : 0) + (filters.dateRange !== 'all' ? 1 : 0)}
+              {tagsArray.length + (search ? 1 : 0) + (dateRange !== 'all' ? 1 : 0)}
             </Badge>
           )}
         </Button>
@@ -95,7 +82,7 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
             <Label>Search</Label>
-            <Input placeholder='Search in title and description...' value={search} onChange={handleSearchChange} />
+            <Input placeholder='Search in title and description...' value={inputValue} onChange={handleSearchChange} />
           </div>
 
           <div className='space-y-2'>
@@ -105,7 +92,7 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
                 <Button
                   key={range}
                   size='sm'
-                  variant={filters.dateRange === range ? 'default' : 'outline'}
+                  variant={dateRange === range ? 'default' : 'outline'}
                   onClick={() => handleDateRangeChange(range as FilterOptions['dateRange'])}
                 >
                   {range.charAt(0).toUpperCase() + range.slice(1)}
@@ -121,7 +108,7 @@ export function FilterDialog({ onFilterChange, availableTags, currentFilters }: 
                 {availableTags.map(tag => (
                   <Badge
                     key={tag}
-                    variant={filters.tags.includes(tag) ? 'default' : 'outline'}
+                    variant={tagsArray.includes(tag) ? 'default' : 'outline'}
                     className='cursor-pointer'
                     onClick={() => toggleTag(tag)}
                   >

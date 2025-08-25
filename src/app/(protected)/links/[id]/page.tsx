@@ -4,88 +4,137 @@ import { useParams, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { getLinkById, saveLink } from '@/actions/links'
 import { toast } from 'sonner'
 import { useEffect, useState } from 'react'
 import { LinkForm } from '@/components/dashboard/link-form'
-import { Link as LinkData, LinkFormData } from '@/types/link'
+import { LinkFormData } from '@/types/link'
+import { useSaveLink } from '@/hooks/mutations/use-link-mutations'
+import { useLink } from '@/hooks/queries/use-links'
+import { useQueryClient } from '@tanstack/react-query'
+import { linkKeys } from '@/hooks/queries/use-links'
+import { useOfflineLinknote } from '@/hooks/use-offline-linknote'
 
 export default function LinkDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const saveLinkMutation = useSaveLink()
+  const offline = useOfflineLinknote()
 
   const { id } = params as { id: string }
-  const isNew = id === 'new'
+  const initialIsNew = id === 'new'
 
-  const [isLoading, setIsLoading] = useState(true)
-  const [linkData, setLinkData] = useState<LinkData | null | undefined>(null)
-  const [linkId, setLinkId] = useState<string | undefined>(isNew ? undefined : id)
-  const [hasBeenSaved, setHasBeenSaved] = useState(false)
+  const [linkId, setLinkId] = useState<string | undefined>(initialIsNew ? undefined : id)
+  const [hasBeenSaved, setHasBeenSaved] = useState(!initialIsNew)
 
-  useEffect(() => {
-    async function fetchLinkData() {
-      if (!isNew) {
-        setIsLoading(true)
-        const result = await getLinkById(id)
+  const isNew = !linkId
 
-        if (result.success) {
-          setLinkData(result.link)
-          setHasBeenSaved(true)
-        } else {
-          toast.error('Error', { description: result.error })
-          router.push('/dashboard')
-        }
-      }
-
-      setIsLoading(false)
-    }
-
-    fetchLinkData()
-  }, [id, router, isNew])
+  // Usar el hook para obtener el link
+  const { data: linkData, isLoading, error } = useLink(linkId || '')
 
   const handleSubmit = async (formData: LinkFormData, isAutoSaveEvent = false) => {
     const safeFormData = {
       ...formData,
       description: formData.description ?? '',
+      isFavorite: formData.isFavorite ?? false,
     }
-
     const isActualUpdateForBackend = Boolean(linkId) && hasBeenSaved
 
-    try {
-      const result = await saveLink(safeFormData, isActualUpdateForBackend, linkId)
-
-      if (result.success) {
-        if (result.linkId) {
-          setLinkId(result.linkId)
+    // Híbrido: usar offline si no hay conexión
+    if (!offline.isOnline) {
+      try {
+        let result: { success: boolean; linkId?: string; error?: string }
+        if (isNew) {
+          const id = await offline.link.create(safeFormData)
+          setLinkId(id ?? undefined)
           setHasBeenSaved(true)
-        }
 
-        if (isAutoSaveEvent) {
-          toast.success('Link saved', { duration: 2000 })
-          router.refresh()
+          result = { success: true, linkId: id ?? undefined }
         } else {
-          toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
-            description: 'The link has been saved successfully',
-          })
-
-          if (!isAutoSaveEvent) {
-            router.push('/dashboard')
-          }
+          const ok = await offline.link.update({ id: linkId!, ...safeFormData })
+          result = { success: ok, linkId }
         }
 
+        // toast.success('Guardado offline. Se sincronizará cuando vuelvas a estar online.')
         return result
-      } else {
-        toast.error('Error', { description: result.error || 'Error saving link' })
-        return { success: false, error: result.error || 'Error saving link' }
+      } catch (error) {
+        console.log(error)
+        toast.error('Offline error', { description: 'Could not save the link offline.' })
+        return { success: false, error: 'Could not save the link offline.' }
       }
-    } catch (error) {
-      console.error('Error saving link:', error)
-      toast.error('Error', { description: 'An error occurred while saving the link' })
-      return { success: false, error: 'An error occurred while saving the link' }
     }
+
+    return new Promise<{ success: boolean; linkId?: string; error?: string }>(resolve => {
+      saveLinkMutation.mutate(
+        {
+          data: safeFormData,
+          isUpdate: isActualUpdateForBackend,
+          linkId,
+        },
+        {
+          onSuccess: result => {
+            if (result.success) {
+              if (result.linkId) {
+                setLinkId(result.linkId)
+                setHasBeenSaved(true)
+
+                if (!linkId) {
+                  // Actualizar cache con optimistic update antes de navegar
+                  queryClient.setQueryData(linkKeys.detail(result.linkId), {
+                    id: result.linkId,
+                    title: safeFormData.title,
+                    url: safeFormData.url,
+                    description: safeFormData.description,
+                    tags: safeFormData.tags,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  })
+
+                  toast.success('Link created', {
+                    description: 'The link has been saved successfully',
+                  })
+
+                  router.replace(`/links/${result.linkId}`)
+                  resolve(result)
+                  return
+                }
+              }
+
+              if (isAutoSaveEvent) {
+                toast.success('Link saved', { duration: 2000 })
+              } else {
+                toast.success(isActualUpdateForBackend ? 'Link updated' : 'Link created', {
+                  description: 'The link has been saved successfully',
+                })
+
+                if (!isAutoSaveEvent) {
+                  router.push('/dashboard')
+                }
+              }
+              resolve(result)
+            } else {
+              toast.error('Error', { description: result.error || 'Error saving link' })
+              resolve({ success: false, error: result.error || 'Error saving link' })
+            }
+          },
+          onError: error => {
+            console.log('Error saving link:', error)
+            toast.error('Error', { description: 'An error occurred while saving the link' })
+            resolve({ success: false, error: 'An error occurred while saving the link' })
+          },
+        }
+      )
+    })
   }
 
-  if (isLoading) {
+  useEffect(() => {
+    if (error) {
+      toast.error('Error', { description: 'Error loading link' })
+      router.push('/dashboard')
+    }
+  }, [error, router])
+
+  if (isLoading && !linkData && !isNew) {
     return (
       <div className='flex items-center justify-center h-screen'>
         <Loader2 className='h-8 w-8 animate-spin' />
@@ -93,9 +142,21 @@ export default function LinkDetailPage() {
     )
   }
 
+  if (error) {
+    return (
+      <div className='flex flex-col items-center justify-center h-screen gap-4'>
+        <p className='text-red-500'>Error loading link</p>
+        <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
+        <p className='text-sm text-gray-500'>Please try again later or contact support if the issue persists.</p>
+        <p className='text-sm text-gray-500'>Error details: {error.message}</p>
+        <p className='text-sm text-gray-500'>Link ID: {linkId}</p>
+      </div>
+    )
+  }
+
   return (
     <div className='container py-6 max-w-4xl mx-auto'>
-      <div className='flex flex-col gap-4 mb-6'>
+      <div className='flex flex-col gap-4 mb-8'>
         <div className='flex items-center gap-4'>
           <Link href='/dashboard'>
             <Button variant='outline' size='icon'>

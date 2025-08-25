@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Link as LinkIcon } from 'lucide-react'
 import { TagCloud } from '@/components/dashboard/tag-cloud'
+import { TagClustersWrapper } from '@/components/dashboard/tag-clusters-wrapper'
 import { Button } from '@/components/ui/button'
 import { NewLinkButton } from '@/components/dashboard/new-link/button'
 import { getUserLinks } from '@/actions/links'
@@ -14,12 +15,12 @@ export default async function DashboardPage() {
 
   return (
     <div className='space-y-8'>
-      <div className='flex items-center justify-between'>
+      <section className='flex items-center justify-between'>
         <h1 className='text-3xl font-bold tracking-tight'>Dashboard</h1>
         <NewLinkButton />
-      </div>
+      </section>
 
-      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+      <section className='grid grid-cols-1 md:grid-cols-3 gap-6'>
         <div className='md:col-span-2 space-y-6'>
           <div className='space-y-4'>
             <div className='flex items-center justify-between'>
@@ -32,7 +33,17 @@ export default async function DashboardPage() {
             </div>
             <div className='grid grid-cols-1 gap-4'>
               <Card className='p-4'>
-                {success && links && <LinksFilterClient allLinks={links} availableTags={availableTags} />}
+                {success && links && (
+                  <LinksFilterClient
+                    initialFilters={{
+                      search: '',
+                      tags: [],
+                      dateRange: 'all',
+                      sort: 'newest',
+                    }}
+                    availableTags={availableTags}
+                  />
+                )}
                 {error && (
                   <div className='text-center py-12'>
                     <p className='text-muted-foreground'>{error}</p>
@@ -51,7 +62,7 @@ export default async function DashboardPage() {
                   <LinkIcon className='h-12 w-12 text-muted-foreground mb-3' />
                   <h3 className='text-lg font-medium mb-1'>No links found</h3>
                   <p className='text-sm text-muted-foreground mb-4'>
-                    You haven't created any links yet. Start by adding your first link.
+                    You haven&apos;t created any links yet. Start by adding your first link.
                   </p>
                   <NewLinkButton />
                 </div>
@@ -105,8 +116,11 @@ export default async function DashboardPage() {
               </div>
             </div>
           </div>
+
+          {/* Componente de clusters de tags relacionados */}
+          <TagClustersWrapper />
         </div>
-      </div>
+      </section>
     </div>
   )
 }

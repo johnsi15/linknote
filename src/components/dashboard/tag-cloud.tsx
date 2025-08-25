@@ -35,7 +35,7 @@ export function TagCloud({ tags }: TagCloudProps) {
   return (
     <div className='flex flex-wrap gap-2'>
       {tags.map(tag => (
-        <Link href={`/links?tag=${tag.name}`} key={tag.name}>
+        <Link href={`/links?tags=${tag.name}`} key={tag.name}>
           <Badge
             variant={getVariant(tag.count)}
             style={{ fontSize: getFontSize(tag.count) }}

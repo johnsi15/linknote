@@ -1,0 +1,1 @@
+ALTER TABLE `links` ADD `is_favorite` integer DEFAULT false;

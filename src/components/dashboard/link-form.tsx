@@ -12,6 +12,10 @@ import { TagInput } from '@/components/dashboard/tag-input'
 import { Loader2, SparklesIcon } from 'lucide-react'
 import { RichTextEditor } from '@/components/dashboard/rich-text-editor'
 import { useAutoSave } from '@/hooks/use-auto-save'
+import { useUrlSummary } from '@/hooks/use-url-summary'
+import { cleanHtmlContent, isDescriptionEmpty } from '@/lib/utils'
+import { useDebounce } from 'use-debounce'
+import { useOfflineLinknote } from '@/hooks/use-offline-linknote'
 
 const formSchema = z.object({
   title: z.string().min(1, 'The title is required'),
@@ -37,8 +41,14 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
   const [suggestedTags, setSuggestedTags] = useState<string[]>([])
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false)
   const [noSuggestions, setNoSuggestions] = useState(false)
+  const [streamInitialized, setStreamInitialized] = useState(false)
   const router = useRouter()
   const titleInputRef = useRef<HTMLInputElement>(null)
+  const originalDescRef = useRef<string | null>(null)
+  const cleanOriginalDescRef = useRef<string | null>(null)
+  const [isSummaryStreaming, setIsSummaryStreaming] = useState(false)
+  const { summary, summarize, error: summaryError, isLoading: isLoadingSummary } = useUrlSummary()
+  const offline = useOfflineLinknote()
 
   const isEditing = Boolean(defaultValues?.title || linkId)
 
@@ -76,13 +86,50 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
     },
     delay: 1000,
     linkId: linkId,
+    disabled: isSummaryStreaming || !offline.isOnline,
   })
+
+  const urlValue = form.watch('url')
+  const [debouncedUrl] = useDebounce(urlValue, 400)
+
+  useEffect(() => {
+    const currentDesc = form.getValues('description') || ''
+
+    originalDescRef.current = currentDesc
+    cleanOriginalDescRef.current = cleanHtmlContent(currentDesc)
+
+    setStreamInitialized(false)
+  }, [linkId, debouncedUrl])
+
+  useEffect(() => {
+    if (!summary || !summary.trim()) return
+
+    const isHtml = summary.trim().startsWith('<')
+    let htmlSummary = isHtml ? summary : `<p>${summary}</p>`
+
+    if (/<body[\s>]/i.test(htmlSummary)) {
+      const match = htmlSummary.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+      htmlSummary = match ? match[1] : htmlSummary
+    }
+
+    const isNewLink = !defaultValues?.description && !linkId
+    const isEmptyDescription = !cleanOriginalDescRef.current?.trim() || isDescriptionEmpty(cleanOriginalDescRef.current)
+    const original = isNewLink || isEmptyDescription ? '' : cleanOriginalDescRef.current
+
+    form.setValue('description', `${htmlSummary}${original}`, { shouldDirty: true })
+
+    if (!streamInitialized) setStreamInitialized(true)
+  }, [summary])
 
   useEffect(() => {
     if (titleInputRef.current && !isEditing) {
       titleInputRef.current.focus()
     }
   }, [isEditing])
+
+  useEffect(() => {
+    setIsSummaryStreaming(isLoadingSummary)
+  }, [isLoadingSummary])
 
   const handleSubmit = async (values: FormValues) => {
     const cleanedValues = {
@@ -163,11 +210,36 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
             <FormItem>
               <FormLabel>URL</FormLabel>
               <FormControl>
-                <Input
-                  placeholder='https://johnserrano.co'
-                  {...field}
-                  className='h-12' // Input más alto
-                />
+                <div className='space-y-2'>
+                  <Input
+                    placeholder='https://johnserrano.co'
+                    className='h-12'
+                    {...field}
+                    onBlur={async () => {
+                      field.onBlur?.()
+
+                      if (field.value && offline.isOnline) {
+                        await summarize(field.value)
+                      }
+                    }}
+                  />
+                  {isLoadingSummary && (
+                    <div className='flex items-start gap-2 p-3 text-sm text-yellow-600 bg-yellow-50 rounded-md'>
+                      <Loader2 className='h-4 w-4 mt-0.5 flex-shrink-0 animate-spin' />
+                      <div>
+                        <p className='font-medium'>Generating summary...</p>
+                      </div>
+                    </div>
+                  )}
+                  {summaryError && (
+                    <div className='text-red-500 p-4 bg-red-50 rounded-md'>
+                      {summaryError.message}
+                      {summaryError.isBlocked && (
+                        <p className='mt-2 text-sm'>Este sitio podría estar bloqueando solicitudes automatizadas.</p>
+                      )}
+                    </div>
+                  )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -186,7 +258,6 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
                     value={field.value || ''}
                     onChange={newValue => {
                       field.onChange(newValue)
-                      form.trigger('description')
                     }}
                     className='min-h-[300px]'
                   />
@@ -252,7 +323,7 @@ export function LinkForm({ defaultValues, onSubmit }: LinkFormProps) {
           )}
         />
 
-        {!isEditing && (
+        {(!isEditing || !offline.isOnline) && (
           <Button type='submit' disabled={isSubmitting || saveStatus === 'saving'}>
             {(isSubmitting || saveStatus === 'saving') && <Loader2 className='mr-2 h-4 w-4 animate-spin' />}
             {isSubmitting || saveStatus === 'saving' ? 'Saving...' : 'Save'}

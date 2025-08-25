@@ -11,25 +11,44 @@ export function extractSummary(html: string, maxLength: number = 100): string {
   const temp = document.createElement('div')
   temp.innerHTML = html
 
-  // Eliminar elementos que no queremos en el resumen
   const elementsToRemove = temp.querySelectorAll('pre, code, img, iframe, table')
   elementsToRemove.forEach(el => el.remove())
 
-  // Obtener texto y limpiar
   let text = temp.textContent || temp.innerText || ''
 
-  // Limpiar espacios múltiples y saltos de línea
   text = text
     .replace(/\s+/g, ' ')
     .replace(/[\r\n]+/g, ' ')
     .trim()
 
-  // Cortar en la última palabra completa
   if (text.length <= maxLength) return text
 
-  // Buscar el último espacio antes del límite
   let lastSpace = text.lastIndexOf(' ', maxLength)
   if (lastSpace <= 0) lastSpace = maxLength
 
   return text.substring(0, lastSpace).trim() + '...'
+}
+
+export function isDescriptionEmpty(desc: string) {
+  const text = desc.replace(/<[^>]+>/g, '').trim()
+
+  return text.length === 0
+}
+
+export function cleanHtmlContent(html: string | null | undefined): string {
+  if (!html) return ''
+
+  let cleaned = html
+
+  if (/<body[\s>]/i.test(cleaned)) {
+    const match = cleaned.match(/<body[^>]*>([\s\S]*?)<\/body>/i)
+    cleaned = match ? match[1] : cleaned
+  }
+
+  return cleaned
+    .replace(/\s*data-meta-[^=]*="[^"]*"/g, '')
+    .replace(/\s*style="[^"]*"/g, '')
+    .replace(/<p\s+>/g, '<p>')
+    .replace(/<p><\/p>/g, '')
+    .trim()
 }

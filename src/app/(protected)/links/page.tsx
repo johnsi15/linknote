@@ -5,6 +5,7 @@ import { LinksFilterClient } from '@/components/dashboard/filter/links'
 import { getUserLinks } from '@/actions/links'
 import { NewLinkButton } from '@/components/dashboard/new-link/button'
 import { Link } from '@/types/link'
+import { FavoritesTab } from '@/components/dashboard/favorites-tab'
 
 type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>
 
@@ -44,7 +45,17 @@ export default async function LinksPage({ searchParams }: { searchParams: Search
 
         <TabsContent value='all' className='space-y-4'>
           <Card className='p-4'>
-            {success && links && <LinksFilterClient allLinks={links} availableTags={availableTags} />}
+            {success && links && (
+              <LinksFilterClient
+                initialFilters={{
+                  search: '',
+                  tags: [],
+                  dateRange: 'all',
+                  sort: 'newest',
+                }}
+                availableTags={availableTags}
+              />
+            )}
             {error && (
               <div className='text-center py-12'>
                 <p className='text-muted-foreground'>{error}</p>
@@ -54,15 +65,11 @@ export default async function LinksPage({ searchParams }: { searchParams: Search
         </TabsContent>
 
         <TabsContent value='recent' className='space-y-4'>
-          <Card className='p-4'>{success && links && <LinkList links={links.slice(0, 3)} />}</Card>
+          <Card className='p-4'>{success && links && <LinkList links={links.slice(0, 9)} />}</Card>
         </TabsContent>
 
         <TabsContent value='favorites' className='space-y-4'>
-          <Card className='p-4'>
-            <div className='text-center py-12'>
-              <p className='text-muted-foreground'>You don´t have any favorite links yet.</p>
-            </div>
-          </Card>
+          <FavoritesTab />
         </TabsContent>
       </Tabs>
     </div>

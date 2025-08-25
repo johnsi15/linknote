@@ -6,6 +6,7 @@ export const links = sqliteTable('links', {
   title: text('title').notNull(),
   url: text('url').notNull(),
   description: text('description'),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).default(false),
   createdAt: integer('created_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
   updatedAt: integer('updated_at', { mode: 'timestamp' }).$defaultFn(() => new Date()),
 })
