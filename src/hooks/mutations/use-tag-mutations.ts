@@ -1,6 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { tagKeys } from '@/hooks/queries/use-tags'
 import { linkKeys } from '@/hooks/queries/use-links'
+import { tagClustersKeys } from '@/hooks/queries/use-tag-clusters'
+import { similarTagsKeys } from '@/hooks/mutations/use-tag-embeddings'
 
 interface Tag {
   id: string
@@ -84,8 +86,10 @@ export function useCreateTag() {
       return result.tag
     },
     onSuccess: () => {
-      // Invalidar todas las queries de tags
+      // Invalidar todas las queries de tags y clusters
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
+      queryClient.invalidateQueries({ queryKey: similarTagsKeys.all })
     },
   })
 }
@@ -105,9 +109,11 @@ export function useUpdateTag() {
       return result.tag
     },
     onSuccess: () => {
-      // Invalidar queries de tags y links (por si cambió el nombre del tag)
+      // Invalidar queries de tags, links y clusters (por si cambió el nombre del tag)
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
+      queryClient.invalidateQueries({ queryKey: similarTagsKeys.all })
     },
   })
 }
@@ -117,11 +123,17 @@ export function useDeleteTag() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: apiDeleteTag,
+    mutationFn: async (id: string) => {
+      const result = await apiDeleteTag(id)
+
+      return result
+    },
     onSuccess: () => {
-      // Invalidar queries de tags y links
+      // Invalidar queries de tags, links y clusters
       queryClient.invalidateQueries({ queryKey: tagKeys.all })
       queryClient.invalidateQueries({ queryKey: linkKeys.all })
+      queryClient.invalidateQueries({ queryKey: tagClustersKeys.all })
+      queryClient.invalidateQueries({ queryKey: similarTagsKeys.all })
     },
   })
 }
