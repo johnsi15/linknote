@@ -16,11 +16,6 @@ export const TagInput = memo(function TagInput({
   isLoading: boolean
   error: string | null
 }) {
-  // 🔍 Debug logging para el TagInput simple
-  console.log('🔍 TagInput Debug (SIMPLE VERSION):')
-  console.log('  Value:', value)
-  console.log('  Is loading:', isLoading)
-  
   return (
     <div className='flex space-x-2'>
       <Input
