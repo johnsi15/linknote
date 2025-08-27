@@ -37,16 +37,32 @@ export function Footer() {
             </a>
           </div>
         </div>
-        <div className='text-gray-700 dark:text-muted-foreground text-xs'>
-          Built by{' '}
+        <div className='text-gray-700 dark:text-muted-foreground text-xs flex flex-col md:flex-row md:items-center gap-1 md:gap-3'>
+          <span>
+            Built by{' '}
+            <a
+              href='https://github.com/johnsi15'
+              target='_blank'
+              rel='noopener noreferrer'
+              className='p-1.5 -m-1.5 hover:text-foreground transition-colors rounded-md'
+              aria-label='John Serrano'
+            >
+              John Serrano
+            </a>
+          </span>
+          <span className="hidden md:inline">|</span>
           <a
-            href='https://github.com/johnsi15'
-            target='_blank'
-            rel='noopener noreferrer'
-            className='p-1.5 -m-1.5 hover:text-foreground transition-colors rounded-md'
-            aria-label='John Serrano'
+            href="/privacy-policy"
+            className="underline hover:text-primary transition-colors"
           >
-            John Serrano
+            Privacy Policy
+          </a>
+          <span className="hidden md:inline">|</span>
+          <a
+            href="/terms-of-service"
+            className="underline hover:text-primary transition-colors"
+          >
+            Terms of Service
           </a>
         </div>
       </div>
