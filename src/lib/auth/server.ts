@@ -5,10 +5,7 @@ export async function getUser() {
     const user = await currentUser()
 
     if (!user) {
-      return {
-        id: process.env.DEFAULT_USER_ID ?? '',
-        fullName: 'Guest',
-      }
+      return null
     }
 
     return user
