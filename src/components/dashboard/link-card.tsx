@@ -136,33 +136,37 @@ export function LinkCard({
         <CardContent className='pb-2'>
           {summary && <p className='text-sm text-muted-foreground line-clamp-2'>{summary}</p>}
         </CardContent>
-        <CardFooter className='flex items-center justify-between pt-2'>
-          <div className='flex flex-wrap gap-1'>
-            {tags.map(tag => (
-              <Badge key={tag} variant='secondary' className='text-xs'>
-                {tag}
-              </Badge>
-            ))}
+        <CardFooter className='flex flex-col items-end pt-2'>
+          <div className='flex items-center justify-between w-full'>
+            <div className='flex flex-wrap gap-1'>
+              {tags.map(tag => (
+                <Badge key={tag} variant='secondary' className='text-xs'>
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+            <div className='flex items-center space-x-1 text-xs text-muted-foreground'>
+              {id && (
+                <div className='flex space-x-1 ml-2'>
+                  <Button variant='ghost' size='icon' className='h-7 w-7' onClick={() => router.push(`/links/${id}`)}>
+                    <PencilIcon className='h-3.5 w-3.5' />
+                  </Button>
+                  <Button
+                    variant='ghost'
+                    size='icon'
+                    className='h-7 w-7 text-destructive'
+                    onClick={() => handleDelete(id)}
+                    disabled={deleteLink.isPending}
+                  >
+                    <TrashIcon className='h-3.5 w-3.5' />
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-          <div className='flex items-center space-x-1 text-xs text-muted-foreground'>
-            <span>{formatDistanceToNow(new Date(createdAt), { addSuffix: true })}</span>
-            {id && (
-              <div className='flex space-x-1 ml-2'>
-                <Button variant='ghost' size='icon' className='h-7 w-7' onClick={() => router.push(`/links/${id}`)}>
-                  <PencilIcon className='h-3.5 w-3.5' />
-                </Button>
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-7 w-7 text-destructive'
-                  onClick={() => handleDelete(id)}
-                  disabled={deleteLink.isPending}
-                >
-                  <TrashIcon className='h-3.5 w-3.5' />
-                </Button>
-              </div>
-            )}
-          </div>
+          <span className='text-xs text-muted-foreground pt-2'>
+            {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
+          </span>
         </CardFooter>
       </Card>
     </>
