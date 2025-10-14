@@ -92,7 +92,9 @@ export default async function DashboardPage() {
                       tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1)
                     })
 
-                    return Array.from(tagCounts).map(([name, count]) => ({ name, count }))
+                    return Array.from(tagCounts)
+                      .map(([name, count]) => ({ name, count }))
+                      .slice(0, 40)
                   })()}
                 />
               ) : (
